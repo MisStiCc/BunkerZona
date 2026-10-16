@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bkhosoug6y3q1"
 path.s3tc="res://.godot/imported/controller_mutant_1.jpg-8ffe3294f183d8160e3e214f8d7b9c72.s3tc.ctex"
+path.etc2="res://.godot/imported/controller_mutant_1.jpg-8ffe3294f183d8160e3e214f8d7b9c72.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/controller_mutant_1.jpg"
-dest_files=["res://.godot/imported/controller_mutant_1.jpg-8ffe3294f183d8160e3e214f8d7b9c72.s3tc.ctex"]
+dest_files=["res://.godot/imported/controller_mutant_1.jpg-8ffe3294f183d8160e3e214f8d7b9c72.s3tc.ctex", "res://.godot/imported/controller_mutant_1.jpg-8ffe3294f183d8160e3e214f8d7b9c72.etc2.ctex"]
 
 [params]
 

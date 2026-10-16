@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://2l2vgt2fycog"
 path.s3tc="res://.godot/imported/Meshy_AI_Crimson_Wraith_1006023758_texture_0.jpg-d039bbf92ac5d031b71905fe7a045d99.s3tc.ctex"
+path.etc2="res://.godot/imported/Meshy_AI_Crimson_Wraith_1006023758_texture_0.jpg-d039bbf92ac5d031b71905fe7a045d99.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/Meshy_AI_Crimson_Wraith_1006023758_texture_0.jpg"
-dest_files=["res://.godot/imported/Meshy_AI_Crimson_Wraith_1006023758_texture_0.jpg-d039bbf92ac5d031b71905fe7a045d99.s3tc.ctex"]
+dest_files=["res://.godot/imported/Meshy_AI_Crimson_Wraith_1006023758_texture_0.jpg-d039bbf92ac5d031b71905fe7a045d99.s3tc.ctex", "res://.godot/imported/Meshy_AI_Crimson_Wraith_1006023758_texture_0.jpg-d039bbf92ac5d031b71905fe7a045d99.etc2.ctex"]
 
 [params]
 

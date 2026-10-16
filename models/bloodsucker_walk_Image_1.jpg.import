@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dhkopjp23exuw"
 path.s3tc="res://.godot/imported/bloodsucker_walk_Image_1.jpg-47bb1de1d8f7e0007585e3e0978cab4d.s3tc.ctex"
+path.etc2="res://.godot/imported/bloodsucker_walk_Image_1.jpg-47bb1de1d8f7e0007585e3e0978cab4d.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/bloodsucker_walk_Image_1.jpg"
-dest_files=["res://.godot/imported/bloodsucker_walk_Image_1.jpg-47bb1de1d8f7e0007585e3e0978cab4d.s3tc.ctex"]
+dest_files=["res://.godot/imported/bloodsucker_walk_Image_1.jpg-47bb1de1d8f7e0007585e3e0978cab4d.s3tc.ctex", "res://.godot/imported/bloodsucker_walk_Image_1.jpg-47bb1de1d8f7e0007585e3e0978cab4d.etc2.ctex"]
 
 [params]
 

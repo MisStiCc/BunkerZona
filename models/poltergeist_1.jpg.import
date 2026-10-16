@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cbxxuwcrvd745"
 path.s3tc="res://.godot/imported/poltergeist_1.jpg-120cc69726ded648e7a426f945d58d7c.s3tc.ctex"
+path.etc2="res://.godot/imported/poltergeist_1.jpg-120cc69726ded648e7a426f945d58d7c.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/poltergeist_1.jpg"
-dest_files=["res://.godot/imported/poltergeist_1.jpg-120cc69726ded648e7a426f945d58d7c.s3tc.ctex"]
+dest_files=["res://.godot/imported/poltergeist_1.jpg-120cc69726ded648e7a426f945d58d7c.s3tc.ctex", "res://.godot/imported/poltergeist_1.jpg-120cc69726ded648e7a426f945d58d7c.etc2.ctex"]
 
 [params]
 

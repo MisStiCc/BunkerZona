@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://l0rv4wwubirm"
 path.s3tc="res://.godot/imported/Meshy_AI_Shadow_Recon_Operativ_1006023444_texture_1.jpg-cb13c0a8d07890093623e8eb2003fd14.s3tc.ctex"
+path.etc2="res://.godot/imported/Meshy_AI_Shadow_Recon_Operativ_1006023444_texture_1.jpg-cb13c0a8d07890093623e8eb2003fd14.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/Meshy_AI_Shadow_Recon_Operativ_1006023444_texture_1.jpg"
-dest_files=["res://.godot/imported/Meshy_AI_Shadow_Recon_Operativ_1006023444_texture_1.jpg-cb13c0a8d07890093623e8eb2003fd14.s3tc.ctex"]
+dest_files=["res://.godot/imported/Meshy_AI_Shadow_Recon_Operativ_1006023444_texture_1.jpg-cb13c0a8d07890093623e8eb2003fd14.s3tc.ctex", "res://.godot/imported/Meshy_AI_Shadow_Recon_Operativ_1006023444_texture_1.jpg-cb13c0a8d07890093623e8eb2003fd14.etc2.ctex"]
 
 [params]
 

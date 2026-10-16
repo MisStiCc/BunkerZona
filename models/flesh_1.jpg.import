@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://diaeoyij3sd26"
 path.s3tc="res://.godot/imported/flesh_1.jpg-d42c421b99e1c1947b7ee836c3c12c91.s3tc.ctex"
+path.etc2="res://.godot/imported/flesh_1.jpg-d42c421b99e1c1947b7ee836c3c12c91.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/flesh_1.jpg"
-dest_files=["res://.godot/imported/flesh_1.jpg-d42c421b99e1c1947b7ee836c3c12c91.s3tc.ctex"]
+dest_files=["res://.godot/imported/flesh_1.jpg-d42c421b99e1c1947b7ee836c3c12c91.s3tc.ctex", "res://.godot/imported/flesh_1.jpg-d42c421b99e1c1947b7ee836c3c12c91.etc2.ctex"]
 
 [params]
 

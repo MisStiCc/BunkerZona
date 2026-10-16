@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dj2embgynytnc"
 path.s3tc="res://.godot/imported/zombie_2.jpg-aa3c721cc3d25f34b1afbf5932d05979.s3tc.ctex"
+path.etc2="res://.godot/imported/zombie_2.jpg-aa3c721cc3d25f34b1afbf5932d05979.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/zombie_2.jpg"
-dest_files=["res://.godot/imported/zombie_2.jpg-aa3c721cc3d25f34b1afbf5932d05979.s3tc.ctex"]
+dest_files=["res://.godot/imported/zombie_2.jpg-aa3c721cc3d25f34b1afbf5932d05979.s3tc.ctex", "res://.godot/imported/zombie_2.jpg-aa3c721cc3d25f34b1afbf5932d05979.etc2.ctex"]
 
 [params]
 

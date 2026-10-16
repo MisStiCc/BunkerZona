@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bu4c6qhrpjgcl"
 path.s3tc="res://.godot/imported/Meshy_AI_Voidspire_Nexus_1006022317_texture_0.jpg-6f254805a73e5802a1bdf770e3b781b2.s3tc.ctex"
+path.etc2="res://.godot/imported/Meshy_AI_Voidspire_Nexus_1006022317_texture_0.jpg-6f254805a73e5802a1bdf770e3b781b2.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/Meshy_AI_Voidspire_Nexus_1006022317_texture_0.jpg"
-dest_files=["res://.godot/imported/Meshy_AI_Voidspire_Nexus_1006022317_texture_0.jpg-6f254805a73e5802a1bdf770e3b781b2.s3tc.ctex"]
+dest_files=["res://.godot/imported/Meshy_AI_Voidspire_Nexus_1006022317_texture_0.jpg-6f254805a73e5802a1bdf770e3b781b2.s3tc.ctex", "res://.godot/imported/Meshy_AI_Voidspire_Nexus_1006022317_texture_0.jpg-6f254805a73e5802a1bdf770e3b781b2.etc2.ctex"]
 
 [params]
 

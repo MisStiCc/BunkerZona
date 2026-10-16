@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://crs58cnktoihp"
 path.s3tc="res://.godot/imported/snork_mutant_0.jpg-4bcf91c1ddc0bfe74be6d47c2475dae3.s3tc.ctex"
+path.etc2="res://.godot/imported/snork_mutant_0.jpg-4bcf91c1ddc0bfe74be6d47c2475dae3.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://models/snork_mutant_0.jpg"
-dest_files=["res://.godot/imported/snork_mutant_0.jpg-4bcf91c1ddc0bfe74be6d47c2475dae3.s3tc.ctex"]
+dest_files=["res://.godot/imported/snork_mutant_0.jpg-4bcf91c1ddc0bfe74be6d47c2475dae3.s3tc.ctex", "res://.godot/imported/snork_mutant_0.jpg-4bcf91c1ddc0bfe74be6d47c2475dae3.etc2.ctex"]
 
 [params]
 
