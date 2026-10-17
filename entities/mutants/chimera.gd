@@ -27,9 +27,10 @@ func _ready():
 	biomass_cost = 200.0
 	mutant_type = "chimera"
 	
+	# Целевая высота модели: нормализация по AABB в base_mutant
+	model_target_height = 1.5
 	super._ready()
-	_setup_skeletal_anim()
-	
+		
 	leap_timer = Timer.new()
 	leap_timer.one_shot = true
 	leap_timer.wait_time = 4.0
@@ -49,7 +50,6 @@ func _physics_process(delta):
 		return
 	
 	super._physics_process(delta)
-	_update_skeletal_anim(delta)
 
 
 func _find_new_target():
@@ -208,98 +208,3 @@ func _setup_label():
 	label.text = "🦎 ХИМЕРА"
 	add_child(label)
 
-# ==================== ПРОЦЕДУРНЫЙ ГАЛОП ПО КОСТЯМ ====================
-
-var _skeleton: Skeleton3D
-var _leg_roots: Array = []   # [{bone:int, phase:float}]
-var _wing_roots: Array = []  # [{bone:int, phase:float}]
-var _head_root: int = -1
-var _rest_rot: Dictionary = {}  # bone -> Quaternion (поза покоя)
-var _gallop_phase: float = 0.0
-
-
-func _setup_skeletal_anim():
-	"""Ноги захардкожены по анатомии, голова/крылья ищутся по геометрии rest-поз"""
-	var model := get_node_or_null("Model")
-	if model == null:
-		return
-	var skels = model.find_children("*", "Skeleton3D", true, false)
-	if skels.is_empty():
-		return
-	_skeleton = skels[0]
-	var bone_count := _skeleton.get_bone_count()
-	# Дети каждой кости (для подъёма по цепочкам)
-	var kids := {}
-	for j in range(bone_count):
-		var parent_idx := _skeleton.get_bone_parent(j)
-		if parent_idx >= 0:
-			kids[parent_idx] = int(kids.get(parent_idx, 0)) + 1
-	var leaves: Array[int] = []
-	for i in range(bone_count):
-		if int(kids.get(i, 0)) == 0:
-			leaves.append(i)
-	# НОГИ - захардкожены (автопоиск путал плечи с лапами)
-	# Bone_045 зад-лево, Bone_018 перед-право, Bone_051 зад-право, Bone_024 перед-лево
-	_leg_roots = [
-		{"bone": 16, "phase": 0.0},        # зад-лево
-		{"bone": 54, "phase": 0.0},        # перед-право (диагональ)
-		{"bone": 30, "phase": 3.14159},   # зад-право
-		{"bone": 60, "phase": 3.14159},   # перед-лево (диагональ)
-	]
-	# КРЫЛЬЯ: задние верхние концевые цепочки -> корень у развилки
-	var wing_roots := {}
-	var head_best_y := 0.0
-	for l in leaves:
-		var gp: Vector3 = _skeleton.get_bone_global_rest(l).origin
-		if gp.y > 0.6 and gp.z > 0.4:
-			var b := l
-			var guard := 0
-			while b >= 0 and guard < 14:
-				var par := _skeleton.get_bone_parent(b)
-				if par < 0:
-					break
-				if int(kids.get(par, 0)) > 2 and b != l:
-					break
-				b = par
-				guard += 1
-			wing_roots[b] = true
-		elif gp.y > 0.9 and gp.z < 0.0 and gp.y > head_best_y:
-			head_best_y = gp.y
-			var b2 := l
-			var guard2 := 0
-			while b2 >= 0 and guard2 < 14:
-				var par2 := _skeleton.get_bone_parent(b2)
-				if par2 < 0 or int(kids.get(par2, 0)) > 2:
-					break
-				b2 = par2
-				guard2 += 1
-			_head_root = b2
-	var wi := 0.0
-	for b in wing_roots:
-		_wing_roots.append({"bone": b, "phase": wi})
-		wi += 1.3
-	# Поз покоя для всех анимируемых костей
-	for entry in _leg_roots + _wing_roots:
-		var b: int = int(entry["bone"])
-		_rest_rot[b] = _skeleton.get_bone_pose_rotation(b)
-	if _head_root >= 0:
-		_rest_rot[_head_root] = _skeleton.get_bone_pose_rotation(_head_root)
-
-func _update_skeletal_anim(delta: float):
-	"""Галоп: ноги по диагональным фазам, взмахи крыльев, покачивание головы"""
-	if _skeleton == null:
-		return
-	var move_speed := Vector2(velocity.x, velocity.z).length()
-	var gait: float = clampf(move_speed / 6.0, 0.0, 1.5)
-	_gallop_phase += delta * maxf(move_speed, 1.0) * 2.2
-	for entry in _leg_roots:
-		var b: int = int(entry["bone"])
-		var swing: float = sin(_gallop_phase + float(entry["phase"])) * 0.5 * gait
-		_skeleton.set_bone_pose_rotation(b, _rest_rot[b] * Quaternion(Vector3(1, 0, 0), swing))
-	for entry in _wing_roots:
-		var b: int = int(entry["bone"])
-		var flap: float = sin(_gallop_phase * 0.7 + float(entry["phase"])) * (0.25 + 0.2 * gait)
-		_skeleton.set_bone_pose_rotation(b, _rest_rot[b] * Quaternion(Vector3(0, 0, 1), flap))
-	if _head_root >= 0:
-		var sway: float = sin(_gallop_phase * 0.5) * 0.08 * (0.5 + gait)
-		_skeleton.set_bone_pose_rotation(_head_root, _rest_rot[_head_root] * Quaternion(Vector3(0, 1, 0), sway))

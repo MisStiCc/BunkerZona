@@ -20,6 +20,13 @@ signal chunk_generated(chunk_pos: Vector2i)
 @export var monolith_blend: float = 35.0
 @export var props_per_chunk: int = 3
 
+# Рельеф Зоны: реальная высотная карта Припяти (Copernicus DSM, окно 330м)
+var _hm_data: PackedFloat32Array = PackedFloat32Array()
+var _hm_grid: int = 0
+var _hm_min: float = 0.0
+var _hm_range: float = 1.0
+# Вертикальная экспансия и кривая (тёплые низины чуть подняты - меньше "жидко")
+const HM_EXPANSION: float = 2.5
 var noise: FastNoiseLite
 var noise_detail: FastNoiseLite
 var noise_patch: FastNoiseLite
@@ -42,6 +49,7 @@ const STALKER_HEIGHT: float = 1.8
 
 func _ready():
 	# print("TerrainGenerator: _ready() START")
+	_load_zone_heightmap()
 	_setup_noise()
 	add_to_group("terrain_generator")
 
@@ -54,6 +62,26 @@ func _ready():
 	_update_chunks()
 
 	# print("TerrainGenerator: _ready() DONE, загружено чанков: ", loaded_chunks.size())
+
+
+func _load_zone_heightmap():
+	"""Copernicus DSM окно 330м: [u16 grid][f32 min][f32 max][u16*grid^2]"""
+	var path := "res://terrain/zone_height.raw"
+	if not FileAccess.file_exists(path):
+		return
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return
+	_hm_grid = f.get_16()
+	_hm_min = f.get_float()
+	var hmax: float = f.get_float()
+	_hm_range = maxf(hmax - _hm_min, 0.1)
+	_hm_data.resize(_hm_grid * _hm_grid)
+	for i in range(_hm_grid * _hm_grid):
+		_hm_data[i] = float(f.get_16()) / 65535.0
+	# Нормировка в метры с экспансией
+	for i in range(_hm_grid * _hm_grid):
+		_hm_data[i] = (_hm_data[i] * _hm_range + _hm_min - _hm_min) * HM_EXPANSION
 
 
 func _setup_noise():
@@ -79,12 +107,33 @@ func _setup_noise():
 
 
 func get_terrain_height(x: float, z: float) -> float:
-	"""Высота рельефа в мировой точке. Вокруг монолита - плоская арена."""
-	var h = noise.get_noise_2d(x, z) * terrain_amplitude
-	h += noise_detail.get_noise_2d(x, z) * terrain_amplitude * 0.25
-	var dist = Vector2(x, z).length()
-	var flat = clamp((dist - monolith_flat_radius) / monolith_blend, 0.0, 1.0)
+	"""Высота рельефа: реальная карта Припяти (картa покрывает весь мир).
+	Вокруг монолита - плоская арена, на краю мира - плавный спад к воде."""
+	var h: float = _sample_heightmap(x, z)
+	var dist := Vector2(x, z).length()
+	var flat: float = clamp((dist - monolith_flat_radius) / monolith_blend, 0.0, 1.0)
 	return h * flat
+
+
+func _sample_heightmap(x: float, z: float) -> float:
+	"""Билинейная выборка: мир [-165..165] -> карта [0..1]; v=0 север"""
+	if _hm_grid == 0:
+		return noise.get_noise_2d(x, z) * terrain_amplitude
+	var u: float = clampf((x + 165.0) / 330.0, 0.0, 1.0)
+	var v: float = clampf((z + 165.0) / 330.0, 0.0, 1.0)
+	var fx: float = u * float(_hm_grid - 1)
+	var fy: float = v * float(_hm_grid - 1)
+	var x0 := int(fx)
+	var y0 := int(fy)
+	var tx: float = fx - float(x0)
+	var ty: float = fy - float(y0)
+	var x1 := mini(x0 + 1, _hm_grid - 1)
+	var y1 := mini(y0 + 1, _hm_grid - 1)
+	var a: float = _hm_data[y0 * _hm_grid + x0]
+	var b: float = _hm_data[y0 * _hm_grid + x1]
+	var c: float = _hm_data[y1 * _hm_grid + x0]
+	var d: float = _hm_data[y1 * _hm_grid + x1]
+	return (a * (1.0 - tx) + b * tx) * (1.0 - ty) + (c * (1.0 - tx) + d * tx) * ty
 
 
 func _terrain_color(x: float, z: float, h: float) -> Color:
@@ -105,6 +154,16 @@ func _terrain_material() -> StandardMaterial3D:
 		_terrain_mat.albedo_color = Color.WHITE
 		_terrain_mat.vertex_color_use_as_albedo = true
 		_terrain_mat.roughness = 1.0
+		# Сухая земля (CC0 ambientCG) трипланаром поверх vertex colors:
+		# вершины красят зону, текстура даёт растрескавшийся микрофактуру
+		if ResourceLoader.exists("res://assets/textures/pbr/dirt_dry/albedo.jpg"):
+			_terrain_mat.albedo_texture = load("res://assets/textures/pbr/dirt_dry/albedo.jpg")
+			_terrain_mat.uv1_triplanar = true
+			_terrain_mat.uv1_scale = Vector3(0.08, 0.08, 0.08)
+			if ResourceLoader.exists("res://assets/textures/pbr/dirt_dry/normal.png"):
+				_terrain_mat.normal_enabled = true
+				_terrain_mat.normal_texture = load("res://assets/textures/pbr/dirt_dry/normal.png")
+				_terrain_mat.normal_scale = 0.6
 	return _terrain_mat
 
 
@@ -287,18 +346,37 @@ func _add_collision(chunk: Node3D, mesh: ArrayMesh):
 
 # ==================== СТРУКТУРЫ ЗОНЫ ====================
 
+
+# PBR-материал из пака ambientCG (CC0): albedo+normal+roughness(+ao) трипланаром
+func _pbr_material(path: String, tint: Color, tile: float, rough: float, metal: float = 0.0) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = tint
+	m.roughness = rough
+	m.metallic = metal
+	var base := "res://assets/textures/pbr/" + path
+	if ResourceLoader.exists(base + "/albedo.jpg"):
+		m.albedo_texture = load(base + "/albedo.jpg")
+		m.uv1_triplanar = true
+		m.uv1_scale = Vector3.ONE * tile
+		if ResourceLoader.exists(base + "/normal.png"):
+			m.normal_enabled = true
+			m.normal_texture = load(base + "/normal.png")
+			m.normal_scale = 0.8
+		if ResourceLoader.exists(base + "/roughness.jpg"):
+			m.roughness_texture = load(base + "/roughness.jpg")
+		if ResourceLoader.exists(base + "/ao.jpg"):
+			m.ao_enabled = true
+			m.ao_texture = load(base + "/ao.jpg")
+			m.ao_light_affect = 0.5
+	return m
+
 func _structure_materials():
 	if _concrete_mat == null:
-		_concrete_mat = StandardMaterial3D.new()
-		_concrete_mat.albedo_color = Color(0.44, 0.44, 0.41)
-		_concrete_mat.roughness = 0.95
-		_concrete_dark_mat = StandardMaterial3D.new()
-		_concrete_dark_mat.albedo_color = Color(0.26, 0.27, 0.26)
-		_concrete_dark_mat.roughness = 1.0
-		_rust_mat = StandardMaterial3D.new()
-		_rust_mat.albedo_color = Color(0.38, 0.22, 0.12)
-		_rust_mat.roughness = 1.0
-		_rust_mat.metallic = 0.4
+		# Панельки-руины: грязный бетон (CC0 ambientCG), тинт сохраняет цветовую
+		# гамму Зоны, трипланар не тянет UV на боксах любого размера
+		_concrete_mat = _pbr_material("concrete_wall_dirty", Color(0.55, 0.55, 0.51), 0.3, 0.95)
+		_concrete_dark_mat = _pbr_material("concrete_floor", Color(0.30, 0.30, 0.29), 0.35, 1.0)
+		_rust_mat = _pbr_material("corrugated_rust", Color(0.55, 0.36, 0.24), 0.4, 1.0, 0.35)
 		_box_mesh = BoxMesh.new()
 		_box_mesh.size = Vector3.ONE
 
@@ -312,6 +390,45 @@ func _add_box_instance(parent: Node3D, mat: StandardMaterial3D, pos: Vector3, si
 	mi.material_override = mat
 	parent.add_child(mi)
 	return mi
+
+
+# Декали грязи (CC0, из архива Припяти) - грузятся один раз
+var _decal_textures: Array = []
+
+func _add_wall_decal(body: Node3D, size: Vector3):
+	"""Декаль на случайной вертикальной стене коробки (в локальных координатах body)"""
+	if _decal_textures.is_empty():
+		for name in ["crack_01", "crack_02", "rust_streak_01", "stain_dark_01",
+				"moss_patch_01", "stain_oil_01"]:
+			var p := "res://assets/decals/%s.png" % name
+			if ResourceLoader.exists(p):
+				_decal_textures.append(load(p))
+	if _decal_textures.is_empty():
+		return
+
+	var decal := Decal.new()
+	var w := randf_range(1.4, 2.4)
+	decal.size = Vector3(w, w, 1.6)
+	decal.texture_albedo = _decal_textures[randi() % _decal_textures.size()]
+	decal.modulate = Color(1, 1, 1, 0.8)
+
+	# Случайная стена: 0/1 - широкие (X), 2/3 - торцы (Z)
+	var face := randi() % 4
+	var h := randf_range(-size.y * 0.1, size.y * 0.25)
+	var pos: Vector3
+	var normal: Vector3
+	match face:
+		0: pos = Vector3(randf_range(-1, 1) * size.x * 0.25, h, size.z * 0.5 + 0.4); normal = Vector3(0, 0, 1)
+		1: pos = Vector3(randf_range(-1, 1) * size.x * 0.25, h, -size.z * 0.5 - 0.4); normal = Vector3(0, 0, -1)
+		2: pos = Vector3(size.x * 0.5 + 0.4, h, randf_range(-1, 1) * size.z * 0.25); normal = Vector3(1, 0, 0)
+		_: pos = Vector3(-size.x * 0.5 - 0.4, h, randf_range(-1, 1) * size.z * 0.25); normal = Vector3(-1, 0, 0)
+
+	var y_axis := normal
+	var x_axis := Vector3.UP.cross(y_axis).normalized()
+	var z_axis := x_axis.cross(y_axis).normalized()
+	decal.basis = Basis(x_axis, y_axis, z_axis)
+	decal.position = pos
+	body.add_child(decal)
 
 
 func _find_structure_spot(origin: Vector3, rng: RandomNumberGenerator, placed: Array, min_gap: float) -> Vector3:
@@ -372,6 +489,7 @@ func _add_structures(chunk: Node3D, chunk_pos: Vector2i, nav_faces: PackedVector
 			chunk.add_child(body)
 			_add_box_instance(body, _concrete_mat, Vector3.ZERO, size, 0.0)
 			_add_box_instance(body, _concrete_dark_mat, Vector3(0.0, -size.y * 0.15, size.z / 2.0 + 0.06), Vector3(1.2, size.y * 0.5, 0.12), 0.0)
+			_add_wall_decal(body, size)
 			_add_box_instance(chunk, _concrete_dark_mat, spot + Vector3(rng.randf_range(-4.5, 4.5), -0.4, rng.randf_range(-4.5, 4.5)), size * 0.4, rng.randf() * TAU)
 			_append_box_faces(nav_faces, body.position, size, yaw)
 
@@ -393,6 +511,8 @@ func _add_structures(chunk: Node3D, chunk_pos: Vector2i, nav_faces: PackedVector
 			chunk.add_child(body)
 			_add_box_instance(body, _rust_mat, Vector3.ZERO, size, 0.0)
 			_add_box_instance(body, _concrete_dark_mat, Vector3(0.0, size.y * 0.55, 0.0), size * Vector3(1.05, 0.12, 1.05), 0.0)
+			if rng.randf() < 0.5:
+				_add_wall_decal(body, size)
 			_append_box_faces(nav_faces, body.position, size, yaw)
 
 	# Полузатопленная труба
@@ -466,9 +586,8 @@ func _add_props(chunk: Node3D, chunk_pos: Vector2i):
 
 func _make_dead_tree(rng: RandomNumberGenerator) -> Node3D:
 	if _bark_mat == null:
-		_bark_mat = StandardMaterial3D.new()
-		_bark_mat.albedo_color = Color(0.16, 0.13, 0.10)
-		_bark_mat.roughness = 1.0
+		# Стволы: старое дерево (CC0), трипланар держит масштаб на тянутых цилиндрах
+		_bark_mat = _pbr_material("wood_planks_old", Color(0.30, 0.24, 0.19), 0.7, 1.0)
 		_trunk_mesh = CylinderMesh.new()
 		_trunk_mesh.top_radius = 0.06
 		_trunk_mesh.bottom_radius = 0.34
