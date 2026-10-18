@@ -1,0 +1,166 @@
+[gd_scene load_steps=22 format=3]
+
+[ext_resource type="Shader" path="res://inbox/emission_fx/shaders/emission_sky.gdshader" id="ext_sky"]
+[ext_resource type="Shader" path="res://inbox/emission_fx/shaders/shockwave_ring.gdshader" id="ext_ring"]
+[ext_resource type="Shader" path="res://inbox/emission_fx/shaders/light_pillar.gdshader" id="ext_pillar"]
+[ext_resource type="Texture2D" path="res://inbox/emission_fx/textures/spark_soft.png" id="ext_spark"]
+[ext_resource type="Texture2D" path="res://inbox/emission_fx/textures/ash_flake.png" id="ext_ash"]
+[ext_resource type="Script" path="res://inbox/emission_fx/scripts/emission_controller.gd" id="ext_ctrl"]
+
+[sub_resource type="ShaderMaterial" id="sub_sky_mat"]
+shader = ExtResource("ext_sky")
+shader_parameter/col_horizon = Color(0.85, 0.16, 0.05, 1)
+shader_parameter/col_zenith = Color(0.22, 0.02, 0.03, 1)
+shader_parameter/intensity = 0.0
+shader_parameter/noise_scale = 0.004
+shader_parameter/speed = 0.3
+shader_parameter/sphere_radius = 600.0
+
+[sub_resource type="SphereMesh" id="sub_sky_mesh"]
+radius = 600.0
+height = 1200.0
+
+[sub_resource type="ShaderMaterial" id="sub_ring_mat"]
+shader = ExtResource("ext_ring")
+shader_parameter/ring_col = Color(1, 0.45, 0.12, 1)
+shader_parameter/inner_col = Color(0.5, 0.07, 0.03, 1)
+shader_parameter/ring_pos = 0.0
+shader_parameter/ring_width = 0.055
+shader_parameter/intensity = 0.0
+shader_parameter/speed = 1.0
+
+[sub_resource type="QuadMesh" id="sub_ring_mesh"]
+size = Vector2(360, 360)
+
+[sub_resource type="ShaderMaterial" id="sub_echo_mat"]
+shader = ExtResource("ext_ring")
+shader_parameter/ring_col = Color(0.9, 0.3, 0.1, 1)
+shader_parameter/inner_col = Color(0.4, 0.05, 0.03, 1)
+shader_parameter/ring_pos = 0.0
+shader_parameter/ring_width = 0.085
+shader_parameter/intensity = 0.0
+shader_parameter/speed = 0.7
+
+[sub_resource type="ShaderMaterial" id="sub_pillar_mat"]
+shader = ExtResource("ext_pillar")
+shader_parameter/col_low = Color(1, 0.72, 0.3, 1)
+shader_parameter/col_high = Color(0.85, 0.16, 0.04, 1)
+shader_parameter/intensity = 0.0
+shader_parameter/seed = 0.0
+shader_parameter/speed = 3.0
+
+[sub_resource type="CylinderMesh" id="sub_pillar_mesh"]
+top_radius = 1.6
+bottom_radius = 2.6
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="sub_ash_draw_mat"]
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("ext_ash")
+billboard_mode = 3
+transparency = 1
+disable_receive_shadows = true
+
+[sub_resource type="Gradient" id="sub_ash_ramp"]
+offsets = PackedFloat32Array(0, 0.65, 1)
+colors = PackedColorArray(0.42, 0.38, 0.36, 0.5, 0.38, 0.34, 0.32, 0.28, 0.35, 0.32, 0.3, 0)
+
+[sub_resource type="ParticleProcessMaterial" id="sub_ash_proc"]
+emission_shape = 1
+emission_sphere_radius = 120.0
+direction = Vector3(0, -1, 0)
+spread = 30.0
+initial_velocity_min = 0.4
+initial_velocity_max = 1.1
+gravity = Vector3(0, -0.7, 0)
+angle_min = -180.0
+angle_max = 180.0
+scale_min = 0.2
+scale_max = 0.45
+color_ramp = SubResource("sub_ash_ramp")
+
+[sub_resource type="QuadMesh" id="sub_ash_quad"]
+material = SubResource("sub_ash_draw_mat")
+size = Vector2(0.9, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="sub_spark_draw_mat"]
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("ext_spark")
+billboard_mode = 3
+disable_receive_shadows = true
+blend_mode = 1
+
+[sub_resource type="Gradient" id="sub_spark_ramp"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 0.85, 0.5, 1, 1, 0.35, 0.05, 0)
+
+[sub_resource type="ParticleProcessMaterial" id="sub_spark_proc"]
+emission_shape = 1
+emission_sphere_radius = 22.0
+direction = Vector3(0, 1, 0)
+spread = 40.0
+initial_velocity_min = 8.0
+initial_velocity_max = 17.0
+gravity = Vector3(0, -11, 0)
+scale_min = 0.25
+scale_max = 0.6
+color_ramp = SubResource("sub_spark_ramp")
+
+[sub_resource type="QuadMesh" id="sub_spark_quad"]
+material = SubResource("sub_spark_draw_mat")
+size = Vector2(0.35, 0.35)
+
+[node name="EmissionFX" type="Node3D"]
+script = ExtResource("ext_ctrl")
+
+[node name="SkyDome" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("sub_sky_mesh")
+material_override = SubResource("sub_sky_mat")
+
+[node name="Shockwave" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("sub_ring_mesh")
+material_override = SubResource("sub_ring_mat")
+position = Vector3(0, 0.4, 0)
+rotation = Vector3(-1.5707963267948966, 0, 0)
+
+[node name="ShockwaveEcho" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("sub_ring_mesh")
+material_override = SubResource("sub_echo_mat")
+position = Vector3(0, 0.6, 0)
+rotation = Vector3(-1.5707963267948966, 0, 0)
+
+[node name="Pillars" type="Node3D" parent="."]
+
+[node name="PillarTemplate" type="MeshInstance3D" parent="Pillars"]
+visible = false
+cast_shadow = 0
+mesh = SubResource("sub_pillar_mesh")
+material_override = SubResource("sub_pillar_mat")
+
+[node name="Ash" type="GPUParticles3D" parent="."]
+amount = 420
+lifetime = 6.0
+randomness = 0.6
+visibility_aabb = AABB(-150, -10, -150, 300, 90, 300)
+local_coords = true
+process_material = SubResource("sub_ash_proc")
+draw_pass_1 = SubResource("sub_ash_quad")
+
+[node name="Sparks" type="GPUParticles3D" parent="."]
+amount = 170
+lifetime = 1.3
+explosiveness = 0.85
+visibility_aabb = AABB(-30, 0, -30, 60, 45, 60)
+process_material = SubResource("sub_spark_proc")
+draw_pass_1 = SubResource("sub_spark_quad")
+
+[node name="CoreLight" type="OmniLight3D" parent="."]
+light_color = Color(1, 0.45, 0.15, 1)
+light_energy = 0.0
+omni_range = 65.0
+position = Vector3(0, 10, 0)
