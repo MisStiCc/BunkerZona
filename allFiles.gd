@@ -14,7 +14,7 @@ func _run():
 	# Записываем каждый файл
 	for file_path in all_files:
 		# Пропускаем системные папки
-		if file_path.contains(".godot") or file_path.contains(".git"):
+		if file_path.contains(".godot/") or file_path.contains(".git"):
 			continue
 			
 		file_count += 1

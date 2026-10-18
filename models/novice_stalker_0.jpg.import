@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://g4g13r22l2gu"
-path="res://.godot/imported/novice_stalker_0.jpg-b2ba1e1f4af101e224aa87c13f84a7db.ctex"
+path.s3tc="res://.godot/imported/novice_stalker_0.jpg-b2ba1e1f4af101e224aa87c13f84a7db.s3tc.ctex"
+path.etc2="res://.godot/imported/novice_stalker_0.jpg-b2ba1e1f4af101e224aa87c13f84a7db.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c3ad45cfb40ac532f1409922ad604be2"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/novice_stalker_0.jpg"
-dest_files=["res://.godot/imported/novice_stalker_0.jpg-b2ba1e1f4af101e224aa87c13f84a7db.ctex"]
+dest_files=["res://.godot/imported/novice_stalker_0.jpg-b2ba1e1f4af101e224aa87c13f84a7db.s3tc.ctex", "res://.godot/imported/novice_stalker_0.jpg-b2ba1e1f4af101e224aa87c13f84a7db.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

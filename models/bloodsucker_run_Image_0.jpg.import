@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dwl45rg0f7dub"
-path="res://.godot/imported/bloodsucker_run_Image_0.jpg-9f773d1beff2821fd78ae5460e42a977.ctex"
+path.s3tc="res://.godot/imported/bloodsucker_run_Image_0.jpg-9f773d1beff2821fd78ae5460e42a977.s3tc.ctex"
+path.etc2="res://.godot/imported/bloodsucker_run_Image_0.jpg-9f773d1beff2821fd78ae5460e42a977.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "d4ccbf2c39652116f8ab3c0d599babd1"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/bloodsucker_run_Image_0.jpg"
-dest_files=["res://.godot/imported/bloodsucker_run_Image_0.jpg-9f773d1beff2821fd78ae5460e42a977.ctex"]
+dest_files=["res://.godot/imported/bloodsucker_run_Image_0.jpg-9f773d1beff2821fd78ae5460e42a977.s3tc.ctex", "res://.godot/imported/bloodsucker_run_Image_0.jpg-9f773d1beff2821fd78ae5460e42a977.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

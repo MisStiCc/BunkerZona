@@ -17,6 +17,13 @@
 открываются прогрессом (кольца 40/45/65/70/85). Весь баланс кампании — в
 `data/campaign_data.gd`, дизайн и математика — в `docs/campaign_design.md`.
 
+## Башня Монолита
+
+100 этажей с растущей сложностью: звёзды (1-3) за условия этажа, биомасса
+и крутки гачи в награду. Каждый 5-й этаж — «Прорыв» (×1.5 награды),
+каждый 10-й — именной «Хранитель» (×3). Панель — кнопка «🗼 Башня»
+в лаборатории. Дизайн — `docs/tower_design.md`, баланс — `data/tower_data.gd`.
+
 ## Режим выживания
 
 Волны бесконечны и становятся сильнее с каждой, награда растёт с числом
@@ -51,3 +58,8 @@
 - Можно делать выброс
 - Интерфейс показывает ресурсы
 - Игра не падает с ошибками
+
+## Атрибуция
+
+- Картовые данные Припяти: © участники [OpenStreetMap](https://www.openstreetmap.org/copyright), ODbL 1.0. Высоты: AWS Terrain Tiles / SRTM (NASA/USGS).
+- Модели пропсов: Kenney (CC0), Quaternius (CC0), а также **Bus, Swing set, Tumbleweed, Dead Tree by Poly by Google, CC-BY 4.0** и **Dead Tree Trunk, Bus Stop by Zsky, CC-BY 4.0** (poly.pizza). Полные списки: `models/props/CREDITS.md`, `models/animals/CREDITS.md`, `assets/textures/CREDITS.md`, `assets/audio/CREDITS.md`.
