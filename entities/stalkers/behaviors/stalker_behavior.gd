@@ -11,20 +11,24 @@ func _init(stalker_node: BaseStalker):
     stalker = stalker_node
 
 
+## Кеш скриптов поведения: раньше create() делал load() при каждом спавне.
+static var _script_cache: Dictionary = {}
+
+
 static func create(behavior_type: GameEnums.StalkerBehavior, stalker_node: BaseStalker) -> StalkerBehaviorStrategy:
-    match behavior_type:
-        GameEnums.StalkerBehavior.GREEDY:
-            return load("res://entities/stalkers/behaviors/greedy_behavior.gd").new(stalker_node)
-        GameEnums.StalkerBehavior.BRAVE:
-            return load("res://entities/stalkers/behaviors/brave_behavior.gd").new(stalker_node)
-        GameEnums.StalkerBehavior.CAUTIOUS:
-            return load("res://entities/stalkers/behaviors/cautious_behavior.gd").new(stalker_node)
-        GameEnums.StalkerBehavior.AGGRESSIVE:
-            return load("res://entities/stalkers/behaviors/aggressive_behavior.gd").new(stalker_node)
-        GameEnums.StalkerBehavior.STEALTHY:
-            return load("res://entities/stalkers/behaviors/stealthy_behavior.gd").new(stalker_node)
-    
-    return StalkerBehaviorStrategy.new(stalker_node)
+        if _script_cache.is_empty():
+                _script_cache = {
+                        GameEnums.StalkerBehavior.GREEDY: load("res://entities/stalkers/behaviors/greedy_behavior.gd"),
+                        GameEnums.StalkerBehavior.BRAVE: load("res://entities/stalkers/behaviors/brave_behavior.gd"),
+                        GameEnums.StalkerBehavior.CAUTIOUS: load("res://entities/stalkers/behaviors/cautious_behavior.gd"),
+                        GameEnums.StalkerBehavior.AGGRESSIVE: load("res://entities/stalkers/behaviors/aggressive_behavior.gd"),
+                        GameEnums.StalkerBehavior.STEALTHY: load("res://entities/stalkers/behaviors/stealthy_behavior.gd"),
+                }
+        var script: GDScript = _script_cache.get(behavior_type)
+        if script:
+                return script.new(stalker_node)
+
+        return StalkerBehaviorStrategy.new(stalker_node)
 
 
 # Методы для оценки ситуации - переопределяются в наследниках

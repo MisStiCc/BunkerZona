@@ -14,6 +14,8 @@ func _ready():
 	biomass_cost = 30.0
 	mutant_type = "dog"
 	
+	# Целевая высота модели: нормализация по AABB в base_mutant
+	model_target_height = 0.9
 	super._ready()
 	
 	_setup_label()

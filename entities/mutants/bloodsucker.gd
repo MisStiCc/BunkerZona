@@ -44,27 +44,27 @@ func _ready():
 						damage = 40.0
 						armor = 15.0
 						biomass_cost = 150.0
-        
+
 		mutant_type = "bloodsucker"
-        
+
 		mesh_instance = $MeshInstance3D
-        
+
 		super._ready()
-        
+
 		if has_node("Model"):
 				_setup_bloodsucker_anim()
-        
+
 		invisibility_timer = Timer.new()
 		invisibility_timer.one_shot = true
 		invisibility_timer.timeout.connect(_on_invisibility_ended)
 		add_child(invisibility_timer)
-        
+
 		leap_timer = Timer.new()
 		leap_timer.one_shot = true
 		leap_timer.wait_time = 2.0
 		leap_timer.timeout.connect(_on_leap_ended)
 		add_child(leap_timer)
-        
+
 		_setup_label()
 		# "Bloodsucker mutant initialized: ", subspecies  # (лог отключён)
 
@@ -101,37 +101,36 @@ func _setup_bloodsucker_anim():
 func _physics_process(delta):
 		if current_state == State.DEAD:
 				return
-        
+
 		if can_go_invisible and not is_invisible and current_state == State.PATROL:
 				_try_go_invisible()
-        
+
 		_update_invisibility_visuals()
-        
+
 		super._physics_process(delta)
-	_update_bloodsucker_anim()
 		_update_bloodsucker_anim()
 
 
 func _try_go_invisible():
 		if not can_go_invisible or is_invisible:  # Добавлена проверка is_invisible
 				return
-        
+
 		is_invisible = true
 		can_go_invisible = false
-        
+
 		invisibility_timer.wait_time = invisibility_duration
 		invisibility_timer.start()
-        
+
 		# "Bloodsucker стал невидимым!"  # (лог отключён)
 
 
 func _on_invisibility_ended():
 		if not is_invisible:  # Защита от множественных вызовов
 				return
-                
+
 		is_invisible = false
 		# "Bloodsucker стал видимым"  # (лог отключён)
-        
+
 		await get_tree().create_timer(invisibility_cooldown).timeout
 		can_go_invisible = true
 
@@ -139,7 +138,7 @@ func _on_invisibility_ended():
 func _update_invisibility_visuals():
 		if not mesh_instance:
 				return
-        
+
 		var alpha = 0.2 if is_invisible else 1.0
 		if mesh_instance.material_override:
 				mesh_instance.material_override.albedo_color.a = alpha
@@ -149,18 +148,18 @@ func _patrol(delta):
 		var stalkers = get_tree().get_nodes_in_group("stalkers")
 		var nearest_stalker = null
 		var nearest_dist = INF
-        
+
 		for stalker in stalkers:
 				if is_instance_valid(stalker):
 						var dist = global_position.distance_to(stalker.global_position)
 						if dist < detection_radius and dist < nearest_dist:
 								nearest_dist = dist
 								nearest_stalker = stalker
-        
+
 		if nearest_stalker:
 				target_stalker = nearest_stalker
 				current_state = State.CHASE
-        
+
 		super._patrol(delta)
 
 
@@ -168,23 +167,23 @@ func _chase(_delta):
 		if not target_stalker or not is_instance_valid(target_stalker):
 				current_state = State.PATROL
 				return
-        
+
 		# Поводок: невидимка не уходит далеко от своей территории
 		if _spawn_position.distance_to(global_position) > leash_radius:
 				target_stalker = null
 				current_state = State.PATROL
 				# "Кровосос: добыча увела от территории, возврат"  # (лог отключён)
 				return
-        
+
 		var direction = (target_stalker.global_position - global_position).normalized()
 		velocity.x = direction.x * speed
 		velocity.z = direction.z * speed
-        
+
 		if is_invisible and is_instance_valid(target_stalker):
 				var dist = global_position.distance_to(target_stalker.global_position)
 				if dist < ambush_range:
 						_ambush_attack()
-        
+
 		if global_position.distance_to(target_stalker.global_position) < 2.0:
 				current_state = State.ATTACK
 
@@ -192,19 +191,19 @@ func _chase(_delta):
 func _ambush_attack():
 		if not target_stalker or not is_instance_valid(target_stalker):
 				return
-        
+
 		# "Bloodsucker атакует из засады!"  # (лог отключён)
 		is_invisible = false
 		invisibility_timer.stop()
-        
+
 		var direction = (target_stalker.global_position - global_position).normalized()
 		velocity.x = direction.x * speed * 2.0
 		velocity.z = direction.z * speed * 2.0
 		velocity.y = 2.0
-        
+
 		target_stalker.take_damage(leap_damage, self)
 		attacked_stalker.emit(target_stalker)
-        
+
 		leap_timer.start()
 
 
@@ -216,12 +215,12 @@ func _attack(_delta):
 		if not target_stalker or not is_instance_valid(target_stalker):
 				current_state = State.PATROL
 				return
-        
+
 		var dist = global_position.distance_to(target_stalker.global_position)
 		if dist > 2.0:
 				current_state = State.CHASE
 				return
-        
+
 		if attack_timer.is_stopped():
 				target_stalker.take_damage(damage, self)
 				attacked_stalker.emit(target_stalker)
@@ -232,12 +231,12 @@ func _attack(_delta):
 func take_damage(dmg: float, source = null):
 		if not is_invisible:
 				dmg *= 1.5
-        
+
 		if is_invisible:
 				is_invisible = false
 				invisibility_timer.stop()
 				# "Bloodsucker стал видимым из-за урона"  # (лог отключён)
-        
+
 		super.take_damage(dmg, source)
 
 
@@ -251,3 +250,18 @@ func _setup_label():
 		label.modulate = Color(1.0, 0.2, 0.2)  # красный
 		label.text = "🩸 КРОВОСОС"
 		add_child(label)
+
+
+func _update_bloodsucker_anim():
+		# Патруль шагает, погоня бежит (клипы Walking/Running)
+		if _bs_anim == null:
+				return
+		var want := ""
+		match current_state:
+				State.CHASE:
+						want = "Running"
+				State.PATROL, State.ATTACK:
+						want = "Walking"
+		if want != "" and _bs_current_anim != want and _bs_anim.has_animation(want):
+				_bs_anim.play(want)
+				_bs_current_anim = want

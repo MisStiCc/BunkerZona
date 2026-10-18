@@ -20,6 +20,8 @@ func _ready():
 	detection_radius = 30.0
 	mutant_type = "pseudogiant"
 	
+	# Целевая высота модели: нормализация по AABB в base_mutant
+	model_target_height = 3.2
 	super._ready()
 	
 	stomp_timer = Timer.new()

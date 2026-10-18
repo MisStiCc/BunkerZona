@@ -25,6 +25,10 @@ func _ready():
 	
 	mesh_instance = $MeshInstance3D
 	
+	# Целевая высота модели: нормализация по AABB в base_mutant
+	model_target_height = 1.6
+	# Летает: парит на 1.6 м над рельефом (клип Flying_Idle), гравитация off
+	hover_height = 1.6
 	super._ready()
 	
 	telekinesis_timer = Timer.new()

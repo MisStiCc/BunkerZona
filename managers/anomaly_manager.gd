@@ -213,7 +213,7 @@ func _on_artifact_stolen(artifact: Node, stalker: Node):
 	# print("Артефакт украден сталкером: " + str(stalker))
 
 
-func _on_artifact_collected(artifact: Node, collector: Node):
+func _on_artifact_collected(artifact: Node, _collector: Node):
 	if artifact in active_artifacts:
 		active_artifacts.erase(artifact)
 	_stop_artifact_timer(artifact)
@@ -228,7 +228,7 @@ func _start_artifact_timer(artifact: Node):
 	var timer = Timer.new()
 	timer.wait_time = 30.0  # 30 секунд до превращения
 	timer.one_shot = true
-	timer.timeout.connect(_on_artifact_timeout.bind(artifact))
+	timer.timeout.connect(_on_artifact_timeout.bind(artifact, id))
 	add_child(timer)
 	timer.start()
 	
@@ -246,20 +246,33 @@ func _stop_artifact_timer(artifact: Node):
 		artifact_timers.erase(id)
 
 
-func _on_artifact_timeout(artifact: Node):
+func _on_artifact_timeout(artifact: Node, timer_id: int):
+	# Таймер одноразовый: запись в artifact_timers больше не нужна
+	artifact_timers.erase(timer_id)
+	
 	if not is_instance_valid(artifact):
-		artifact_timers.erase(artifact.get_instance_id())
 		return
 	
-	# print("Артефакт превращается в аномалию")
+	# Артефакт пролежал на земле 30 секунд - кристаллизуется в аномалию
+	# (закрытый TODO ZCode: раньше артефакт просто исчезал)
+	var pos: Vector3 = artifact.global_position
+	var scene_name: String = String(artifact.scene_file_path.get_file().get_basename())
 	
 	# Удаляем артефакт
 	active_artifacts.erase(artifact)
 	_stop_artifact_timer(artifact)
 	artifact.queue_free()
 	
-	# TODO: Создать аномалию на этом месте
-	# create_anomaly("some_type", artifact.global_position, 1, 0)
+	# Ищем аномалию-хозяина по обратной карте аномалия -> артефакт
+	var anomaly_type: String = ""
+	for a_type in anomaly_artifact_map:
+		if String(anomaly_artifact_map[a_type]) == scene_name:
+			anomaly_type = String(a_type)
+			break
+	
+	if not anomaly_type.is_empty() and anomaly_scenes.has(anomaly_type):
+		create_anomaly(anomaly_type, pos, 1, 0.0)
+	# print("Артефакт ", scene_name, " кристаллизовался в аномалию ", anomaly_type)
 
 
 func remove_all_artifacts():

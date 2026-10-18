@@ -16,6 +16,8 @@ signal spotted_stalker(stalker: Node3D)
 @export var biomass_cost: float = 50.0
 @export var mutant_type: String = "base"
 @export var gravity: float = 15.0
+# >0 - мутант летает: держится на этой высоте над землёй (полтергейст)
+@export var hover_height: float = 0.0
 
 enum State { PATROL, CHASE, ATTACK, DEAD }
 var current_state: State = State.PATROL
@@ -35,6 +37,22 @@ var _model_skeletal: bool = false  # у модели есть риг и Animatio
 var _air_time: float = 0.0
 var _stuck_pos: Vector3 = Vector3.ZERO
 var _stuck_time: float = 0.0
+
+# Скелетная анимация (модели models/animals/* и кровосос):
+# клипы подбираются по суффиксам имён («AnimalArmature|Walk» -> Walk)
+# 0 = не нормализовать размер
+@export var model_target_height: float = 0.0
+# Разворот модели к направлению движения (у большинства экспортов +Z вперёд)
+@export var model_yaw_degrees: float = 180.0
+# false - наследник сам управляет AnimationPlayer (кровосос)
+var use_builtin_clip_player: bool = true
+var _anim: AnimationPlayer
+var _clip_idle: String = ""
+var _clip_move: String = ""
+var _clip_run: String = ""
+var _clip_attack: String = ""
+var _clip_death: String = ""
+var _current_clip: String = ""
 
 # Множители статов (лаборатория + звёздность), задаётся до add_child,
 # применяются в _ready() после статов наследника
@@ -84,6 +102,9 @@ func _ready():
 	if model:
 		_model_base_y = model.position.y
 		_model_skeletal = not model.find_children("*", "AnimationPlayer", true, false).is_empty()
+		if _model_skeletal:
+			_setup_skeletal_animation(model)
+			_model_base_y = model.position.y
 	
 	health = max_health
 	
@@ -123,6 +144,101 @@ func _apply_star_label():
 		label.text += " " + "★".repeat(star_level)
 
 
+# ==================== СКЕЛЕТНАЯ АНИМАЦИЯ ====================
+# Модели из models/animals/* (CC0, Quaternius): все клипы внутри модели,
+# имена вида «AnimalArmature|Walk». Проигрыватель общий для всех мутантов.
+
+func _setup_skeletal_animation(model: Node3D):
+	"""Нормализует размер модели и подбирает клипы по суффиксам имён"""
+	var players = model.find_children("*", "AnimationPlayer", true, false)
+	if players.is_empty():
+		return
+	_anim = players[0]
+	_model_skeletal = true
+
+	var names := _anim.get_animation_list()
+	_clip_death = _match_clip(names, ["death"])
+	_clip_move = _match_clip(names, ["walk", "fast_flying"])
+	_clip_run = _match_clip(names, ["run", "gallop"])
+	_clip_attack = _match_clip(names, ["punch", "attack_headbutt", "attack_kick", "attack", "bite_front", "headbutt"])
+	_clip_idle = _match_clip(names, ["idle"])
+
+	# Циклические - передвижение и стойки, одиночные - атаки/смерть/реакции
+	for n in names:
+		var low := n.to_lower()
+		var one_shot := low.ends_with("attack") or low.ends_with("punch") \
+			or low.ends_with("death") or low.ends_with("bite_front") \
+			or low.ends_with("headbutt") or low.contains("hitreact")
+		_anim.get_animation(n).loop_mode = Animation.LOOP_NONE if one_shot else Animation.LOOP_LINEAR
+
+	# Повтор одиночного клипа (атаки) доступен сразу после завершения
+	_anim.animation_finished.connect(func(_name): _current_clip = "")
+
+	# Нормализация размера: локальный AABB модели -> целевая высота, ноги на землю
+	if model_target_height > 0.0:
+		var aabb := _compute_model_aabb(model)
+		if aabb.size.y > 0.001:
+			var s := model_target_height / aabb.size.y
+			model.scale = Vector3.ONE * s
+			model.rotation.y = deg_to_rad(model_yaw_degrees)
+			model.position.y = _model_base_y - aabb.position.y * s
+
+
+func _match_clip(names: PackedStringArray, suffixes: Array) -> String:
+	for suffix in suffixes:
+		for n in names:
+			if n.to_lower().ends_with(suffix):
+				return n
+	return ""
+
+
+func _compute_model_aabb(model: Node3D) -> AABB:
+	"""Габариты модели в её локальном пространстве (до масштабирования)"""
+	var result := AABB()
+	var first := true
+	var inv := model.global_transform.affine_inverse()
+	for mi in model.find_children("*", "MeshInstance3D", true, false):
+		var rel: Transform3D = inv * mi.global_transform
+		var box: AABB = rel * mi.get_aabb()
+		result = box if first else result.merge(box)
+		first = false
+	return result
+
+
+func _update_skeletal_anim():
+	"""Состояние -> клип: патруль идёт, погоня бежит, атака бьёт"""
+	if _anim == null or not use_builtin_clip_player:
+		return
+	if current_state == State.DEAD:
+		return
+
+	var want := ""
+	match current_state:
+		State.ATTACK:
+			want = _clip_attack if _clip_attack != "" else _clip_idle
+		State.CHASE:
+			want = _clip_run if _clip_run != "" else _clip_move
+		State.PATROL:
+			var moving := Vector2(velocity.x, velocity.z).length() > 0.6
+			want = _clip_move if moving else _clip_idle
+
+	if want != "" and want != _current_clip and _anim.has_animation(want):
+		_anim.play(want, 0.2)
+		_current_clip = want
+
+
+func _ground_below_y() -> float:
+	"""Высота земли под мутантом (для парения). Рей вниз с маской рельефа."""
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(
+		global_position + Vector3.UP * 1.0,
+		global_position + Vector3.DOWN * 12.0, 1)
+	var hit := space.intersect_ray(query)
+	if hit and hit.has("position"):
+		return hit["position"].y
+	return _spawn_position.y
+
+
 func _setup_navigation_component():
 	# Создаем NavigationAgent3D если его нет
 	var nav_agent = get_node_or_null("NavigationAgent3D")
@@ -144,8 +260,11 @@ func _physics_process(delta):
 	if current_state == State.DEAD:
 		return
 	
-	# Добавляем гравитацию
-	if not is_on_floor():
+	# Гравитация или парение (летающие мутанты держат высоту над рельефом)
+	if hover_height > 0.0:
+		var target_y := _ground_below_y() + hover_height
+		velocity.y = clampf((target_y - global_position.y) * 2.5, -2.5, 2.5)
+	elif not is_on_floor():
 		velocity.y -= gravity * delta
 	
 	# NavigationComponent обновляется сам в своём _physics_process
@@ -180,6 +299,9 @@ func _physics_process(delta):
 		_generate_patrol_points()
 		# print("Мутант: застрял - возвращён на точку спавна")
 	
+	# Скелетная анимация: состояние -> клип
+	_update_skeletal_anim()
+
 	# Процедурная анимация статичной модели (скелетная анимирует сама себя)
 	var model := get_node_or_null("Model")
 	if model and not _model_skeletal:
@@ -360,6 +482,10 @@ func _try_attack():
 		target_stalker.take_damage(damage, self)
 		attacked_stalker.emit(target_stalker)
 		attack_timer.start()
+		# Удар: одиночный клип, после завершения обновление вернёт стойку/бег
+		if _anim and _clip_attack != "" and use_builtin_clip_player:
+			_anim.play(_clip_attack, 0.1)
+			_current_clip = _clip_attack
 
 
 func _on_attack_cooldown_ended():
@@ -378,16 +504,23 @@ func take_damage(dmg: float, _source = null):
 func die():
 	if current_state == State.DEAD:
 		return
-	
+
 	current_state = State.DEAD
-	
+
+	# Клип смерти: труп лежит, пока клип не доиграет (1..3 с)
+	var corpse_time := 1.0
+	if _anim and _clip_death != "" and use_builtin_clip_player and _anim.has_animation(_clip_death):
+		_anim.play(_clip_death, 0.15)
+		_current_clip = _clip_death
+		corpse_time = clampf(_anim.get_animation(_clip_death).length, 1.0, 3.0)
+
 	if zone_controller and zone_controller.has_method("add_biomass"):
 		zone_controller.add_biomass(biomass_cost * 0.5)
-	
+
 	died.emit(self)
-	
+
 	var timer = Timer.new()
-	timer.wait_time = 1.0
+	timer.wait_time = corpse_time
 	timer.one_shot = true
 	timer.timeout.connect(queue_free)
 	add_child(timer)

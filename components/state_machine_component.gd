@@ -180,17 +180,20 @@ func _process_seek_monolith(delta):
 		_update_anti_stuck(monolith.global_position, delta)
 
 
-## Антизастревание v2: 6с почти без движения -> обходная точка ПЕРПЕНДИКУЛЯРНО
-## маршруту от текущей позиции (не у цели!), радиус растёт с числом попыток.
+## Антизастревание v3: 5с без СЕТЕВОГО смещения 2.5м -> обходная точка
+## перпендикулярно маршруту, радиус растёт с числом попыток.
+## Порог 2.5м (было 1.0): RVO-дрожь у стены сбрасывала таймер микродвижением,
+## и сталкеры вечно толклись у дома. На 3-й попытке - жёсткое спасение:
+## агента, слезшего с навмеша (крыша, пролом), ставит на ближайшую его точку.
 ## target_pos - куда сталкер идёт (монолит, край карты)
 func _update_anti_stuck(target_pos: Vector3, delta):
 	_stuck_time += delta
-	if stalker.global_position.distance_to(_stuck_pos) >= 1.0:
+	if stalker.global_position.distance_to(_stuck_pos) >= 2.5:
 		_stuck_pos = stalker.global_position
 		_stuck_time = 0.0
 		_stuck_detours = 0
 		return
-	if _stuck_time < 6.0 or not navigation:
+	if _stuck_time < 5.0 or not navigation:
 		return
 	_stuck_time = 0.0
 	_stuck_detours += 1
@@ -205,6 +208,21 @@ func _update_anti_stuck(target_pos: Vector3, delta):
 	if flat.length() > 145.0:
 		flat = flat.normalized() * 145.0
 		detour = Vector3(flat.x, detour.y, detour.z)
+
+	# Жёсткое спасение: три обхода не помогли - скорее всего агент вне навмеша
+	# (стоит на крыше/проломе, путь не строится). Ставим на ближайшую его точку.
+	if _stuck_detours >= 3 and navigation.nav_agent:
+		var map: RID = navigation.nav_agent.get_navigation_map()
+		var snap := NavigationServer3D.map_get_closest_point(map, stalker.global_position)
+		var flat_gap := Vector2(snap.x, snap.z).distance_to(
+			Vector2(stalker.global_position.x, stalker.global_position.z))
+		if flat_gap > 2.0:
+			stalker.global_position = snap + Vector3.UP * 1.8
+			stalker.velocity = Vector3.ZERO
+			_stuck_detours = 0
+			_stuck_pos = stalker.global_position
+			# "StateMachine: спасение - агент вне навмеша, поставлен на него"  # (лог отключён)
+
 	# "StateMachine: антизастревание #", _stuck_detours, " - обходная точка ", detour  # (лог отключён)
 	navigation.move_to(detour)
 

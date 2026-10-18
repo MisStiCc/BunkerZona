@@ -20,6 +20,8 @@ func _ready():
 	biomass_cost = 100.0
 	mutant_type = "controller"
 	
+	# Целевая высота модели: нормализация по AABB в base_mutant
+	model_target_height = 1.8
 	super._ready()
 	
 	control_timer = Timer.new()

@@ -16,9 +16,15 @@ var current_scene_name: String = ""
 # 0 = идти на текущий рубеж (campaign_level сейва)
 var selected_campaign_level: int = 0
 
-# Режим следующего забега: "campaign" или "survival" (выбор в лаборатории,
+# Режим следующего забега: "campaign", "survival" или "tower" (выбор в лаборатории,
 # запоминается в настройках клиента)
 var selected_run_mode: String = "campaign"
+
+# Карта следующего забега: "procedural" (Зона) или "pripyat"
+var selected_map: String = "procedural"
+
+# Этаж башни, выбранный в панели башни (0 = текущий рубеж башни)
+var selected_tower_floor: int = 0
 
 # Константы
 const SAVE_DIR = "user://saves/"
@@ -464,6 +470,7 @@ func _load_settings():
 	if cfg.load(SETTINGS_PATH) == OK:
 		active_save_slot = clampi(int(cfg.get_value("game", "active_save_slot", AUTOSAVE_SLOT)), AUTOSAVE_SLOT, MANUAL_SLOTS)
 		selected_run_mode = str(cfg.get_value("game", "run_mode", "campaign"))
+		selected_map = str(cfg.get_value("game", "map", "procedural"))
 	pass # print("Активный слот сохранения: " + ("автосейв" if active_save_slot == AUTOSAVE_SLOT else str(active_save_slot)))
 
 
@@ -471,18 +478,34 @@ func _save_settings():
 	var cfg = ConfigFile.new()
 	cfg.set_value("game", "active_save_slot", active_save_slot)
 	cfg.set_value("game", "run_mode", selected_run_mode)
+	cfg.set_value("game", "map", selected_map)
 	var error = cfg.save(SETTINGS_PATH)
 	if error != OK:
 		pass # print("Не удалось сохранить настройки: код " + str(error))
 
 
-## Режим забега: кампания или выживание
+## Карта забега: процедурная Зона или Припять
+func get_selected_map() -> String:
+	return "pripyat" if selected_map == "pripyat" else "procedural"
+
+
+func set_selected_map(map: String) -> bool:
+	if map != "procedural" and map != "pripyat":
+		return false
+	selected_map = map
+	_save_settings()
+	return true
+
+
+## Режим забега: кампания, башня или выживание
 func get_selected_run_mode() -> String:
-	return selected_run_mode if selected_run_mode == "survival" else "campaign"
+	if selected_run_mode == "survival" or selected_run_mode == "tower":
+		return selected_run_mode
+	return "campaign"
 
 
 func set_selected_run_mode(mode: String) -> bool:
-	if mode != "campaign" and mode != "survival":
+	if mode != "campaign" and mode != "survival" and mode != "tower":
 		return false
 	selected_run_mode = mode
 	_save_settings()
@@ -560,11 +583,18 @@ func _setup_run_params(params: Dictionary):
 	var run_mode := get_selected_run_mode()
 	params["run_mode"] = run_mode
 	params["campaign_mode"] = get_campaign_mode()
+	params["map"] = get_selected_map()
 
 	if run_mode == "survival":
 		# Выживание: параметры первой волны; следующие считает ZoneController
 		# после каждой волны (эскалация - в SurvivalData)
 		params["survival_params"] = SurvivalData.get_wave_params(1, get_campaign_mode())
+	elif run_mode == "tower":
+		# Башня Монолита: параметры этажа совместимы с campaign_params -
+		# ZoneController применяет их тем же кодом
+		var floor_num := clampi(get_selected_or_frontier_tower_floor(), 1, TowerData.TOTAL_FLOORS)
+		params["tower_floor"] = floor_num
+		params["campaign_params"] = TowerData.get_floor_params(floor_num)
 	else:
 		# Кампания: уровень выбран в лаборатории (или текущий рубеж)
 		var campaign_level := get_selected_or_frontier_level()
@@ -779,6 +809,73 @@ func get_selected_or_frontier_level() -> int:
 	return frontier
 
 
+# ==================== БАШНЯ МОНОЛИТА ====================
+
+func get_tower_floor() -> int:
+	if current_save_data:
+		return clampi(current_save_data.tower_floor, 1, TowerData.TOTAL_FLOORS)
+	return 1
+
+
+## Этаж для следующего забега: выбранный в панели башни или текущий рубеж
+func get_selected_or_frontier_tower_floor() -> int:
+	if selected_tower_floor >= 1:
+		return clampi(selected_tower_floor, 1, TowerData.TOTAL_FLOORS)
+	return get_tower_floor()
+
+
+func get_tower_stars(floor_num: int) -> int:
+	if current_save_data and current_save_data.tower_stars.has(floor_num):
+		return int(current_save_data.tower_stars[floor_num])
+	return 0
+
+
+## Победа в башне: звёзды, награды, рубеж. Возвращает сводку для UI
+func _apply_tower_result(result: Dictionary) -> Dictionary:
+	var floor_num := int(result.get("tower_floor", 0))
+	if floor_num <= 0:
+		return {}
+
+	var stars := TowerData.evaluate_stars(floor_num, result)
+	var rewards: Dictionary = TowerData.get_floor_rewards(floor_num)
+
+	# Бонус за звёзды сверх первой
+	var mutant_rolls := int(rewards["mutant_rolls"]) + maxi(0, stars - 1) * TowerData.STAR_ROLL_BONUS
+	var anomaly_rolls := int(rewards["anomaly_rolls"])
+	var biomass := float(rewards["biomass"])
+	var stars_before := get_tower_stars(floor_num)
+
+	if stars >= 1:
+		var lab = get_lab_data()
+		lab.biomass += biomass
+		if stars > stars_before:
+			current_save_data.tower_stars[floor_num] = stars
+		if floor_num >= current_save_data.tower_floor and floor_num < TowerData.TOTAL_FLOORS:
+			current_save_data.tower_floor = floor_num + 1
+	else:
+		# Поражение: консоляция - половина биомассы, без круток
+		biomass *= 0.5
+		mutant_rolls = 0
+		anomaly_rolls = 0
+		get_lab_data().biomass += biomass
+
+	if mutant_rolls > 0:
+		grant_mutant_rolls(mutant_rolls, "башня: этаж %d" % floor_num)
+	if anomaly_rolls > 0:
+		grant_anomaly_rolls(anomaly_rolls, "башня: этаж %d" % floor_num)
+
+	print("Башня: этаж %d, звёзд %d, +%.0f биомассы, +%d/%d круток" % [
+		floor_num, stars, biomass, mutant_rolls, anomaly_rolls])
+	return {
+		"floor": floor_num,
+		"stars": stars,
+		"biomass": biomass,
+		"mutant_rolls": mutant_rolls,
+		"anomaly_rolls": anomaly_rolls,
+		"stars_before": stars_before
+	}
+
+
 func is_campaign_completed() -> bool:
 	return current_save_data != null and current_save_data.campaign_completed
 
@@ -815,6 +912,13 @@ func process_run_result(result: Dictionary):
 	pass # print("Добавлено биомассы: " + str(reward))
 
 	_apply_campaign_result(result)
+
+	# Башня Монолита: звёзды и награды этажа
+	var tower_summary := {}
+	if result.get("mode", "") == "tower":
+		tower_summary = _apply_tower_result(result)
+		if not tower_summary.is_empty():
+			result["tower_summary"] = tower_summary
 
 	# Выживание: рекорд пройденных волн
 	if result.get("mode", "") == "survival":

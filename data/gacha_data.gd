@@ -304,6 +304,10 @@ static func roll_artifact_gacha(level: int) -> Dictionary:
 
 
 static func milestone_wave_reward(waves: int) -> Dictionary:
+	# Кран закрыт (спека survival_lategame §6): награда только на кратных 10.
+	# Основной путь теперь SurvivalData.get_milestone (вехи фаз легенды).
+	if waves <= 0 or waves % 10 != 0:
+		return {}
 	# Круглые волны выживания: сбалансированные награды (мутант + артефакт)
 	if waves >= 30:
 		return {"mutant": "pseudogiant", "artifact": "rare_artifact", "label": "30 волн"}

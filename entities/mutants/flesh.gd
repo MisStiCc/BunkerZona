@@ -22,6 +22,8 @@ func _ready():
 	biomass_cost = 60.0
 	mutant_type = "flesh"
 	
+	# Целевая высота модели: нормализация по AABB в base_mutant
+	model_target_height = 1.6
 	super._ready()
 	
 	charge_timer = Timer.new()

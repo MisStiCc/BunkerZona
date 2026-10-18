@@ -248,6 +248,20 @@ const STRINGS := {
 	"result.victory": {"ru": "ПОБЕДА", "en": "VICTORY"},
 	"result.defeat": {"ru": "ПОРАЖЕНИЕ", "en": "DEFEAT"},
 	"result.to_lab": {"ru": "В ЛАБОРАТОРИЮ", "en": "TO THE LAB"},
+
+	# ==== Церемония башни (ui/hud/ceremony_overlay.gd) ====
+	"tower_ceremony.cleared": {"ru": "ЭТАЖ ПРОЙДЕН", "en": "FLOOR CLEARED"},
+	"tower_ceremony.floor_up": {"ru": "ЭТАЖ {n}: ПОДЪЁМ", "en": "FLOOR {n}: ASCEND"},
+	"tower_ceremony.next_floor": {"ru": "ЭТАЖ {n}", "en": "FLOOR {n}"},
+	"tower_ceremony.tier_up": {"ru": "ЯРУС: {name}", "en": "TIER: {name}"},
+	"tower_ceremony.break_tag": {"ru": "ПРОРЫВ — награда ×1.5", "en": "BREAKTHROUGH — reward ×1.5"},
+	"tower_ceremony.keeper_down": {"ru": "ХРАНИТЕЛЬ ПОВЕРЖЕН: {name}", "en": "KEEPER SLAIN: {name}"},
+	"tower_ceremony.tower_done": {"ru": "БАШНЯ ПОКОРЕНА", "en": "TOWER CONQUERED"},
+	"tower_ceremony.tower_done_list": {"ru": "Корни → Трубы → Свалка → Тёмная долина → Ржавый лес → Буерак → Саркофаг → Полигон → Рубеж → Сердце Зоны", "en": "Roots → Pipes → Dump → Dark Valley → Rusty Forest → Ravine → Sarcophagus → Proving Ground → Frontier → Heart of the Zone"},
+	"tower_ceremony.rewards_line": {"ru": "+{b} биомассы · +{m} круток мутантов · +{a} аномалийных", "en": "+{b} biomass · +{m} mutant rolls · +{a} anomaly rolls"},
+	"tower_ceremony.consolation": {"ru": "+{b} биомассы (утешение)", "en": "+{b} biomass (consolation)"},
+	"tower_ceremony.record_note": {"ru": "Рекорд этажа: {n}★", "en": "Floor best: {n}★"},
+	"tower_ceremony.skip_hint": {"ru": "нажмите, чтобы продолжить", "en": "click to continue"},
 }
 
 # Имена типов коллекции: ru - из GachaData.DISPLAY_NAMES, en - из DISPLAY_NAMES_EN

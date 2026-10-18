@@ -43,6 +43,8 @@ func _ready():
 	mutant_type = "pseudodog"
 	_original_speed = speed
 	
+	# Целевая высота модели: нормализация по AABB в base_mutant
+	model_target_height = 0.7
 	super._ready()
 	
 	howl_timer = Timer.new()

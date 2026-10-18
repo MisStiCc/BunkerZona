@@ -72,8 +72,8 @@ func get_target_position() -> Vector3:
 func _get_safe_direction() -> Vector3:
     if not stalker.memory_component:
         return Vector3.FORWARD
-    
-    var threats = stalker.memory_component.get_all_threats()
+
+    # Безопасность считает _get_safety_score() - список угроз берёт сам
     var best_dir = Vector3.FORWARD
     var best_score = -INF
     
@@ -119,3 +119,4 @@ func should_attack(_threat: Node) -> bool:
 
 func prefers_artifacts() -> bool:
     return true
+

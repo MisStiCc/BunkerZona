@@ -169,6 +169,10 @@ func _physics_process(_delta):
 	direction = direction.normalized()
 	
 	var desired_velocity = direction * move_speed * terrain_multiplier
+	# Стенка по курсу: RVO знает только про других агентов, а не про строения.
+	# Если луч вперёд упирается в крутизну (стена), скользим вдоль неё -
+	# сталкер огибает дом по стенке вместо давления лбом в угол.
+	desired_velocity = _slide_along_walls(desired_velocity)
 	desired_velocity.y = 0
 	_last_desired = desired_velocity
 	
@@ -182,12 +186,40 @@ func _physics_process(_delta):
 
 var _last_desired := Vector3.ZERO
 
+func _slide_along_walls(velocity: Vector3) -> Vector3:
+	"""Крутизна впереди в 1.2м - проецируем скорость на плоскость стенки.
+	Пологие склоны (normal.y >= 0.7) не трогаем, иначе сдует на рельефе."""
+	if entity == null or not is_instance_valid(entity):
+		return velocity
+	var from := entity.global_position + Vector3.UP * 0.9
+	var space := entity.get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(
+		from, from + velocity.normalized() * 1.2 if velocity.length() > 0.1 else from, 1)
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return velocity
+	var normal: Vector3 = hit.get("normal", Vector3.UP)
+	if normal.y >= 0.7:
+		return velocity
+	normal.y = 0.0
+	if normal.length_squared() < 0.01:
+		return velocity
+	normal = normal.normalized()
+	var into_wall := velocity.dot(normal)
+	if into_wall >= 0.0:
+		return velocity
+	return (velocity - normal * into_wall).normalized() * velocity.length()
+
+
 func _on_velocity_computed(safe_velocity: Vector3):
-	# RVO-сервер Godot периодически заничивает безопасную скорость при живом
+	# RVO-сервер Godot периодически занижает безопасную скорость при живом
 	# желании двигаться (замороженный агент без соседей) - в этом случае идём
 	# по желаемой напрямую, иначе сталкеры вечно стоят на месте
 	if safe_velocity.length() < 0.1 and _last_desired.length() > 0.1:
 		safe_velocity = _last_desired
+	# Итоговую скорость тоже снимаем со стенки: соседи толкают в стену,
+	# и давление толпы не ломает огибание дома
+	safe_velocity = _slide_along_walls(safe_velocity)
 	entity.velocity.x = safe_velocity.x
 	entity.velocity.z = safe_velocity.z
 

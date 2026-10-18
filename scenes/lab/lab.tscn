@@ -46,6 +46,7 @@ offset_right = -20.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 10
 
 [node name="Header" type="HBoxContainer" parent="VBox" unique_id=503281637]
 layout_mode = 2
@@ -85,7 +86,9 @@ text = "НАЧАТЬ НОВЫЙ ЗАБЕГ"
 
 [node name="Stations" type="HBoxContainer" parent="VBox" unique_id=840897145]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
+custom_minimum_size = Vector2(0, 175)
+theme_override_constants/separation = 12
 
 [node name="AnomalyStation" type="Button" parent="VBox/Stations" unique_id=136749369]
 layout_mode = 2
@@ -106,6 +109,7 @@ offset_right = 60.0
 offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_font_sizes/font_size = 20
 text = "АНОМАЛИИ"
 horizontal_alignment = 1
 
@@ -122,6 +126,7 @@ offset_right = 30.0
 offset_bottom = 15.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_font_sizes/font_size = 16
 text = "Ур.0"
 horizontal_alignment = 1
 
@@ -144,6 +149,7 @@ offset_right = 60.0
 offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_font_sizes/font_size = 20
 text = "МУТАНТЫ"
 horizontal_alignment = 1
 
@@ -160,6 +166,7 @@ offset_right = 30.0
 offset_bottom = 15.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_font_sizes/font_size = 16
 text = "Ур.0"
 horizontal_alignment = 1
 
@@ -182,6 +189,7 @@ offset_right = 60.0
 offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_font_sizes/font_size = 20
 text = "МОНОЛИТ"
 horizontal_alignment = 1
 
@@ -198,6 +206,7 @@ offset_right = 30.0
 offset_bottom = 15.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_font_sizes/font_size = 16
 text = "Ур.0"
 horizontal_alignment = 1
 
@@ -218,27 +227,44 @@ text = "Common: 0   Rare: 0   Legendary: 0"
 
 [node name="OpenStorageButton" type="Button" parent="VBox/StoragePanel" unique_id=1884352419]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+theme_override_font_sizes/font_size = 16
 text = "ОТКРЫТЬ ХРАНИЛИЩЕ"
 
 [node name="StatsPanel" type="PanelContainer" parent="VBox" unique_id=1504504298]
 layout_mode = 2
-size_flags_vertical = 3
 
 [node name="StatsLabel" type="Label" parent="VBox/StatsPanel" unique_id=170435326]
 layout_mode = 2
+theme_override_font_sizes/font_size = 14
 text = "Всего забегов: 0   Побед: 0   Поражений: 0
 Сталкеров убито: 0   Артефактов украдено: 0"
 
+[node name="Spacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="PrimaryActions" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
 [node name="BottomButtons" type="HBoxContainer" parent="VBox" unique_id=2032821775]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="MenuButton" type="Button" parent="VBox/BottomButtons" unique_id=1920276815]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
 text = "ГЛАВНОЕ МЕНЮ"
 
 [node name="SettingsButton" type="Button" parent="VBox/BottomButtons" unique_id=414624332]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
 text = "НАСТРОЙКИ"
 
 [node name="SettingsScreen" type="Control" parent="."]
@@ -329,11 +355,16 @@ text = "НАЗАД"
 
 [node name="ShopButton" type="Button" parent="VBox/BottomButtons" unique_id=445293369]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
 text = "МАГАЗИН"
 
 [node name="SaveButton" type="Button" parent="VBox/BottomButtons" unique_id=445293368]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
 text = "СОХРАНИТЬ"
 
 [node name="ShopPanel" type="Control" parent="."]
@@ -643,3 +674,5 @@ text = "Собрано артефактов:"
 [node name="ContinueButton" type="Button" parent="ResultPanel/Panel/Margin/VBox" unique_id=1878362002]
 layout_mode = 2
 text = "ПРОДОЛЖИТЬ"
+
+

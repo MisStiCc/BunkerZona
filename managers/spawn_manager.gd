@@ -566,3 +566,4 @@ func set_campaign_scaling(hp_mult: float, damage_mult: float, speed_mult: float)
 	campaign_damage_mult = damage_mult
 	campaign_speed_mult = speed_mult
 	# print("Масштаб кампании: HP x%.2f, урон x%.2f, скорость x%.2f" % [hp_mult, damage_mult, speed_mult])
+

@@ -33,9 +33,48 @@ var _is_music_playing: bool = false
 
 func _ready():
     _setup_players()
-    _register_dummy_sounds()  # Добавляем заглушки
+    _register_dummy_sounds()  # Сначала заглушки - как фолбэк на отсутствующие файлы
+    _register_real_sounds()   # Затем реальный пак (перезаписывает, где файлы есть)
     add_to_group("sound_manager")
     pass # print("SoundManager инициализирован", "SoundManager")
+
+
+# Варианты шагов по поверхностям: поверхность -> массив клипов
+var footstep_variants: Dictionary = {}
+
+
+func _register_real_sounds():
+    ## Пак из assets/audio (CC0, подготовлен агентом-подготовщиком).
+    ## Имя файла = ключ: sfx/<ключ>.ogg, music/<трек>.ogg
+    var keys := {
+        "footstep_sounds": ["ui_hover", "ui_click", "upgrade", "exchange", "pulse_warning"],
+        "anomaly_sounds": ["electric", "thermal", "gravity", "chemical", "radiation"],
+        "mutant_sounds": ["bloodsucker", "flesh", "snork", "pseudodog", "controller",
+            "poltergeist", "chimera", "zombie"],
+    }
+    for dict_name in keys:
+        var dict: Dictionary = get(dict_name)
+        for key in keys[dict_name]:
+            var path := "res://assets/audio/sfx/%s.ogg" % key
+            if ResourceLoader.exists(path):
+                dict[key] = load(path)
+
+    # Шаги: surface -> step_<surface>_NN.ogg, до 6 вариантов на поверхность
+    for surface in ["grass", "sand", "stone", "water"]:
+        var variants: Array = []
+        for i in range(1, 7):
+            var path := "res://assets/audio/sfx/step_%s_%02d.ogg" % [surface, i]
+            if ResourceLoader.exists(path):
+                variants.append(load(path))
+        if not variants.is_empty():
+            footstep_sounds[surface] = variants[0]
+            footstep_variants[surface] = variants
+
+    # Музыка: menu / lab / run
+    for track in ["menu", "lab", "run"]:
+        var path := "res://assets/audio/music/music_%s.ogg" % track
+        if ResourceLoader.exists(path):
+            music_tracks[track] = load(path)
 
 
 func _setup_players():
@@ -206,7 +245,36 @@ func _get_free_sfx_player() -> AudioStreamPlayer:
 # ==================== СПЕЦИФИЧЕСКИЕ ЗВУКИ ====================
 
 func play_footstep(terrain_type: String):
+    # Варианты шагов: случайный клип + случайный питч, чтобы не тикало метрономом
+    if footstep_variants.has(terrain_type):
+        var variants: Array = footstep_variants[terrain_type]
+        var sound: AudioStream = variants[randi() % variants.size()]
+        var player = _get_free_sfx_player()
+        if player and sound:
+            player.stream = sound
+            player.volume_db = linear_to_db(sfx_volume * 0.5)
+            player.pitch_scale = randf_range(0.9, 1.1)
+            player.play()
+        return
     play_sound(terrain_type, 0.5, randf_range(0.9, 1.1))
+
+
+## Случайный вариант шага для позиционного плеера сущности (3D-звук)
+func get_footstep_stream(surface: String) -> AudioStream:
+    if footstep_variants.has(surface):
+        var variants: Array = footstep_variants[surface]
+        return variants[randi() % variants.size()]
+    if footstep_sounds.has(surface):
+        return footstep_sounds[surface]
+    return null
+
+
+## Рык мутанта: ключи пака; пёс падает на псевдопса
+func play_mutant_spawn_sound(mutant_type: String):
+    var key := mutant_type
+    if key == "dog_mutant":
+        key = "pseudodog"
+    play_mutant_sound(key)
 
 
 func play_anomaly_sound(anomaly_type: String):

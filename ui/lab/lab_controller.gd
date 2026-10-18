@@ -57,13 +57,24 @@ var _campaign_prev_button: Button
 var _campaign_next_button: Button
 var _campaign_mode_button: Button
 var _campaign_label: Label
-# Переключатель режима забега: кампания / выживание
+# Переключатель режима забега: кампания / башня / выживание
 var _run_mode_button: Button
+# Кнопка и панель Башни Монолита (строятся кодом)
+var _tower_button: Button
+var tower_panel: Control
+var _tower_grid: GridContainer
+var _tower_info: Label
+var _tower_go_button: Button
+var _selected_tower_floor: int = 0
+# Кнопка выбора карты забега: Зона / Припять
+var _map_button: Button
 
 
 func _ready():
 	# print("lab_controller: _ready started")
 	
+	# Непрозрачные панели: всплывающие окна читаются поверх фона
+	theme = UiTheme.build()
 	_load_cover_art()
 	
 	# Ищем GameManager один раз при старте
@@ -81,6 +92,10 @@ func _ready():
 	_build_gallery_ui()
 	_build_language_button()
 	Loc.changed.connect(_apply_static_texts)
+	# Музыка лаборатории
+	var sm := get_tree().get_first_node_in_group("sound_manager")
+	if sm and sm.has_method("play_music"):
+		sm.play_music("lab")
 	_show_last_run_result()
 
 	# print("lab_controller: initialized, GameManager найден: ", game_manager != null)
@@ -94,6 +109,18 @@ func _show_last_run_result():
 	var result: Dictionary = get_tree().root.get_meta("last_run_result")
 	get_tree().root.remove_meta("last_run_result")
 	show_run_result(result)
+
+	# Башня: сводка этажа (звёзды/крутки) поверх стандартных итогов
+	if result.has("tower_summary"):
+		var s: Dictionary = result["tower_summary"]
+		var stats_label = result_panel.get_node_or_null("Panel/Margin/VBox/StatsLabel")
+		if stats_label:
+			var stars_text := ""
+			for i in range(3):
+				stars_text += "★" if i < int(s.get("stars", 0)) else "☆"
+			stats_label.text += "\n\nБАШНЯ, этаж %d: %s\nБиомасса: %d | Крутки мутантов: +%d | Аномалий: +%d" % [
+				int(s.get("floor", 0)), stars_text,
+				int(s.get("biomass", 0.0)), int(s.get("mutant_rolls", 0)), int(s.get("anomaly_rolls", 0))]
 
 
 func _load_cover_art():
@@ -298,6 +325,10 @@ func _setup_campaign_selector():
 	_campaign_label.clip_text = true
 	_campaign_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
+	_map_button = Button.new()
+	_map_button.text = "🗺 Зона"
+	_tower_button = Button.new()
+	_tower_button.text = "🗼 Башня"
 	_run_mode_button = Button.new()
 	_run_mode_button.text = "Кампания"
 	_campaign_prev_button = Button.new()
@@ -306,6 +337,8 @@ func _setup_campaign_selector():
 	_campaign_next_button.text = "▶"
 	_campaign_mode_button = Button.new()
 
+	row.add_child(_map_button)
+	row.add_child(_tower_button)
 	row.add_child(_run_mode_button)
 	row.add_child(_campaign_prev_button)
 	row.add_child(_campaign_label)
@@ -313,12 +346,33 @@ func _setup_campaign_selector():
 	row.add_child(_campaign_mode_button)
 	header.add_child(row)
 
+	_map_button.pressed.connect(_on_map_pressed)
+	_tower_button.pressed.connect(_on_tower_pressed)
 	_run_mode_button.pressed.connect(_on_run_mode_pressed)
 	_campaign_prev_button.pressed.connect(_on_campaign_prev_pressed)
 	_campaign_next_button.pressed.connect(_on_campaign_next_pressed)
 	_campaign_mode_button.pressed.connect(_on_campaign_mode_pressed)
-	for btn in [_run_mode_button, _campaign_prev_button, _campaign_next_button, _campaign_mode_button]:
+	for btn in [_map_button, _tower_button, _run_mode_button, _campaign_prev_button, _campaign_next_button, _campaign_mode_button]:
 		btn.mouse_entered.connect(_play_hover_sound)
+	_refresh_map_button()
+
+
+func _refresh_map_button():
+	if game_manager and _map_button:
+		var is_pripyat: bool = game_manager.get_selected_map() == "pripyat"
+		_map_button.text = "🗺 Припять" if is_pripyat else "🗺 Зона"
+
+
+func _on_map_pressed():
+	"""Переключение карты забега: процедурная Зона <-> Припять"""
+	_play_click_sound()
+	if not game_manager:
+		return
+	var next_map: String = "procedural"
+	if game_manager.get_selected_map() == "procedural":
+		next_map = "pripyat"
+	game_manager.set_selected_map(next_map)
+	_refresh_map_button()
 
 
 func _refresh_campaign_ui():
@@ -326,12 +380,25 @@ func _refresh_campaign_ui():
 		return
 
 	# Режим забега определяет, что показывает строка
-	var is_survival: bool = game_manager.get_selected_run_mode() == "survival"
-	_run_mode_button.text = "Выживание" if is_survival else "Кампания"
-	# Множитель сложности применяется в обоих режимах
+	var run_mode: String = game_manager.get_selected_run_mode()
+	_run_mode_button.text = {
+		"campaign": "Кампания",
+		"tower": "Башня",
+		"survival": "Выживание"
+	}.get(run_mode, "Кампания")
+	# Множитель сложности применяется во всех режимах
 	_campaign_mode_button.text = "Сложность: %s" % CampaignData.get_mode_name(game_manager.get_campaign_mode())
 
-	if is_survival:
+	if run_mode == "tower":
+		var frontier_floor: int = game_manager.get_tower_floor()
+		var params: Dictionary = TowerData.get_floor_params(frontier_floor)
+		var floor_text: String = params.get("title", "")
+		_campaign_label.text = "БАШНЯ - %s (всего этажей: %d)" % [floor_text, TowerData.TOTAL_FLOORS]
+		_campaign_prev_button.disabled = true
+		_campaign_next_button.disabled = true
+		return
+
+	if run_mode == "survival":
 		var record: int = 0
 		var stats = game_manager.get_statistics()
 		if stats:
@@ -362,13 +429,16 @@ func _refresh_campaign_ui():
 
 
 func _on_run_mode_pressed():
-	"""Переключение режима забега: кампания <-> выживание"""
+	"""Переключение режима забега: кампания -> башня -> выживание -> кампания"""
 	_play_click_sound()
 	if not game_manager:
 		return
 
-	var next_mode: String = "survival"
-	if game_manager.get_selected_run_mode() == "survival":
+	var next_mode: String = "tower"
+	var current: String = game_manager.get_selected_run_mode()
+	if current == "tower":
+		next_mode = "survival"
+	elif current == "survival":
 		next_mode = "campaign"
 
 	game_manager.set_selected_run_mode(next_mode)
@@ -843,6 +913,20 @@ func _show_message(text: String, duration: float = 2.0):
 	if is_instance_valid(msg_label):
 		msg_label.queue_free()
 
+func _add_primary_action(btn: Button, fallback: Node) -> void:
+	"""Большая тач-кнопка (ФЕРМА/ГАЧА/КОДЕКС): высота 84px, шрифт 24.
+	Кладём в ряд PrimaryActions над служебным - зона большого пальца.
+	Ряда нет (старая сцена) - возвращаемся в BottomButtons, как раньше."""
+	var primary: HBoxContainer = get_node_or_null("VBox/PrimaryActions")
+	btn.custom_minimum_size = Vector2(0, 84)
+	btn.add_theme_font_size_override("font_size", 24)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if primary:
+		primary.add_child(btn)
+	elif fallback:
+		fallback.add_child(btn)
+
+
 # ==================== ФЕРМА МУТАНТОВ ====================
 
 var farm_panel: Control
@@ -861,7 +945,7 @@ func _build_farm_ui():
 		farm_btn.text = Loc.t("lab.farm")
 		farm_btn.pressed.connect(_on_farm_pressed)
 		farm_btn.mouse_entered.connect(_play_hover_sound)
-		bottom.add_child(farm_btn)
+		_add_primary_action(farm_btn, bottom)
 
 	farm_panel = Control.new()
 	farm_panel.name = "FarmPanel"
@@ -1113,7 +1197,7 @@ func _build_gacha_ui():
 		gacha_btn.text = "ГАЧА"
 		gacha_btn.pressed.connect(_on_gacha_pressed)
 		gacha_btn.mouse_entered.connect(_play_hover_sound)
-		bottom.add_child(gacha_btn)
+		_add_primary_action(gacha_btn, bottom)
 
 	gacha_panel = Control.new()
 	gacha_panel.name = "GachaPanel"
@@ -1310,7 +1394,7 @@ func _build_gallery_ui():
 		gal_btn.text = Loc.t("lab.gallery")
 		gal_btn.pressed.connect(_on_gallery_pressed)
 		gal_btn.mouse_entered.connect(_play_hover_sound)
-		bottom.add_child(gal_btn)
+		_add_primary_action(gal_btn, bottom)
 
 	gallery_panel = Control.new()
 	gallery_panel.name = "GalleryPanel"
@@ -2143,3 +2227,205 @@ func _on_recycle_confirm():
 	_recycle_batch.clear()
 	_rebuild_farm_panel()
 	_refresh_ui()
+
+
+
+
+# ==================== БАШНЯ МОНОЛИТА ====================
+
+func _on_tower_pressed():
+	_play_click_sound()
+	if tower_panel == null:
+		_build_tower_panel()
+	_selected_tower_floor = game_manager.get_tower_floor() if game_manager else 1
+	_rebuild_tower_grid()
+	tower_panel.visible = true
+
+
+func _build_tower_panel():
+	tower_panel = Control.new()
+	tower_panel.name = "TowerPanel"
+	tower_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tower_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	tower_panel.visible = false
+	add_child(tower_panel)
+
+	var shade := ColorRect.new()
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0, 0, 0, 0.72)
+	tower_panel.add_child(shade)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tower_panel.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(980, 640)
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "БАШНЯ МОНОЛИТА"
+	title.add_theme_font_size_override("font_size", 26)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	# Сетка этажей 10x10 в прокручиваемом контейнере
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+
+	_tower_grid = GridContainer.new()
+	_tower_grid.columns = 10
+	_tower_grid.add_theme_constant_override("h_separation", 6)
+	_tower_grid.add_theme_constant_override("v_separation", 6)
+	_tower_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_tower_grid)
+
+	_tower_info = Label.new()
+	_tower_info.add_theme_font_size_override("font_size", 15)
+	_tower_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tower_info.custom_minimum_size = Vector2(0, 70)
+	vbox.add_child(_tower_info)
+
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 16)
+	vbox.add_child(buttons)
+
+	_tower_go_button = Button.new()
+	_tower_go_button.text = "ИДТИ НА ЭТАЖ"
+	_tower_go_button.custom_minimum_size = Vector2(220, 46)
+	_tower_go_button.pressed.connect(_on_tower_go_pressed)
+	buttons.add_child(_tower_go_button)
+
+	var close_btn := Button.new()
+	close_btn.text = "НАЗАД"
+	close_btn.custom_minimum_size = Vector2(140, 46)
+	close_btn.pressed.connect(_on_tower_close_pressed)
+	buttons.add_child(close_btn)
+
+	_tower_go_button.mouse_entered.connect(_play_hover_sound)
+	close_btn.mouse_entered.connect(_play_hover_sound)
+
+
+func _rebuild_tower_grid():
+	if tower_panel == null or not game_manager:
+		return
+
+	for child in _tower_grid.get_children():
+		child.queue_free()
+
+	var frontier: int = game_manager.get_tower_floor()
+	for f in range(1, TowerData.TOTAL_FLOORS + 1):
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(84, 52)
+		var stars: int = game_manager.get_tower_stars(f)
+		var star_text := ""
+		for i in range(3):
+			star_text += "★" if i < stars else "·"
+
+		var floor_type: String = TowerData.get_floor_type(f)
+		var label_text := str(f)
+		if floor_type == "keeper":
+			label_text = "☠" + str(f)
+		elif floor_type == "break":
+			label_text = "▲" + str(f)
+
+		btn.text = label_text + "\n" + star_text
+
+		if f > frontier:
+			btn.disabled = true
+			btn.tooltip_text = "Этаж закрыт - пройдите предыдущий"
+		else:
+			btn.tooltip_text = _tower_floor_tooltip(f)
+		btn.pressed.connect(_on_tower_floor_selected.bind(f))
+
+		# Цвета: Хранитель - красный, Прорыв - оранжевый, 3 звезды - зелёный,
+		# рубеж - белый фон подсвечен
+		match floor_type:
+			"keeper":
+				btn.modulate = Color(1.0, 0.55, 0.55)
+			"break":
+				btn.modulate = Color(1.0, 0.8, 0.55)
+			_:
+				btn.modulate = Color(0.6, 1.0, 0.6) if stars >= 3 else Color.WHITE
+		if f == frontier:
+			btn.self_modulate = Color(1, 1, 1, 1)
+			btn.tooltip_text += "\nТЕКУЩИЙ РУБЕЖ"
+
+		_tower_grid.add_child(btn)
+
+	_tower_info.text = _tower_floor_info(_selected_tower_floor)
+
+
+func _tower_floor_tooltip(f: int) -> String:
+	var params: Dictionary = TowerData.get_floor_params(f)
+	var rewards: Dictionary = TowerData.get_floor_rewards(f)
+	var conds: Array = TowerData.get_star_conditions(f)
+	var c2: Dictionary = TowerData.STAR_CONDITIONS[conds[0]]
+	var c3: Dictionary = TowerData.STAR_CONDITIONS[conds[1]]
+	return "%s\nВолн: %d | Сталкеров: %d-%d | Выбросов до победы: %d\n★★ %s - %s\n★★★ %s - %s\nНаграда: %d биомассы, +%d круток мутантов, +%d аномалий" % [
+		params.get("title", ""),
+		int(params.get("waves", 0)), int(params.get("count_min", 0)), int(params.get("count_max", 0)),
+		int(params.get("pulses_to_win", 0)),
+		c2.get("name", ""), c2.get("desc", ""),
+		c3.get("name", ""), c3.get("desc", ""),
+		int(rewards.get("biomass", 0.0)), int(rewards.get("mutant_rolls", 0)), int(rewards.get("anomaly_rolls", 0))]
+
+
+func _tower_floor_info(f: int) -> String:
+	if f <= 0:
+		return "Выберите этаж"
+	var params: Dictionary = TowerData.get_floor_params(f)
+	var rewards: Dictionary = TowerData.get_floor_rewards(f)
+	var conds: Array = TowerData.get_star_conditions(f)
+	var c2: Dictionary = TowerData.STAR_CONDITIONS[conds[0]]
+	var c3: Dictionary = TowerData.STAR_CONDITIONS[conds[1]]
+	var stars: int = game_manager.get_tower_stars(f) if game_manager else 0
+	var star_text := ""
+	for i in range(3):
+		star_text += "★" if i < stars else "☆"
+	return "%s  %s\n★★ %s: %s\n★★★ %s: %s\nНаграда: %d биомассы | +%d круток мутантов | +%d аномалийных круток" % [
+		params.get("title", ""), star_text,
+		c2.get("name", ""), c2.get("desc", ""),
+		c3.get("name", ""), c3.get("desc", ""),
+		int(rewards.get("biomass", 0.0)), int(rewards.get("mutant_rolls", 0)), int(rewards.get("anomaly_rolls", 0))]
+
+
+func _on_tower_floor_selected(f: int):
+	_play_click_sound()
+	_selected_tower_floor = f
+	_tower_info.text = _tower_floor_info(f)
+
+
+func _on_tower_go_pressed():
+	"""Запуск забега на выбранный этаж башни"""
+	_play_click_sound()
+	if not game_manager or _selected_tower_floor <= 0:
+		return
+
+	# Выбранный этаж может быть не выше рубежа
+	_selected_tower_floor = mini(_selected_tower_floor, game_manager.get_tower_floor())
+	game_manager.selected_tower_floor = _selected_tower_floor
+	game_manager.set_selected_run_mode("tower")
+	tower_panel.visible = false
+
+	await get_tree().create_timer(0.2).timeout
+	game_manager.change_scene("run")
+
+
+func _on_tower_close_pressed():
+	_play_click_sound()
+	tower_panel.visible = false

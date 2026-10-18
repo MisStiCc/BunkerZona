@@ -20,7 +20,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.1, 0.1, 0.12, 1)
 
-[node name="CoverArt" type="TextureRect" parent="."]
+[node name="CoverArt" type="TextureRect" parent="." unique_id=1623414956]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,7 +31,7 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Dim" type="ColorRect" parent="."]
+[node name="Dim" type="ColorRect" parent="." unique_id=274034405]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -151,16 +151,15 @@ offset_bottom = 195.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SettingsTitle" type="Label" parent="SettingsScreen/Panel"]
+[node name="SettingsTitle" type="Label" parent="SettingsScreen/Panel" unique_id=1082976445]
 layout_mode = 0
-offset_left = 0.0
 offset_top = 15.0
 offset_right = 400.0
 offset_bottom = 40.0
 text = "НАСТРОЙКИ"
 horizontal_alignment = 1
 
-[node name="MusicLabel" type="Label" parent="SettingsScreen/Panel"]
+[node name="MusicLabel" type="Label" parent="SettingsScreen/Panel" unique_id=771558882]
 layout_mode = 0
 offset_left = 30.0
 offset_top = 60.0
@@ -168,7 +167,7 @@ offset_right = 200.0
 offset_bottom = 85.0
 text = "Музыка"
 
-[node name="MusicSlider" type="HSlider" parent="SettingsScreen/Panel"]
+[node name="MusicSlider" type="HSlider" parent="SettingsScreen/Panel" unique_id=936445632]
 layout_mode = 0
 offset_left = 30.0
 offset_top = 95.0
@@ -178,7 +177,7 @@ max_value = 1.0
 step = 0.05
 value = 0.7
 
-[node name="SfxLabel" type="Label" parent="SettingsScreen/Panel"]
+[node name="SfxLabel" type="Label" parent="SettingsScreen/Panel" unique_id=1367849825]
 layout_mode = 0
 offset_left = 30.0
 offset_top = 135.0
@@ -186,7 +185,7 @@ offset_right = 200.0
 offset_bottom = 160.0
 text = "Звуки"
 
-[node name="SfxSlider" type="HSlider" parent="SettingsScreen/Panel"]
+[node name="SfxSlider" type="HSlider" parent="SettingsScreen/Panel" unique_id=253357684]
 layout_mode = 0
 offset_left = 30.0
 offset_top = 170.0

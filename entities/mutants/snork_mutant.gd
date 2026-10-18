@@ -24,6 +24,8 @@ func _ready():
 	biomass_cost = 60.0
 	mutant_type = "snork"
 	
+	# Целевая высота модели: нормализация по AABB в base_mutant
+	model_target_height = 1.7
 	super._ready()
 	
 	jump_timer = Timer.new()

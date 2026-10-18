@@ -47,6 +47,12 @@ var current_target: Node = null
 # Таймер атаки
 var attack_timer: float = 0.0
 
+# Шаги: позиционный звук по пройденной дистанции
+var _step_player: AudioStreamPlayer3D
+var _step_accum: float = 0.0
+var _step_surface: String = "grass"
+const STEP_INTERVAL: float = 2.2
+
 # Состояния эффектов (для аномалий)
 var is_stunned: bool = false
 var stun_timer: float = 0.0
@@ -63,6 +69,9 @@ func _ready():
 	# Добавляем в группы
 	add_to_group("stalkers")
 	add_to_group("stalkers_" + GameEnums.StalkerType.keys()[stalker_type].to_lower())
+	
+	# Позиционные шаги
+	_setup_footsteps()
 	
 	# Настройка подписи
 	_setup_label()
@@ -90,6 +99,29 @@ func _setup_label():
 		label.outline_modulate = Color.BLACK
 
 
+func _setup_footsteps():
+	"""Позиционный шаг: свой 3D-плеер, поверхность спрашиваем у карты"""
+	_step_player = AudioStreamPlayer3D.new()
+	_step_player.max_distance = 20.0
+	_step_player.bus = "SFX"
+	add_child(_step_player)
+	var terrain = get_tree().get_first_node_in_group("terrain_generator")
+	if terrain and terrain.has_method("get_footstep_surface"):
+		_step_surface = terrain.get_footstep_surface()
+
+
+func _play_footstep():
+	var sm = get_tree().get_first_node_in_group("sound_manager")
+	if sm == null or not sm.has_method("get_footstep_stream") or _step_player == null:
+		return
+	var stream: AudioStream = sm.get_footstep_stream(_step_surface)
+	if stream == null:
+		return
+	_step_player.stream = stream
+	_step_player.pitch_scale = randf_range(0.9, 1.1)
+	_step_player.play()
+
+
 func _physics_process(delta):
 	if not is_alive():
 		return
@@ -100,6 +132,13 @@ func _physics_process(delta):
 	
 	# Обновление состояний эффектов
 	_update_effects(delta)
+	
+	# Шаги: копим пройденную по земле дистанцию
+	if is_on_floor():
+		_step_accum += Vector2(velocity.x, velocity.z).length() * delta
+		if _step_accum >= STEP_INTERVAL:
+			_step_accum = 0.0
+			_play_footstep()
 	
 	# Плавный разворот в сторону движения (для моделей)
 	var horizontal := Vector2(velocity.x, velocity.z)

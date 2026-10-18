@@ -26,17 +26,6 @@ static func format_number(value: float, decimals: int = 0) -> String:
     return result
 
 
-static func format_time(seconds: float) -> String:
-    var mins = floor(seconds / 60)
-    var secs = int(seconds) % 60
-    var millis = int((seconds - int(seconds)) * 100)
-    
-    if mins > 0:
-        return "%d:%02d.%02d" % [mins, secs, millis]
-    else:
-        return "%d.%02d" % [secs, millis]
-
-
 static func get_random_position_in_circle(center: Vector3, min_radius: float, max_radius: float) -> Vector3:
     var angle = randf() * TAU
     var distance = min_radius + randf() * (max_radius - min_radius)

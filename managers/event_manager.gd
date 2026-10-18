@@ -108,25 +108,21 @@ func _drop_all_artifacts():
         return
     
     var stalkers = _spawn_manager.get_active_stalkers()
-    var dropped = 0
     
     for s in stalkers:
         if is_instance_valid(s) and s.has_method("has_artifact") and s.has_artifact():
             if s.has_method("drop_artifact"):
                 s.drop_artifact()
-                dropped += 1
     
-    pass # print("Сброшено артефактов во время выброса: " + str(dropped), "EventManager")
+    pass # (лог отключён: сколько артефактов сброшено)
 
 
 func _kill_all_stalkers():
     """Выброс выжигает всех сталкеров на поверхности"""
-    var killed = 0
     for s in get_tree().get_nodes_in_group("stalkers"):
         if is_instance_valid(s) and s.has_method("take_damage") and s.is_alive():
             s.take_damage(999999.0, self)
-            killed += 1
-    pass # print("Выброс выжег сталкеров: " + str(killed), "EventManager")
+    pass # (лог отключён: сколько сталкеров выжжено)
 
 
 func _shuffle_all_anomalies():

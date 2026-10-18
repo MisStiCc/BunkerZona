@@ -118,3 +118,9 @@ signal save_deleted(slot: int)
 # Ошибки
 @warning_ignore("unused_signal")  # глобальная шина: подключается извне
 signal error_occurred(error_code: int, error_message: String, source: String)
+
+# Управление (мобильная камера)
+@warning_ignore("unused_signal")  # глобальная шина: подключается извне
+signal ground_tapped(world_position: Vector3)
+
+

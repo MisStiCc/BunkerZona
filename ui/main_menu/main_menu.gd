@@ -27,10 +27,18 @@ var game_manager: Node
 
 
 func _ready():
+	# Непрозрачные панели настроек/загрузки
+	theme = UiTheme.build()
 	_setup_buttons()
 	_setup_sounds()
 	_setup_settings()
 	_setup_save_slot_selector()
+	# Музыка меню (SoundManager ищется один раз ниже)
+	var _sm := get_tree().get_first_node_in_group("sound_manager")
+	if _sm and _sm.has_method("play_music"):
+		_sm.play_music("menu")
+	_setup_attribution()
+	_load_cover_art()
 	_load_cover_art()
 	
 	load_screen.visible = false
@@ -315,3 +323,16 @@ func _build_language_button():
 
 func _on_language_pressed():
 	Loc.toggle()
+
+
+func _setup_attribution():
+	"""Атрибуция OSM ODbL + CC-BY: обязательна по лицензиям ассетов"""
+	var label := Label.new()
+	label.text = "Карта: © OpenStreetMap contributors (ODbL) · Высоты: SRTM/AWS Terrain Tiles\n" + \
+		"Bus, Swing set, Tumbleweed, Dead Tree by Poly by Google (CC-BY 4.0) · Dead Tree Trunk, Bus Stop by Zsky (CC-BY 4.0)"
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 0.45))
+	label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	label.position = Vector2(10, -44)
+	label.size = Vector2(900, 40)
+	add_child(label)
