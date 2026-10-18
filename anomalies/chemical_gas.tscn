@@ -1,4 +1,5 @@
 [gd_scene load_steps=9 format=3 uid="uid://chemical_gas"]
+[ext_resource type="PackedScene" path="res://anomaly_fx/scenes/fx_gas.tscn" id="2_fx"]
 
 [ext_resource type="Script" path="res://anomalies/chemical_gas.gd" id="1"]
 
@@ -42,6 +43,7 @@ script = ExtResource("1")
 shape = SubResource("SphereShape3D_gas")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
 mesh = SubResource("SphereMesh_gas")
 material_override = SubResource("Material_gas")
 
@@ -49,3 +51,5 @@ material_override = SubResource("Material_gas")
 process_material = SubResource("ParticleProcess_gas")
 draw_pass_1 = SubResource("Particle_mesh_gas")
 draw_pass_1.material_override = SubResource("Particle_mat_gas")
+
+[node name="FX" parent="." instance=ExtResource("2_fx")]

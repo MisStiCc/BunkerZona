@@ -1,4 +1,5 @@
 [gd_scene load_steps=9 format=3 uid="uid://chemical_acid_cloud"]
+[ext_resource type="PackedScene" path="res://anomaly_fx/scenes/fx_acid_cloud.tscn" id="2_fx"]
 
 [ext_resource type="Script" path="res://anomalies/chemical_acid_cloud.gd" id="1"]
 
@@ -43,6 +44,7 @@ script = ExtResource("1")
 shape = SubResource("SphereShape3D_acid")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
 mesh = SubResource("SphereMesh_acid")
 material_override = SubResource("Material_acid")
 
@@ -50,3 +52,5 @@ material_override = SubResource("Material_acid")
 process_material = SubResource("ParticleProcess_acid")
 draw_pass_1 = SubResource("Particle_mesh_acid")
 draw_pass_1.material_override = SubResource("Particle_mat_acid")
+
+[node name="FX" parent="." instance=ExtResource("2_fx")]

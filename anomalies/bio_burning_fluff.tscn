@@ -1,4 +1,5 @@
 [gd_scene load_steps=9 format=3 uid="uid://bio_burning_fluff"]
+[ext_resource type="PackedScene" path="res://anomaly_fx/scenes/fx_burning_fluff.tscn" id="2_fx"]
 
 [ext_resource type="Script" path="res://anomalies/bio_burning_fluff.gd" id="1"]
 
@@ -42,6 +43,7 @@ script = ExtResource("1")
 shape = SubResource("SphereShape3D_fluff")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
 mesh = SubResource("SphereMesh_fluff")
 material_override = SubResource("Material_fluff")
 
@@ -49,3 +51,5 @@ material_override = SubResource("Material_fluff")
 process_material = SubResource("ParticleProcess_fluff")
 draw_pass_1 = SubResource("Particle_mesh_fluff")
 draw_pass_1.material_override = SubResource("Particle_mat_fluff")
+
+[node name="FX" parent="." instance=ExtResource("2_fx")]

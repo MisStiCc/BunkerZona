@@ -1,4 +1,5 @@
 [gd_scene load_steps=5 format=3 uid="uid://electric_anomaly"]
+[ext_resource type="PackedScene" path="res://anomaly_fx/scenes/fx_electra.tscn" id="2_fx"]
 
 [ext_resource type="Script" path="res://anomalies/electric_anomaly.gd" id="1"]
 
@@ -22,5 +23,8 @@ script = ExtResource("1")
 shape = SubResource("SphereShape3D_electric")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
 mesh = SubResource("SphereMesh_electric")
 material_override = SubResource("Material_electric")
+
+[node name="FX" parent="." instance=ExtResource("2_fx")]
