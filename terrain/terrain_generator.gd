@@ -658,3 +658,22 @@ func force_rebuild_navigation():
 	"""Совместимость: у чанков свои навмеши, пересборка не нужна"""
 	# print("TerrainGenerator: навигация на чанковых навмешах, чанков: ", loaded_chunks.size(),
 		  # ", полигонов: ", get_nav_polygons_total())
+
+
+func get_footstep_surface() -> String:
+	return "grass"
+
+
+func _apply_sky(hdr_path: String, energy: float):
+	"""Панорамное небо в WorldEnvironment главной сцены (без UV/меша)."""
+	var we := get_parent().get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we == null or not ResourceLoader.exists(hdr_path):
+		return
+	var mat := PanoramaSkyMaterial.new()
+	mat.panorama = load(hdr_path)
+	var sky := Sky.new()
+	sky.sky_material = mat
+	we.environment.background_mode = Environment.BG_SKY
+	we.environment.sky = sky
+	# Существующий мрачный ambient сохраняем: источник COLOR, не от неба
+	we.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
