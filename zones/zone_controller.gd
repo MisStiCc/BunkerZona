@@ -40,7 +40,7 @@ var sound_manager: SoundManager
 @export var mutant_scenes: Dictionary = {}
 
 @export var max_energy: float = 1000.0
-@export var max_biomass: float = 5000.0
+@export var max_biomass: float = 999999.0
 @export var critical_biomass_threshold: float = 0.4
 @export var pulse_duration: float = 5.0
 # Победа: 3 выброса (от кнопки или от переполнения биомассы) ИЛИ отбить все волны

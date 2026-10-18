@@ -277,7 +277,7 @@ func _on_energy_changed(current: float, max_val: float):
 
 
 func _on_biomass_changed(current: float, max_val: float):
-		biomass_value.text = "%d / %d" % [int(current), int(max_val)]
+		biomass_value.text = "%d" % int(current) if max_val >= 100000.0 else "%d / %d" % [int(current), int(max_val)]
 
 
 func _on_break_started(wave_number: int, break_duration: float):

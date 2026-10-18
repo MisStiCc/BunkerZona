@@ -137,14 +137,16 @@ func _sample_heightmap(x: float, z: float) -> float:
 
 
 func _terrain_color(x: float, z: float, h: float) -> Color:
+	# Полосы по НОРМИРОВАННОЙ высоте карты: реальный рельеф 0..~32м,
+	# старые абсолютные пороги (-1.2/2.5) красили всё в выцветший грунт
 	var patch = (noise_patch.get_noise_2d(x, z) + 1.0) * 0.5
-	var col = Color(0.23, 0.27, 0.14).lerp(Color(0.38, 0.33, 0.19), patch)
-	if h < -1.2:
-		# Болотные низины - мокрая тёмная жижа
-		col = col.lerp(Color(0.14, 0.16, 0.11), clamp((-1.2 - h) / 2.0, 0.0, 0.8))
-	elif h > 2.5:
-		# Сухие вершины - выцветший грунт
-		col = col.lerp(Color(0.33, 0.31, 0.26), clamp((h - 2.5) / 2.5, 0.0, 0.6))
+	var t: float = clampf(h / maxf(_hm_range * HM_EXPANSION, 1.0), 0.0, 1.0) if _hm_grid > 0 else 0.5
+	var col = Color(0.23, 0.27, 0.14)  # трава поймы
+	col = col.lerp(Color(0.27, 0.30, 0.16), patch)  # вариация почвы
+	if t > 0.55:
+		col = col.lerp(Color(0.30, 0.30, 0.18), clampf((t - 0.55) / 0.25, 0.0, 1.0))  # сухой луг
+	if t > 0.8:
+		col = col.lerp(Color(0.34, 0.32, 0.27), clampf((t - 0.8) / 0.2, 0.0, 1.0))  # вершины
 	return col
 
 

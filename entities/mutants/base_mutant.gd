@@ -33,7 +33,9 @@ var current_patrol_index: int = 0
 var _spawn_position: Vector3 = Vector3.ZERO
 # Процедурная анимация статичной модели (models/*.glb)
 var _model_base_y: float = 0.0
-var _model_skeletal: bool = false  # у модели есть риг и AnimationPlayer
+var _model_skeletal: bool = false
+# Отключить боди-боб (мутант анимирует кости сам, напр. галоп химеры)
+var disable_body_bob := false  # у модели есть риг и AnimationPlayer
 var _air_time: float = 0.0
 var _stuck_pos: Vector3 = Vector3.ZERO
 var _stuck_time: float = 0.0
@@ -304,7 +306,7 @@ func _physics_process(delta):
 
 	# Процедурная анимация статичной модели (скелетная анимирует сама себя)
 	var model := get_node_or_null("Model")
-	if model and not _model_skeletal:
+	if model and not _model_skeletal and not disable_body_bob:
 		var t := Time.get_ticks_msec() / 1000.0
 		# Воздух-наклон после 0.3с в воздухе: у земли is_on_floor мигает на кочках
 		_air_time = 0.0 if is_on_floor() else _air_time + delta
