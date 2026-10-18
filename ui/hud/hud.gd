@@ -110,6 +110,17 @@ func _apply_language_and_prices():
 		if anomaly_header:
 				anomaly_header.text = Loc.t("hud.anomalies")
 		var mutant_header: Label = get_node_or_null("MutantPanel/Header")
+		# Условия звезды (рецепт v3) - компактная строка над кнопками
+		var recipe_line: Label = mutant_panel.get_node_or_null("StarRecipe")
+		if recipe_line == null:
+			recipe_line = Label.new()
+			recipe_line.name = "StarRecipe"
+			recipe_line.add_theme_font_size_override("font_size", 8)
+			recipe_line.add_theme_color_override("font_color", Color(1.0, 0.8, 0.35))
+			recipe_line.position = Vector2(2, 14)
+			recipe_line.size = Vector2(440, 12)
+			mutant_panel.add_child(recipe_line)
+		recipe_line.text = "3★ = 3 копии + корм той же ★ + 4 простых (ферма)"
 		if mutant_header:
 				mutant_header.text = Loc.t("hud.mutants")
 		_apply_prices()

@@ -113,7 +113,7 @@ func _show_last_run_result():
 	# Башня: сводка этажа (звёзды/крутки) поверх стандартных итогов
 	if result.has("tower_summary"):
 		var s: Dictionary = result["tower_summary"]
-		var stats_label = result_panel.get_node_or_null("Panel/Margin/VBox/StatsLabel")
+		var _stats_label = result_panel.get_node_or_null("Panel/Margin/VBox/StatsLabel")
 		if stats_label:
 			var stars_text := ""
 			for i in range(3):
@@ -391,8 +391,8 @@ func _refresh_campaign_ui():
 
 	if run_mode == "tower":
 		var frontier_floor: int = game_manager.get_tower_floor()
-		var params: Dictionary = TowerData.get_floor_params(frontier_floor)
-		var floor_text: String = params.get("title", "")
+		var tower_params: Dictionary = TowerData.get_floor_params(frontier_floor)
+		var floor_text: String = tower_params.get("title", "")
 		_campaign_label.text = "БАШНЯ - %s (всего этажей: %d)" % [floor_text, TowerData.TOTAL_FLOORS]
 		_campaign_prev_button.disabled = true
 		_campaign_next_button.disabled = true

@@ -30,7 +30,7 @@ static func _road_cell(p: Vector2) -> Vector2i:
 
 
 ## Строит и возвращает корень пропсов (добавить ребёнком карты до навмеша).
-static func build(host: Node3D, layers: Dictionary, bounds: Rect2,
+static func build(_host: Node3D, layers: Dictionary, bounds: Rect2,
 		height_fn: Callable) -> Node3D:
 	_rng.seed = PripyatPropsData.SEED
 	_scenes.clear()
@@ -151,7 +151,7 @@ static func _poly_area(pts: PackedVector2Array) -> float:
 	return absf(area) * 0.5
 
 
-static func _in_polys(ctx: Ctx, p: Vector2, polys: Array) -> bool:
+static func _in_polys(_ctx: Ctx, p: Vector2, polys: Array) -> bool:
 	for poly in polys:
 		if not (poly["rect"] as Rect2).has_point(p):
 			continue

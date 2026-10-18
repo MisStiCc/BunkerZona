@@ -400,7 +400,7 @@ var _decal_textures: Array = []
 func _add_wall_decal(body: Node3D, size: Vector3):
 	"""Декаль на случайной вертикальной стене коробки (в локальных координатах body)"""
 	if _decal_textures.is_empty():
-		for name in ["crack_01", "crack_02", "rust_streak_01", "stain_dark_01",
+		for sky_name in ["crack_01", "crack_02", "rust_streak_01", "stain_dark_01",
 				"moss_patch_01", "stain_oil_01"]:
 			var p := "res://assets/decals/%s.png" % name
 			if ResourceLoader.exists(p):

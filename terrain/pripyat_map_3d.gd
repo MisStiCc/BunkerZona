@@ -200,7 +200,7 @@ func _tint_at(wx: float, wz: float) -> Color:
 
 
 func _load_decal_textures():
-	for name in ["crack_01", "crack_02", "crack_03", "rust_streak_01", "rust_streak_02",
+	for layer_name in ["crack_01", "crack_02", "crack_03", "rust_streak_01", "rust_streak_02",
 			"stain_dark_01", "stain_dark_02", "stain_oil_01", "moss_patch_01",
 			"moss_patch_02", "sign_radiation", "paint_x_white"]:
 		var path := "res://assets/decals/%s.png" % name

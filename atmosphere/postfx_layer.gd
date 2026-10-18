@@ -44,9 +44,9 @@ func set_strength(new_strength: float):
 func _apply_strength():
 	if _mat == null:
 		return
-	_mat.set_shader_parameter("desaturation", 0.32 * strength)
-	_mat.set_shader_parameter("tint_strength", 0.22 * strength)
-	_mat.set_shader_parameter("wash", 0.45 * strength)
+	_mat.set_shader_parameter("desaturation", 0.15 * strength)
+	_mat.set_shader_parameter("tint_strength", 0.12 * strength)
+	_mat.set_shader_parameter("wash", 0.12 * strength)
 	_mat.set_shader_parameter("vignette_strength", 1.1 * strength)
-	_mat.set_shader_parameter("grain_amount", 0.065 * strength)
+	_mat.set_shader_parameter("grain_amount", 0.04 * strength)
 	_mat.set_shader_parameter("flicker_amount", 0.02 * strength)

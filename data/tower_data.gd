@@ -93,6 +93,7 @@ const STAR_ROLL_BONUS: int = 1            # +1 крутка за звезду с
 
 static func get_tier(floor_num: int) -> Dictionary:
 	var f: int = clampi(floor_num, 1, TOTAL_FLOORS)
+	@warning_ignore("integer_division")
 	var idx: int = (f - 1) / 10
 	return TIERS[idx]
 
