@@ -182,6 +182,9 @@ func get_star_requirements(mutant_type: String) -> Dictionary:
 ## Повысить звезду по полному рецепту (кнопка на ферме)
 ## Утилизация копий с фермы: очки по редкости (1/2/3/5),
 ## каждые 10 очков = 1 крутка артефактов, остаток копится в lab.recycle_points
+# Очков утилизации за 1 крутку артефактов (спека D7: 10 делало фичу мёртвой)
+const RECYCLE_ROLL_COST: int = 6
+
 func recycle_copies(batch: Dictionary) -> Dictionary:
         var lab = get_lab_data()
         var points: int = lab.recycle_points
@@ -194,8 +197,8 @@ func recycle_copies(batch: Dictionary) -> Dictionary:
                         lab.consume_farm_copy(type)
                         points += GachaData.get_fodder_value(type, true)
                         consumed += 1
-        var rolls: int = int(points / 10.0)
-        lab.recycle_points = points % 10
+        var rolls: int = points / RECYCLE_ROLL_COST
+        lab.recycle_points = points % RECYCLE_ROLL_COST
         if rolls > 0:
                 grant_anomaly_rolls(rolls, "утилизация копий")
         else:

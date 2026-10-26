@@ -42,6 +42,9 @@ var campaign_level_reached: int = 1
 @export var mutant_stars: Dictionary = {}
 @export var artifact_stars: Dictionary = {}
 
+# DEV-крутки (данные v0.31): см. комментарий у gacha_rolls_mutants
+const DEV_ROLLS: int = 1000000
+
 # ФЕРМА МУТАНТОВ: копии, выпавшие дублями из гачи/вех. Копия того же типа
 # повышает звезду, копии других типов - корм (очки звезды).
 @export var farm_copies: Dictionary = {}
@@ -78,9 +81,9 @@ var campaign_level_reached: int = 1
 @export var loadout_anomalies: Array[String] = []
 @export var loadout_mutants: Array[String] = []
 
-# КРУТКИ ГАЧИ. DEV: мутантные - миллион по запросу игрока (смотреть шансы),
-# аномалийные крутки - серьёзная валюта (30-й уровень/30 волн = +10), дефолт 0.
-@export var gacha_rolls_mutants: int = 1000000
+# КРУТКИ ГАЧИ. DEV-режим для отладки коллекции (спека D7): ПЕРЕД РЕЛИЗОМ
+# обнулить (0 = честный старт).
+@export var gacha_rolls_mutants: int = DEV_ROLLS
 @export var gacha_rolls_artifacts: int = 0
 # Супер-гача: прогресс бонуса обычных круток и доступные супер-крутки
 # (каждые GachaData.SUPER_PITY обычных призывов = +1 супер-крутка).
