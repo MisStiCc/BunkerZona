@@ -122,3 +122,6 @@ signal error_occurred(error_code: int, error_message: String, source: String)
 # Управление (мобильная камера)
 @warning_ignore("unused_signal")  # глобальная шина: подключается извне
 signal ground_tapped(world_position: Vector3)
+# D8: движение пальца по земле при активной кисти - едет призрак постановки
+@warning_ignore("unused_signal")  # глобальная шина: подключается извне
+signal ground_hovered(world_position: Vector3)

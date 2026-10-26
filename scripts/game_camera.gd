@@ -20,8 +20,7 @@ const RTS_YAW: float = 0.0                # север вверх, как на �
 const ZOOM_MIN: float = 25.0
 const ZOOM_MAX: float = 150.0
 const TERRAIN_MARGIN: float = 8.0         # не нырять в рельеф при пане по холмам
-const TOUCH_SLOP: float = 14.0            # px: меньше - тап, больше - пан
-const TAP_MAX_TIME: float = 0.35          # сек: дольше - это пан
+# Пороги тапа живут в HudMobile (D8): крупные тач-цели разрешают ленивее пальцы
 const DOUBLE_TAP_TIME: float = 0.35
 const INERTIA_DECAY: float = 0.04         # остаток скорости через 1 сек
 
@@ -151,6 +150,14 @@ func _unhandled_input(event: InputEvent) -> void:
                         return
                 _touches[event.index] = event.position
                 if _touches.size() == 1:
+                        # Кисть активна (D8): палец двигает призрак постановки, а не карту
+                        if _brush_active():
+                                _drag_total += event.relative.length()
+                                _pan_velocity = Vector2.ZERO
+                                var ghost_hit: Vector3 = _raycast_ground(event.position)
+                                if ghost_hit.x != INF:
+                                        Signals.ground_hovered.emit(ghost_hit)
+                                return
                         _drag_total += event.relative.length()
                         var now := Time.get_ticks_msec() / 1000.0
                         var dt: float = maxf(now - _last_drag_time, 1.0 / 120.0)
@@ -168,14 +175,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _maybe_tap(pos: Vector2) -> void:
         var now := Time.get_ticks_msec() / 1000.0
-        if now - _press_time > TAP_MAX_TIME or _drag_total > TOUCH_SLOP:
+        if now - _press_time > HudMobile.TAP_MAX_TIME or _drag_total > HudMobile.TOUCH_SLOP:
                 return
 
         # В режиме кисти (HUD) двойной тап - просто вторая постановка
-        var placing: bool = false
-        var zc: Node = get_tree().get_first_node_in_group("zone_controller")
-        if zc and str(zc.get("_pending_placement")) != "":
-                placing = true
+        var placing: bool = _brush_active()
 
         if not placing and now - _last_tap_time < DOUBLE_TAP_TIME and pos.distance_to(_last_tap_pos) < 48.0:
                 _last_tap_time = -10.0
@@ -188,6 +192,12 @@ func _maybe_tap(pos: Vector2) -> void:
         var hit: Vector3 = _raycast_ground(pos)
         if hit.x != INF:
                 Signals.ground_tapped.emit(hit)
+
+
+func _brush_active() -> bool:
+        # Режим кисти включает HUD (_pending_placement в ZoneController)
+        var zc: Node = get_tree().get_first_node_in_group("zone_controller")
+        return zc != null and str(zc.get("_pending_placement")) != ""
 
 
 func _center_on_monolith() -> void:

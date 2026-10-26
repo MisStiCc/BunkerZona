@@ -94,6 +94,17 @@ var _anomaly_base_costs: Dictionary = {}
 var _mutants_collapsed: bool = false
 var _mut_header_btn: Button = null
 
+# D8 (мобильный UX): аккордеон категорий, автосворачивание в док,
+# панель подтверждения постановки, safe-area. Только _touch_mode.
+var _touch_anom_cat: String = "heat"
+var _touch_mut_cat: String = "squad"
+var _anom_collapsed: bool = false
+var _touch_tab_buttons: Dictionary = {}   # "anomaly"/"mutant" -> Array[Button]
+var _confirm_panel: Panel = null
+var _confirm_ok_btn: Button = null
+var _confirm_cancel_btn: Button = null
+var _last_touch_activity_ms: int = 0
+
 # Стихии боевых видов (v0.31.0): фон/кант/текст кнопки — цвет стихии.
 # fire=жар, electric=электрика, chem=химия, gravity=гравитация, rad=радиация, bio=мутанты
 const ELEM_COLORS := {
@@ -105,6 +116,24 @@ const ELEM_COLORS := {
                 "bio": {"bg": Color("12200c"), "bg_hover": Color("1a3012"), "edge": Color("7dc95e"), "text": Color("e4ffd8")},
 }
 const COST_SHORT_COLOR := Color("ff8a6a") # цена не по карману (v0.31.0)
+
+# D8: категории аккордеона тач-панелей (ключ -> виды). Порядок кнопок вида
+# задаёт порядок в ряду; макс 5 кнопок в ряду (588 px - влезает).
+const TOUCH_ANOMALY_CATS := {
+	"heat": ["heat_anomaly", "thermal_steam", "thermal_comet", "bio_burning_fluff"],
+	"electric": ["electric_anomaly", "electric_tesla"],
+	"gravity": ["gravity_vortex", "gravity_lift", "gravity_whirlwind", "time_dilation", "teleport"],
+	"chem": ["acid_anomaly", "chemical_jelly", "chemical_gas", "chemical_acid_cloud", "radiation_hotspot"],
+}
+const TOUCH_MUTANT_CATS := {
+	"squad": ["dog_mutant", "flesh", "snork_mutant", "pseudodog", "zombie"],
+	"elite": ["controller_mutant", "poltergeist", "bloodsucker", "chimera", "pseudogiant"],
+}
+const TOUCH_CAT_TITLES := {
+	"heat": {"ru": "ТЕПЛО", "en": "HEAT"}, "electric": {"ru": "ЭЛЕКТРО", "en": "ELECTRO"},
+	"gravity": {"ru": "ГРАВИ", "en": "GRAVI"}, "chem": {"ru": "ХИМИЯ+ФОН", "en": "CHEM+RAD"},
+	"squad": {"ru": "ОТРЯД", "en": "PACK"}, "elite": {"ru": "ЭЛИТА", "en": "ELITE"},
+}
 
 
 func _ready():
@@ -143,6 +172,8 @@ func _ready():
                 _loadout_init.call_deferred()
                 # Торговец забега: кнопка в свободном окне верха
                 _build_trader_button.call_deferred()
+                # D8: тач-аккордеон панелей, подтверждение постановки, safe-area
+                _setup_touch_ui.call_deferred()
 
                 # print("HUD инициализирован")
 
@@ -439,6 +470,15 @@ func _process(delta):
                                 if _trader_button.visible != shop_available:
                                                 _trader_button.visible = shop_available
 
+                # D8: в бою панели сами сворачиваются в док после IDLE_COLLAPSE сек без постановок
+                if _touch_mode and not start_panel.visible:
+                                var idle_ms: int = Time.get_ticks_msec() - _last_touch_activity_ms
+                                if idle_ms > int(HudMobile.IDLE_COLLAPSE * 1000.0) and (not _anom_collapsed or not _mutants_collapsed):
+                                                _anom_collapsed = true
+                                                _mutants_collapsed = true
+                                                _update_mut_header_text()
+                                                _refresh_loadout_ui()
+
 
 func _on_energy_changed(current: float, max_val: float):
                 energy_value.text = "%d / %d" % [int(current), int(max_val)]
@@ -512,6 +552,8 @@ func _on_start_run_pressed():
                 _update_mut_header_text()
                 # После старта набор зафиксирован: невзятые виды недоступны
                 _refresh_loadout_ui()
+                # D8: отсчёт автосворачивания панелей в бою — с момента старта
+                _last_touch_activity_ms = Time.get_ticks_msec()
                 # print("HUD: старт забега запрошен")
 
 
@@ -707,6 +749,7 @@ func _toggle_placement(btn: Button, item_id: String):
                 _pending_item = item_id
                 _pending_button = btn
                 btn.modulate = Color(1.5, 1.4, 0.6)
+                _last_touch_activity_ms = Time.get_ticks_msec()
                 if zone_controller and zone_controller.has_method("set_pending_placement"):
                                 zone_controller.set_pending_placement(item_id)
 
@@ -1052,6 +1095,7 @@ func _toggle_mutant_panel() -> void:
                                 show_reward_note("Сначала соберите набор и запустите забег")
                                 return
                 _mutants_collapsed = not _mutants_collapsed
+                _last_touch_activity_ms = Time.get_ticks_msec()
                 _update_mut_header_text()
                 _refresh_loadout_ui()
 
@@ -1237,6 +1281,11 @@ func _refresh_loadout_ui():
                                                                 continue
                                                 taken_anomalies.append(btn)
                                                 btn.modulate = Color(1, 1, 1, 1) if taken else Color(0.6, 0.64, 0.58, 0.72)
+                if _touch_mode:
+                                # D8: аккордеон категорий вместо сплошных сеток; видимость
+                                # (владение/набор) уже выставлена выше
+                                _touch_layout_panels()
+                                return
                 _layout_taken(taken_anomalies, get_node_or_null("AnomalyPanel"), 4)
                 # Мутанты: в бою только взятые, до боя - вся галерея (v0.21.0).
                 # Порядок - по цене биомассы: слева дешёвые, справа супер-мутанты
@@ -1353,3 +1402,276 @@ func _layout_taken(taken: Array, panel, cols: int) -> void:
                                 btn.offset_top = float(met["y0"]) + float(row) * py
                                 btn.offset_right = btn.offset_left + float(met["bw"])
                                 btn.offset_bottom = btn.offset_top + float(met["bh"])
+
+
+# ==================== ТАЧ-UI: АККОРДЕОН, ПОДТВЕРЖДЕНИЕ, SAFE-AREA (D8) ====================
+# Спека design_inbox/mobile_ux: крупные кнопки по пальцу (HudMobile), панели
+# постановки собираются в категории-аккордеон, в бою сворачиваются в док после
+# IDLE_COLLAPSE сек без постановок, установка через призрак + панель подтверждения.
+
+func _setup_touch_ui() -> void:
+                """Только тач: табы категорий, панель подтверждения, safe-area,
+                крупные СТАРТ/ВЫБРОС. Десктоп не заходит сюда."""
+                if not _touch_mode:
+                                return
+                _touch_anom_cat = HudMobile.last_anomaly_cat
+                _touch_mut_cat = HudMobile.last_mutant_cat
+                _build_touch_tabs()
+                _build_touch_confirm()
+                _enlarge_bottom_buttons()
+                _apply_safe_area()
+                _last_touch_activity_ms = Time.get_ticks_msec()
+                _refresh_loadout_ui()
+
+
+func _build_touch_tabs() -> void:
+                _touch_tab_buttons["anomaly"] = _make_tab_row(anomaly_panel, TOUCH_ANOMALY_CATS, "anomaly", 22.0)
+                _touch_tab_buttons["mutant"] = _make_tab_row(mutant_panel, TOUCH_MUTANT_CATS, "mutant", 26.0)
+
+
+func _make_tab_row(panel: Panel, cats: Dictionary, kind: String, tabs_y: float) -> Array:
+                var tabs: Array = []
+                if panel == null:
+                                return tabs
+                var keys: Array = cats.keys()
+                var panel_w: float = panel.offset_right - panel.offset_left
+                var tw: float = panel_w / float(maxi(keys.size(), 1))
+                for i in range(keys.size()):
+                                var cat: String = str(keys[i])
+                                var b := Button.new()
+                                b.name = "Tab_" + cat
+                                b.text = str(TOUCH_CAT_TITLES.get(cat, {}).get(Loc.lang, cat))
+                                b.position = Vector2(4.0 + float(i) * tw, tabs_y)
+                                b.size = Vector2(tw - 4.0, HudMobile.TAB_H)
+                                b.focus_mode = Control.FOCUS_NONE
+                                b.add_theme_font_size_override("font_size", 15)
+                                b.mouse_entered.connect(_play_hover_sound)
+                                b.pressed.connect(_on_touch_tab.bind(kind, cat))
+                                panel.add_child(b)
+                                tabs.append(b)
+                return tabs
+
+
+func _on_touch_tab(kind: String, cat: String) -> void:
+                _play_click_sound()
+                _last_touch_activity_ms = Time.get_ticks_msec()
+                if kind == "anomaly":
+                                _touch_anom_cat = cat
+                                HudMobile.last_anomaly_cat = cat
+                                _anom_collapsed = false
+                else:
+                                _touch_mut_cat = cat
+                                HudMobile.last_mutant_cat = cat
+                                _mutants_collapsed = false
+                                _update_mut_header_text()
+                _refresh_loadout_ui()
+
+
+func _touch_cat_of(kind: String, type: String) -> String:
+                var cats: Dictionary = TOUCH_ANOMALY_CATS if kind == "anomaly" else TOUCH_MUTANT_CATS
+                for cat in cats:
+                                if type in cats[cat]:
+                                                return str(cat)
+                return str(cats.keys()[0]) if cats.size() > 0 else ""
+
+
+func _touch_layout_panels() -> void:
+                _touch_layout_panel(anomaly_panel, "anomaly", _touch_anom_cat, _anom_collapsed, 22.0)
+                _touch_layout_panel(mutant_panel, "mutant", _touch_mut_cat, _mutants_collapsed, 26.0)
+
+
+func _touch_layout_panel(panel: Panel, kind: String, active_cat: String, collapsed: bool, tabs_y: float) -> void:
+                """Сетка одной панели в тач-режиме: табы категорий сверху, под ними
+                кнопки активной категории 112x72. Свернутая панель = док (одни табы)."""
+                if panel == null:
+                                return
+                var type_map: Dictionary = _anomaly_buttons if kind == "anomaly" else _mutant_buttons
+                var cats: Dictionary = TOUCH_ANOMALY_CATS if kind == "anomaly" else TOUCH_MUTANT_CATS
+                var tabs: Array = _touch_tab_buttons.get(kind, [])
+                var is_mut: bool = kind == "mutant"
+                var gap := 4.0
+                var row_gap := 6.0
+                var max_row: int = 0
+                for cat in cats:
+                                max_row = maxi(max_row, cats[cat].size())
+                var panel_w: float = 8.0 + float(max_row) * (HudMobile.BTN_W + gap)
+                if panel.anchor_left >= 0.5:
+                                panel.offset_left = panel.offset_right - panel_w
+                else:
+                                panel.offset_right = panel.offset_left + panel_w
+                # Заголовок мутантов тянется на новую ширину панели
+                if is_mut and _mut_header_btn:
+                                _mut_header_btn.position = Vector2(4, 2)
+                                _mut_header_btn.size = Vector2(panel_w - 8, 20)
+                # Табы: активная категория подсвечена золотом
+                var tw: float = panel_w / float(maxi(tabs.size(), 1))
+                for i in range(tabs.size()):
+                                var tb: Button = tabs[i]
+                                tb.position = Vector2(4.0 + float(i) * tw, tabs_y)
+                                tb.size = Vector2(tw - 4.0, HudMobile.TAB_H)
+                                tb.add_theme_font_size_override("font_size", 15)
+                                tb.modulate = Color(1.35, 1.2, 0.65) if str(cats.keys()[i]) == active_cat else Color(1, 1, 1, 0.82)
+                # Кнопки: оставляем только активную категорию (видимость по владению
+                # уже выставлена _refresh_loadout_ui)
+                var btns_y: float = tabs_y + HudMobile.TAB_H + row_gap
+                var grid: Array = []
+                for c in panel.get_children():
+                                if c is Button and (not is_mut or c != _mut_header_btn) and not tabs.has(c):
+                                                var t: String = str(type_map.get(c, ""))
+                                                c.visible = c.visible and _touch_cat_of(kind, t) == active_cat
+                                                c.add_theme_font_size_override("font_size", 16)
+                                                if c.visible:
+                                                                grid.append(c)
+                if collapsed and not start_panel.visible:
+                                # Док: одни табы, кнопки спрятаны
+                                for b in grid:
+                                                b.visible = false
+                                panel.offset_bottom = panel.offset_top + btns_y + 2.0
+                                return
+                var cols: int = max_row
+                var rows: int = maxi(int(ceil(float(grid.size()) / float(cols))), 1) if grid.size() > 0 else 1
+                for i in range(grid.size()):
+                                var b: Button = grid[i]
+                                var col: int = i % cols
+                                var row: int = int(floor(float(i) / float(cols)))
+                                b.position = Vector2(4.0 + float(col) * (HudMobile.BTN_W + gap), btns_y + float(row) * (HudMobile.BTN_H + row_gap))
+                                b.size = Vector2(HudMobile.BTN_W, HudMobile.BTN_H)
+                panel.offset_bottom = panel.offset_top + btns_y + float(rows) * (HudMobile.BTN_H + row_gap) + 4.0
+
+
+func _enlarge_bottom_buttons() -> void:
+                """СТАРТ/ВЫБРОС по пальцу: BIG_H (панели вырастают вверх)"""
+                for setup in [[start_run_button, "StartPanel"], [emission_button, "EmissionPanel"]]:
+                                var p: Panel = get_node_or_null(setup[1])
+                                if p:
+                                                p.offset_top -= (HudMobile.BIG_H - 48.0)
+                                                var b: Button = setup[0]
+                                                b.position = Vector2(6, 20)
+                                                b.size = Vector2(p.offset_right - p.offset_left - 12, HudMobile.BIG_H)
+
+
+func _build_touch_confirm() -> void:
+                if is_instance_valid(_confirm_panel):
+                                return
+                _confirm_panel = Panel.new()
+                _confirm_panel.name = "PlacementConfirm"
+                _confirm_panel.anchor_left = 1.0
+                _confirm_panel.anchor_right = 1.0
+                _confirm_panel.anchor_top = 1.0
+                _confirm_panel.anchor_bottom = 1.0
+                _confirm_panel.offset_left = -320.0
+                _confirm_panel.offset_right = -8.0
+                _confirm_panel.offset_top = -448.0
+                _confirm_panel.offset_bottom = -336.0
+                _confirm_panel.visible = false
+                var sb := StyleBoxFlat.new()
+                sb.bg_color = Color(0.06, 0.07, 0.05, 0.92)
+                sb.border_color = Color(0.55, 0.85, 0.45)
+                sb.set_border_width_all(2)
+                sb.set_corner_radius_all(10)
+                _confirm_panel.add_theme_stylebox_override("panel", sb)
+                _confirm_ok_btn = Button.new()
+                _confirm_ok_btn.name = "ConfirmPlace"
+                _confirm_ok_btn.text = "ПОСТАВИТЬ"
+                _confirm_ok_btn.position = Vector2(6, 6)
+                _confirm_ok_btn.size = Vector2(HudMobile.CONFIRM_W, HudMobile.CONFIRM_H)
+                _confirm_ok_btn.pressed.connect(_on_confirm_place)
+                BunkerUI.style_button(_confirm_ok_btn, "primary", 14)
+                _confirm_panel.add_child(_confirm_ok_btn)
+                _confirm_cancel_btn = Button.new()
+                _confirm_cancel_btn.name = "ConfirmCancel"
+                _confirm_cancel_btn.text = "ОТМЕНА" if Loc.lang == "ru" else "CANCEL"
+                _confirm_cancel_btn.position = Vector2(6 + HudMobile.CONFIRM_W + 8, 6)
+                _confirm_cancel_btn.size = Vector2(HudMobile.CONFIRM_W, HudMobile.CONFIRM_H)
+                _confirm_cancel_btn.pressed.connect(_on_confirm_cancel)
+                BunkerUI.style_button(_confirm_cancel_btn, "steel", 14)
+                _confirm_panel.add_child(_confirm_cancel_btn)
+                add_child(_confirm_panel)
+
+
+## ZoneController показывает призрак: панель подтверждения с ценой
+func show_placement_confirm(item_id: String, cost: int, affordable: bool) -> void:
+                if not _touch_mode:
+                                return
+                if not is_instance_valid(_confirm_panel):
+                                _build_touch_confirm()
+                if not is_instance_valid(_confirm_panel):
+                                return
+                var icon: String = "⚡" if item_id.begins_with("anomaly:") else "🧬"
+                _confirm_ok_btn.text = ("ПОСТАВИТЬ" if Loc.lang == "ru" else "PLACE") + "\n" + icon + str(cost)
+                _confirm_ok_btn.modulate = Color.WHITE if affordable else Color(1.0, 0.55, 0.5)
+                _confirm_panel.visible = true
+
+
+func hide_placement_confirm() -> void:
+                if is_instance_valid(_confirm_panel):
+                                _confirm_panel.visible = false
+
+
+## Установка прошла: кисть осталась активной, отсчёт автосворачивания заново
+func notify_placement_done() -> void:
+                _last_touch_activity_ms = Time.get_ticks_msec()
+
+
+## Подтверждение на красном призраке: тряска панели, ничего не списано
+func placement_failed() -> void:
+                if not is_instance_valid(_confirm_panel):
+                                return
+                var base_x: float = _confirm_panel.offset_left
+                var tw := create_tween()
+                for off in [-8.0, 8.0, -5.0, 5.0, 0.0]:
+                                tw.tween_property(_confirm_panel, "offset_left", base_x + off, 0.045)
+
+
+func _on_confirm_place() -> void:
+                _play_click_sound()
+                var zc = get_tree().get_first_node_in_group("zone_controller")
+                if zc and zc.has_method("confirm_placement"):
+                                zc.confirm_placement()
+
+
+func _on_confirm_cancel() -> void:
+                _play_click_sound()
+                # Кисть выключается той же логикой, что и повторный тап по её кнопке
+                if _pending_item != "" and _pending_button:
+                                _toggle_placement(_pending_button, _pending_item)
+                var zc = get_tree().get_first_node_in_group("zone_controller")
+                if zc and zc.has_method("cancel_placement"):
+                                zc.cancel_placement()
+
+
+func _apply_safe_area() -> void:
+                """D8: сдвиг шапки ресурсов от верхнего выреза и нижних панелей
+                (СТАРТ/ВЫБРОС, подтверждение) от нижнего. На обычных экранах 0."""
+                if not HudMobile.SAFE_AREA_APPLY:
+                                return
+                var sa := DisplayServer.get_display_safe_area()
+                var win := DisplayServer.window_get_size()
+                if sa.size == Vector2i.ZERO or win.y <= 0 or win.x <= 0:
+                                return
+                # Пиксели окна -> юниты канваса (видимая область в координатах UI)
+                var vis := get_viewport().get_visible_rect().size
+                var kx: float = vis.x / float(win.x)
+                var ky: float = vis.y / float(win.y)
+                var top: float = maxf(float(sa.position.y), 0.0) * ky
+                var bottom: float = maxf(float(win.y - sa.end.y), 0.0) * ky
+                var left: float = maxf(float(sa.position.x), 0.0) * kx
+                if top > 4.0:
+                                var res: Panel = get_node_or_null("Resources")
+                                if res:
+                                                res.offset_top += top
+                                                res.offset_bottom += top
+                if bottom > 4.0:
+                                for pname in ["StartPanel", "EmissionPanel"]:
+                                                var p: Panel = get_node_or_null(pname)
+                                                if p:
+                                                                p.offset_top -= bottom
+                                                                p.offset_bottom -= bottom
+                                if is_instance_valid(_confirm_panel):
+                                                _confirm_panel.offset_top -= bottom
+                                                _confirm_panel.offset_bottom -= bottom
+                if left > 4.0:
+                                # sensor_landscape: вырез может оказаться слева
+                                if anomaly_panel:
+                                                anomaly_panel.offset_left += left
+                                                anomaly_panel.offset_right += left

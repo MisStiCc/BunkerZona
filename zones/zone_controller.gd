@@ -86,6 +86,8 @@ func _ready():
 
                 # Мобильный режим «тап = ставить»: камера шлёт тапы по земле
                 Signals.ground_tapped.connect(_on_ground_tapped)
+                # D8: движение пальца при активной кисти - призрак следует за пальцем
+                Signals.ground_hovered.connect(_on_ground_hovered)
 
                 # Загружаем параметры забега из GameManager
                 if get_tree().root.has_meta("run_params"):
@@ -829,23 +831,185 @@ func _on_synergy_activated(s: Dictionary) -> void:
                                 })
 
 
-# ==================== РЕЖИМ «ТАП = СТАВИТЬ» (МОБИЛКА) ====================
+# ==================== РЕЖИМ «ТАП = СТАВИТЬ» (МОБИЛКА, D8) ====================
 
 ## HUD включает/выключает режим кисти: item_id = "anomaly:X" / "mutant:X" / ""
+## Тач-флоу (D8): тап по земле показывает ПРИЗРАК (кольцо + цена, зелёный/красный),
+## палец едет - призрак едет (Signals.ground_hovered), установка - тап по призраку
+## или кнопка ПОСТАВИТЬ на HUD. Ничего не списывается до подтверждения.
+## Кисть после установки сохраняется (цепочки постановок). Десктоп ставит сразу.
+var _ghost: Node3D = null
+var _ghost_ring: MeshInstance3D = null
+var _ghost_label: Label3D = null
+var _ghost_item: String = ""
+
+const GHOST_OK_COLOR := Color(0.35, 1.0, 0.45, 0.85)
+const GHOST_FAIL_COLOR := Color(1.0, 0.3, 0.25, 0.9)
+
+
 func set_pending_placement(item_id: String):
                 _pending_placement = item_id
+                if item_id.is_empty():
+                                _hide_ghost()
 
 
-## Тап по земле из мобильной камеры: ставим выбранное в кисти в точку
+func _ensure_ghost() -> void:
+                if _ghost:
+                                return
+                _ghost = Node3D.new()
+                _ghost.name = "PlacementGhost"
+                _ghost_ring = MeshInstance3D.new()
+                var cyl := CylinderMesh.new()
+                cyl.top_radius = HudMobile.GHOST_RING_ANOMALY
+                cyl.bottom_radius = HudMobile.GHOST_RING_ANOMALY
+                cyl.height = 0.08
+                cyl.radial_segments = 32
+                _ghost_ring.mesh = cyl
+                var mat := StandardMaterial3D.new()
+                mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+                mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                mat.albedo_color = GHOST_OK_COLOR
+                _ghost_ring.material_override = mat
+                _ghost.add_child(_ghost_ring)
+                _ghost_label = Label3D.new()
+                _ghost_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+                _ghost_label.no_depth_test = true
+                _ghost_label.pixel_size = 0.02
+                _ghost_label.font_size = 44
+                _ghost_label.outline_size = 12
+                _ghost_label.position = Vector3(0.0, 2.2, 0.0)
+                _ghost.add_child(_ghost_label)
+                _ghost.visible = false
+                add_child(_ghost)
+
+
+## Цена постановки кисти: аномалия - энергия (с надбавкой радиации Припяти),
+## мутант - биомасса. Те же формулы, что в create_anomaly/spawn_mutant.
+func _placement_cost(item_id: String) -> int:
+                if item_id.begins_with("anomaly:"):
+                                var anomaly_type: String = item_id.substr(len("anomaly:"))
+                                var cost: float = float(anomaly_manager.get_anomaly_cost(anomaly_type)) if anomaly_manager else 0.0
+                                if radiation_zone != "" and radiation_zone != "clean":
+                                                cost *= RadiationData.get_effects(radiation_zone)["anomaly_cost_mult"]
+                                return int(cost)
+                if item_id.begins_with("mutant:"):
+                                var mutant_type: String = item_id.substr(len("mutant:"))
+                                return int(spawn_manager.get_mutant_cost(mutant_type)) if spawn_manager else 0
+                return 0
+
+
+func _ghost_affordable(cost: int) -> bool:
+                if _ghost_item.begins_with("anomaly:"):
+                                return can_afford(float(cost), 0.0)
+                return can_afford(0.0, float(cost))
+
+
+func _show_ghost_at(item_id: String, world_position: Vector3) -> void:
+                _ensure_ghost()
+                _ghost_item = item_id
+                var pos: Vector3 = world_position
+                pos.x = clampf(pos.x, -Helpers.WORLD_LIMIT, Helpers.WORLD_LIMIT)
+                pos.z = clampf(pos.z, -Helpers.WORLD_LIMIT, Helpers.WORLD_LIMIT)
+                _ghost.global_position = pos + Vector3.UP * 0.05
+                var is_anomaly: bool = item_id.begins_with("anomaly:")
+                var type: String = item_id.substr(len("anomaly:") if is_anomaly else len("mutant:"))
+                var icon: String = "⚡" if is_anomaly else "🧬"
+                var cost: int = _placement_cost(item_id)
+                var ok: bool = _ghost_affordable(cost)
+                _ghost_ring.scale = Vector3.ONE * (1.0 if is_anomaly else HudMobile.GHOST_RING_MUTANT / HudMobile.GHOST_RING_ANOMALY)
+                var mat: StandardMaterial3D = _ghost_ring.material_override
+                mat.albedo_color = GHOST_OK_COLOR if ok else GHOST_FAIL_COLOR
+                _ghost_label.text = "%s · %s%d" % [GachaData.display_name(type), icon, cost]
+                _ghost_label.modulate = Color(0.85, 1.0, 0.85) if ok else Color(1.0, 0.6, 0.55)
+                _ghost.visible = true
+                var hud = get_tree().get_first_node_in_group("hud")
+                if hud and hud.has_method("show_placement_confirm"):
+                                hud.show_placement_confirm(item_id, cost, ok)
+
+
+func _hide_ghost() -> void:
+                _ghost_item = ""
+                if _ghost:
+                                _ghost.visible = false
+                var hud = get_tree().get_first_node_in_group("hud")
+                if hud and hud.has_method("hide_placement_confirm"):
+                                hud.hide_placement_confirm()
+
+
+## Тап по земле из мобильной камеры
 func _on_ground_tapped(world_position: Vector3):
                 if _pending_placement.is_empty():
                                 return
-                if _pending_placement.begins_with("anomaly:"):
-                                var anomaly_type: String = _pending_placement.substr(len("anomaly:"))
+                if DisplayServer.is_touchscreen_available():
+                                # Тап по своему призраку = подтверждение (быстрый флоу, D8)
+                                if _ghost and _ghost.visible and HudMobile.GHOST_CONFIRM_BY_TAP:
+                                                if world_position.distance_to(_ghost.global_position) <= HudMobile.GHOST_RING_ANOMALY * 1.6:
+                                                                confirm_placement()
+                                                                return
+                                _show_ghost_at(_pending_placement, world_position)
+                                return
+                # Десктоп (страховка): мгновенная установка, как раньше
+                _place_now(_pending_placement, world_position)
+
+
+## Палец едет по земле при активной кисти: призрак следует за пальцем
+func _on_ground_hovered(world_position: Vector3):
+                if _pending_placement.is_empty():
+                                return
+                _show_ghost_at(_pending_placement, world_position)
+
+
+## Мгновенная установка (прежний флоу без призрака)
+func _place_now(item_id: String, world_position: Vector3):
+                if item_id.begins_with("anomaly:"):
+                                var anomaly_type: String = item_id.substr(len("anomaly:"))
                                 create_anomaly(anomaly_type, world_position, 1)
-                elif _pending_placement.begins_with("mutant:"):
-                                var mutant_type: String = _pending_placement.substr(len("mutant:"))
+                elif item_id.begins_with("mutant:"):
+                                var mutant_type: String = item_id.substr(len("mutant:"))
                                 spawn_mutant(mutant_type, world_position + Vector3.UP * 1.0)
+
+
+## Установка в точку призрака (кнопка ПОСТАВИТЬ / тап по призраку).
+## False - не хватило ресурса: тряска панели HUD, призрак остаётся красным.
+func confirm_placement() -> bool:
+                if _pending_placement.is_empty() or not _ghost or not _ghost.visible:
+                                return false
+                var item_id: String = _pending_placement
+                var pos: Vector3 = _ghost.global_position
+                var placed: Node = null
+                if item_id.begins_with("anomaly:"):
+                                var anomaly_type: String = item_id.substr(len("anomaly:"))
+                                placed = create_anomaly(anomaly_type, pos, 1)
+                elif item_id.begins_with("mutant:"):
+                                var mutant_type: String = item_id.substr(len("mutant:"))
+                                placed = spawn_mutant(mutant_type, pos + Vector3.UP * 1.0)
+                if placed:
+                                _hide_ghost()
+                                var hud_ok = get_tree().get_first_node_in_group("hud")
+                                if hud_ok and hud_ok.has_method("notify_placement_done"):
+                                                hud_ok.notify_placement_done()
+                                return true
+                _ghost_flash_fail()
+                var hud_fail = get_tree().get_first_node_in_group("hud")
+                if hud_fail and hud_fail.has_method("placement_failed"):
+                                hud_fail.placement_failed()
+                return false
+
+
+## Отмена кисти (кнопка ОТМЕНА на HUD): призрак и панель подтверждения убираются
+func cancel_placement() -> void:
+                _pending_placement = ""
+                _hide_ghost()
+
+
+func _ghost_flash_fail() -> void:
+                if not _ghost_ring:
+                                return
+                var mat: StandardMaterial3D = _ghost_ring.material_override
+                mat.albedo_color = GHOST_FAIL_COLOR
+                var tw := create_tween()
+                tw.tween_property(_ghost, "scale", Vector3(1.12, 1.12, 1.12), 0.07)
+                tw.tween_property(_ghost, "scale", Vector3.ONE, 0.09)
 
 
 func _get_spawn_position_from_camera() -> Vector3:
