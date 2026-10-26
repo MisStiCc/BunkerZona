@@ -96,6 +96,12 @@ var campaign_speed_mult: float = 1.0
 # Выживание: волны бесконечны, параметры каждой волны обновляет ZoneController
 var endless_mode: bool = false
 
+# Врата Припяти (D9): выживание на большой карте спавнит сталкеров из
+# районных точек города, а не кольцом вокруг Монолита. Точки (мировые)
+# заполняет ZoneController при старте забега через latlon_to_world.
+var gate_mode: bool = false
+var gate_points: Array[Vector3] = []
+
 # Статистика
 var _stalkers_killed: int = 0
 var _artifacts_stolen: int = 0
@@ -265,6 +271,19 @@ func _calculate_stalker_count() -> int:
         return ceil(base * _difficulty)
 
 
+## Активные врата текущей волны (D9): число по SurvivalData.gates_for_wave,
+## стартовая врата детерминированно сдвигается по волне
+func _active_gates() -> Array:
+        if gate_points.size() == 0:
+                return []
+        var n: int = mini(SurvivalData.gates_for_wave(current_wave), gate_points.size())
+        var start: int = SurvivalData.gates_start_index(current_wave) % gate_points.size()
+        var gates: Array = []
+        for i in range(n):
+                gates.append(gate_points[(start + i) % gate_points.size()])
+        return gates
+
+
 func _spawn_stalker() -> bool:
         var scene = _get_stalker_scene_by_difficulty()
         if not scene:
@@ -361,10 +380,16 @@ func _get_spawn_position() -> Vector3:
         if not monolith:
                 return Vector3.ZERO
         
+        var gates: Array = _active_gates()
         for attempt in range(20):
                 var angle = randf() * TAU
                 var distance = min_spawn_distance + randf() * (spawn_radius - min_spawn_distance)
-                var pos = monolith.global_position + Vector3(cos(angle) * distance, 100, sin(angle) * distance)
+                var origin: Vector3 = monolith.global_position
+                # Врата Припяти (D9): точка врат + джиттер вместо кольца вокруг монолита
+                if gate_mode and not gates.is_empty():
+                        origin = gates[randi() % gates.size()]
+                        distance = randf() * SurvivalData.GATE_JITTER
+                var pos = origin + Vector3(cos(angle) * distance, 100, sin(angle) * distance)
                 
                 var space = get_viewport().get_world_3d().direct_space_state
                 var query = PhysicsRayQueryParameters3D.new()

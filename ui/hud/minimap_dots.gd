@@ -11,6 +11,21 @@ const WORLD_HALF: float = 160.0
 const UPDATE_INTERVAL: float = 0.2
 
 var _t: float = 0.0
+# D9: активные врата выживания на Припяти (мировые точки; заполняет ZoneController
+# в передышке, гаснут на волне). Врата дальше края карты рисуются по краю.
+var gate_points: Array = []
+
+
+func set_gates(points: Array) -> void:
+	gate_points = points
+	queue_redraw()
+
+
+func clear_gates() -> void:
+	if gate_points.is_empty():
+		return
+	gate_points.clear()
+	queue_redraw()
 
 
 func _process(delta):
@@ -46,7 +61,29 @@ func _draw():
 		draw_circle(p, 4.5, Color(0.1, 0.05, 0.05))
 		draw_circle(p, 3.2, Color(1.0, 0.27, 0.27))
 
+	_draw_gates()
 	_draw_camera()
+
+
+func _draw_gates():
+	"""D9: жёлтые треугольники активных врат выживания - честное
+	предупреждение направления волны в передышке."""
+	for gp in gate_points:
+		var p := world_to_map(gp)
+		var center := size / 2.0
+		var dir := p - center
+		if dir.length() < 1.0:
+			dir = Vector2.RIGHT
+		else:
+			dir = dir.normalized()
+		# Врата за краем карты: маркер на краю, остриём наружу
+		var edge_dist: float = minf(size.x, size.y) * 0.5 - 10.0
+		var base_pos: Vector2 = center + dir * minf(center.distance_to(p), edge_dist)
+		var tip: Vector2 = base_pos + dir * 7.0
+		var left: Vector2 = base_pos - dir * 4.0 + dir.orthogonal() * 5.0
+		var right: Vector2 = base_pos - dir * 4.0 - dir.orthogonal() * 5.0
+		draw_colored_polygon(PackedVector2Array([tip, left, right]), Color(1.0, 0.85, 0.15, 0.95))
+		draw_arc(base_pos, 9.0, 0, TAU, 20, Color(1.0, 0.85, 0.15, 0.7), 1.5)
 
 
 func _draw_camera():

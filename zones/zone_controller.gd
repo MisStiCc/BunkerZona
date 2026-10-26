@@ -197,6 +197,40 @@ func start_run():
 func _on_wave_break_started(wave_number: int, break_duration: float):
                 wave_break_started.emit(wave_number, break_duration)
                 _maybe_trigger_run_event(wave_number, break_duration)
+                # D9: выживание на Припяти - честное предупреждение, откуда придёт волна
+                if spawn_manager and spawn_manager.gate_mode and not spawn_manager.gate_points.is_empty():
+                                var next_wave: int = wave_number + 1
+                                var hud_break = get_tree().get_first_node_in_group("hud")
+                                if hud_break:
+                                                hud_break.show_wave_gates(_active_gate_points(next_wave))
+                                                if hud_break.has_method("show_gate_warning"):
+                                                                hud_break.show_gate_warning(next_wave, SurvivalData.gate_directions(next_wave))
+
+
+## Мировые координаты спавн-врат Припяти (D9): lat/lon -> мир + высота рельефа
+func _compute_gate_points() -> Array[Vector3]:
+                var points: Array[Vector3] = []
+                var pm = get_tree().get_first_node_in_group("terrain_generator")
+                if pm == null or not pm.has_method("latlon_to_world"):
+                                return points
+                for gate in SurvivalData.SPAWN_GATES:
+                                var w: Vector2 = pm.latlon_to_world(float(gate["lat"]), float(gate["lon"]))
+                                var h: float = pm.get_terrain_height(w.x, w.y) if pm.has_method("get_terrain_height") else 0.0
+                                points.append(Vector3(w.x, h, w.y))
+                return points
+
+
+## Точки активных врат будущей волны (для миникарты в передышке)
+func _active_gate_points(wave: int) -> Array:
+                var points: Array = []
+                var all_points: Array[Vector3] = spawn_manager.gate_points
+                if all_points.is_empty():
+                                return points
+                var n: int = mini(SurvivalData.gates_for_wave(wave), all_points.size())
+                var start: int = SurvivalData.gates_start_index(wave) % all_points.size()
+                for i in range(n):
+                                points.append(all_points[(start + i) % all_points.size()])
+                return points
 
 
 func _on_all_waves_cleared():
@@ -393,6 +427,17 @@ func _initialize_run():
                                                 var mono_s := get_tree().get_first_node_in_group("monolith")
                                                 if pm_s and pm_s.has_method("monolith_position_for_level") and mono_s:
                                                                 mono_s.global_position = pm_s.monolith_position_for_level(1)
+                                                # Врата Припяти (D9): сталкеры приходят из районов города
+                                                spawn_manager.gate_mode = true
+                                                spawn_manager.gate_points = _compute_gate_points()
+                                                var hud_first = get_tree().get_first_node_in_group("hud")
+                                                if hud_first and hud_first.has_method("show_event_note"):
+                                                                hud_first.show_event_note({
+                                                                                "title_ru": "ГОРОД ЖИВЁТ СВОЕЙ ЖИЗНЬЮ",
+                                                                                "title_en": "THE CITY LIVES ITS OWN LIFE",
+                                                                                "desc_ru": "Сталкеры придут с улиц: активные врата видны на миникарте в передышке.",
+                                                                                "desc_en": "Stalkers will come through the streets: active gates are shown on the minimap between waves.",
+                                                                })
 
                                 event_manager.endless_mode = true
                                 pulses = 0
@@ -1106,6 +1151,19 @@ func _on_wave_started(wave_number: int, count: int):
 
                 pass # print("Волна " + str(wave_number) + " началась, сталкеров: " + str(count))
 
+                # Интро-баннер особого этажа Башни (Приложение Б спеки церемонии):
+                # Прорыв/Хранитель на старте 1-й волны, слэм + рык, скип мгновенный
+                if wave_number == 1 and run_params.get("run_mode", "") == "tower":
+                                var intro_type := TowerData.get_floor_type(int(run_params.get("tower_floor", 1)))
+                                if intro_type == "break" or intro_type == "keeper":
+                                                _show_floor_intro_banner(intro_type)
+
+                # D9: волна пошла - врата на миникарте гаснут
+                if spawn_manager and spawn_manager.gate_mode:
+                                var hud_wave = get_tree().get_first_node_in_group("hud")
+                                if hud_wave and hud_wave.has_method("clear_wave_gates"):
+                                                hud_wave.clear_wave_gates()
+
                 # Анонс события выживания (волна уже усилена в _on_wave_ended прошлой волны)
                 if run_params.get("run_mode", "") == "survival" and _pending_event:
                                 var hud = get_tree().get_first_node_in_group("hud")
@@ -1122,6 +1180,87 @@ func _on_wave_started(wave_number: int, count: int):
                                                 _phase_announced[wave_number] = true
                                                 _note_hud(phase_note)
                                                 _update_postfx_strength()
+
+
+## Интро-баннер этажа Башни (Приложение Б церемонии): слэм без затемнения,
+## рык на Хранителе; скип любым кликом/Enter. Арт из CeremonyData, нет файла -
+## текстовая заглушка в цвет акцента.
+func _show_floor_intro_banner(floor_type: String):
+                var layer := CanvasLayer.new()
+                layer.layer = 9  # церемония - 10, HUD выше
+                add_child(layer)
+
+                var vp := get_viewport().get_visible_rect().size
+                var root := Control.new()
+                root.set_anchors_preset(Control.PRESET_FULL_RECT)
+                root.mouse_filter = Control.MOUSE_FILTER_STOP
+                layer.add_child(root)
+
+                var banner := Control.new()
+                banner.position = Vector2(vp.x * 0.04, vp.y * 0.06)
+                banner.size = Vector2(vp.x * 0.92, vp.y * 0.19)
+                banner.pivot_offset = banner.size * 0.5
+                root.add_child(banner)
+
+                var art_key := "banner_keeper" if floor_type == "keeper" else "banner_break"
+                var accent := Color(0.62, 0.16, 0.12) if floor_type == "keeper" else Color(0.8, 0.5, 0.15)
+                var art: Texture2D = null
+                var art_path := CeremonyData.ART_DIR + String(CeremonyData.ART.get(art_key, ""))
+                if art_path != CeremonyData.ART_DIR and ResourceLoader.exists(art_path):
+                                art = load(art_path) as Texture2D
+                if art:
+                                var tex_rect := TextureRect.new()
+                                tex_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+                                tex_rect.texture = art
+                                tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                                tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                                banner.add_child(tex_rect)
+                else:
+                                var panel := Panel.new()
+                                panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+                                var sb := StyleBoxFlat.new()
+                                sb.bg_color = Color(0.05, 0.07, 0.06, 0.88)
+                                sb.border_color = accent
+                                sb.set_border_width_all(4)
+                                sb.set_corner_radius_all(10)
+                                panel.add_theme_stylebox_override("panel", sb)
+                                banner.add_child(panel)
+
+                var title := Label.new()
+                title.set_anchors_preset(Control.PRESET_FULL_RECT)
+                title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+                title.add_theme_font_size_override("font_size", clampi(vp.y * 0.05, 36, 60))
+                title.add_theme_color_override("font_color", Color(0.93, 0.9, 0.78))
+                if floor_type == "keeper":
+                                var tier: Dictionary = TowerData.get_tier(int(run_params.get("tower_floor", 1)))
+                                title.text = Loc.t("tower_ceremony.keeper_intro",
+                                                {"name": String(tier.get("boss", ""))})
+                else:
+                                title.text = Loc.t("tower_ceremony.break_tag")
+                banner.add_child(title)
+
+                # Звук: рык Хранителя, глухой слэм Прорыва
+                var sm = get_tree().get_first_node_in_group("sound_manager")
+                if sm and sm.has_method("play_sound"):
+                                if floor_type == "keeper":
+                                                sm.play_sound("chimera", 0.5, 0.7)
+                                                sm.play_sound("pulse_warning", 0.6, 0.65)
+                                else:
+                                                sm.play_sound("exchange", 0.9, 1.1)
+
+                # Слэм сверху + панч масштаба; держим 1.6 с, уходим, слой сгорает
+                banner.scale = Vector2(1.15, 1.15)
+                banner.position.y = -banner.size.y - 60.0
+                var base_y := vp.y * 0.06
+                var tw := create_tween()
+                tw.tween_property(banner, "position:y", base_y, 0.35) \
+                                .set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+                tw.parallel().tween_property(banner, "scale", Vector2.ONE, 0.35) \
+                                .set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+                tw.tween_interval(1.6)
+                tw.tween_property(banner, "modulate:a", 0.0, 0.25)
+                tw.tween_callback(layer.queue_free)
 
 
 func _on_wave_ended(wave_number: int, survivors: int):
@@ -1143,7 +1282,8 @@ func _on_wave_ended(wave_number: int, survivors: int):
                                 # Следующая волна: параметры + стат её модификатора + анонс в передышке
                                 var next_wave := wave_number + 1
                                 var next_params := SurvivalData.get_wave_params(
-                                                next_wave, run_params.get("campaign_mode", CampaignData.MODE_NORMAL))
+                                                next_wave, run_params.get("campaign_mode", CampaignData.MODE_NORMAL),
+                                                spawn_manager.gate_mode)
                                 _next_wave_modifier = SurvivalData.get_wave_modifier(next_wave)
                                 if _next_wave_modifier.has("stat_mult"):
                                                 var stat_m: float = float(_next_wave_modifier["stat_mult"])

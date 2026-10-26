@@ -880,6 +880,33 @@ func _on_note_expired(desc: String = ""):
 func show_reward_note(text: String):
                 _announce("НАГРАДА", text, Color(1.0, 0.85, 0.2), 2.6)
 
+
+# ==================== ВРАТА ПРИПЯТИ (D9, выживание) ====================
+
+## Жёлтые треугольники активных врат на миникарте (передышка; гаснут на волне)
+func show_wave_gates(points: Array) -> void:
+                var dots := get_node_or_null("Minimap/Dots")
+                if dots and dots.has_method("set_gates"):
+                                dots.set_gates(points)
+
+
+func clear_wave_gates() -> void:
+                var dots := get_node_or_null("Minimap/Dots")
+                if dots and dots.has_method("clear_gates"):
+                                dots.clear_gates()
+
+
+## Честное предупреждение в передышке: откуда придёт волна
+func show_gate_warning(wave: int, dirs: Array) -> void:
+                var names: Array = []
+                for d in dirs:
+                                names.append(str(d.get("ru" if Loc.lang == "ru" else "en", "")))
+                if names.is_empty():
+                                return
+                var title: String = "ВОЛНА %d" % wave if Loc.lang == "ru" else "WAVE %d" % wave
+                var desc: String = ("Сталкеры придут с: " + ", ".join(names)) if Loc.lang == "ru" else ("Stalkers incoming from: " + ", ".join(names))
+                _announce(title, desc, Color(1.0, 0.85, 0.25), 2.4)
+
 ## Часы суток (v0.29.0): строка в панели ресурсов, цвет и иконка по фазе
 func update_daynight(text: String, icon: String, color: Color) -> void:
                 if time_label:

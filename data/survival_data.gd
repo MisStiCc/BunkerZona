@@ -104,14 +104,68 @@ const MILESTONES := {
 # Цикл 60+: химера-копия на ферму + 10 аномалийных + 4000 биомассы
 const MILESTONE_LOOP := {"mutant": "chimera", "anomaly_rolls": 10, "biomass": 4000.0, "label": "легенда"}
 
+# ==================== ВРАТА ПРИПЯТИ (D9, design_inbox/_done/survival_pripyat) ====================
+# Выживание на карте Припяти: сталкеры приходят ИЗ города через спавн-врата
+# в районных точках (lat/lon; все - из MONOLITH_ROUTE, проверены на проходимость),
+# а не кольцом 70-120 м вокруг Монолита. Только карта "pripyat"; процедурная
+# карта и кампания/башня на Припяти работают по-старому.
+const SPAWN_GATES := [
+	{"id": "gate_sw", "lat": 51.4025, "lon": 30.0530},
+	{"id": "gate_e", "lat": 51.4047, "lon": 30.0615},
+	{"id": "gate_n", "lat": 51.4080, "lon": 30.0600},
+	{"id": "gate_far", "lat": 51.4055, "lon": 30.0730},
+]
+const GATE_JITTER: float = 15.0                       # м разброса вокруг врат
+const GATES_COUNT_BY_WAVE: Array[int] = [1, 2, 3, 4]  # сколько врат активно
+const GATES_WAVE_TIERS: Array[int] = [1, 6, 16, 31]   # с какой волны столько врат
+const GATE_BONUS_COUNT: int = 1                       # +1 сталкер с 16-й (компенсация ходьбы)
+const GATE_MIN_WAVE: int = 16
+# Направления для честного предупреждения в передышке (язык выбирает HUD)
+const GATE_DIRS := {
+	"gate_sw": {"ru": "ЮГО-ЗАПАД", "en": "SOUTH-WEST"},
+	"gate_e": {"ru": "ВОСТОК", "en": "EAST"},
+	"gate_n": {"ru": "СЕВЕР", "en": "NORTH"},
+	"gate_far": {"ru": "ДАЛЬНИЙ ВОСТОК", "en": "FAR EAST"},
+}
+
+
+## Число активных врат на волне (1..4)
+static func gates_for_wave(wave: int) -> int:
+	var n := 1
+	for i in GATES_WAVE_TIERS.size():
+		if wave >= GATES_WAVE_TIERS[i]:
+			n = GATES_COUNT_BY_WAVE[i]
+	return n
+
+
+## Индекс первой активной враты на волне. Модуль = число АКТИВНЫХ врат
+## (по чек-листу спеки §7.1: волна 1 приходит с юго-запада, gate_sw)
+static func gates_start_index(wave: int) -> int:
+	return (wave * 7) % maxi(gates_for_wave(wave), 1)
+
+
+## Направления активных врат волны: список {"ru","en"} - для плашки передышки
+static func gate_directions(wave: int) -> Array:
+	var n: int = gates_for_wave(wave)
+	var start: int = gates_start_index(wave)
+	var dirs: Array = []
+	for i in range(n):
+		var g: Dictionary = SPAWN_GATES[(start + i) % SPAWN_GATES.size()]
+		dirs.append(GATE_DIRS.get(str(g["id"]), {"ru": str(g["id"]), "en": str(g["id"])}))
+	return dirs
+
 
 ## Параметры волны N: тот же формат, что у уровня кампании (ZoneController
-## применяет их через те же поля SpawnManager)
-static func get_wave_params(wave: int, mode: String = CampaignData.MODE_NORMAL) -> Dictionary:
+## применяет их через те же поля SpawnManager). gate_mode = врата Припяти (D9):
+## с 16-й волны +1 сталкер (компенсация ходьбы), потолок 29 вместо 28.
+static func get_wave_params(wave: int, mode: String = CampaignData.MODE_NORMAL, gate_mode: bool = false) -> Dictionary:
 	var w: int = maxi(1, wave)
 	var mode_mult: float = float(CampaignData.MODE_MULTIPLIERS.get(mode, 1.0))
 
-	var count_min: int = mini(MAX_COUNT_PER_WAVE, 8 + int(round(0.7 * (w - 1))))
+	var count_cap: int = MAX_COUNT_PER_WAVE + (GATE_BONUS_COUNT if gate_mode else 0)
+	var count_min: int = mini(count_cap, 8 + int(round(0.7 * (w - 1))))
+	if gate_mode and w >= GATE_MIN_WAVE:
+		count_min = mini(count_cap, count_min + GATE_BONUS_COUNT)
 
 	# Состав: до 30-й - как раньше; дальше фаза легенды (мастера растут,
 	# новички к 40-й исчезают, ветераны забирают остаток)
