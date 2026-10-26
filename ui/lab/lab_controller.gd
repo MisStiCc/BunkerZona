@@ -140,12 +140,10 @@ func _load_cover_art():
         var cover: TextureRect = get_node_or_null("CoverArt")
         if not cover:
                 return
-        const COVER_PATH := "res://ui/lab/bunker_lab.svg"
-        if ResourceLoader.exists(COVER_PATH):
-                cover.texture = load(COVER_PATH)
-                # print("lab_controller: обложка лаборатории загружена")
-        else:
-                cover.visible = false
+        for path in ["res://ui/lab/lab_background_2k.png", "res://ui/lab/bunker_lab.svg"]:
+                if ResourceLoader.exists(path):
+                        cover.texture = load(path)
+                        break
 
 
 func _load_data():

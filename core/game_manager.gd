@@ -1316,6 +1316,11 @@ func process_run_result(result: Dictionary):
                                 var mutant_rolls: int = int(floor_rewards.get("mutant_rolls", 0)) + star_rolls
                                 var anomaly_rolls: int = int(floor_rewards.get("anomaly_rolls", 0))
                                 var summary_biomass: float = float(floor_rewards.get("biomass", 0.0))
+                                # Припять: премия радиационного фона к награде этажа (D3):
+                                # этажи 81+ (Саркофаг) приносят x1.5 - риск оплачивается
+                                if str(result.get("map", "procedural")) == "pripyat":
+                                        summary_biomass *= RadiationData.get_effects(
+                                                RadiationData.get_zone_for_level(tower_floor))["reward_mult"]
                                 tower_summary["biomass"] = summary_biomass
                                 tower_summary["mutant_rolls"] = mutant_rolls
                                 tower_summary["anomaly_rolls"] = anomaly_rolls
