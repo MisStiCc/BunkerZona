@@ -40,6 +40,12 @@ func _physics_process(delta):
 	if mesh:
 		mesh.rotate_y(rotation_speed * delta)
 	
+	# D10: воронка глушит парение летающих мутантов в зоне - их тянет вниз
+	for m in get_tree().get_nodes_in_group("mutants"):
+		if is_instance_valid(m) and m.has_method("suppress_hover") \
+				and m.global_position.distance_to(global_position) <= vortex_radius:
+			m.suppress_hover(1.0)
+	
 	for stalker in stalkers_in_zone:
 		if is_instance_valid(stalker):
 			var direction = (global_position - stalker.global_position).normalized()

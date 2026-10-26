@@ -2,7 +2,6 @@
 extends BaseMutant
 class_name PoltergeistMutant
 
-@export var flight_height: float = 5.0
 @export var telekinesis_range: float = 20.0
 @export var throw_damage: float = 30.0
 @export var invisibility_threshold: float = 0.3
@@ -10,7 +9,6 @@ class_name PoltergeistMutant
 var can_telekinesis: bool = true
 var telekinesis_timer: Timer
 var is_invisible: bool = false
-var float_offset: float = 0.0
 var mesh_instance: MeshInstance3D
 
 func _ready():
@@ -27,8 +25,10 @@ func _ready():
 	
 	# Целевая высота модели: нормализация по AABB в base_mutant
 	model_target_height = 1.6
-	# Летает: парит на 1.6 м над рельефом (клип Flying_Idle), гравитация off
+	# Летает: парит на 1.6 м над рельефом, качание - базовое (hover_bob_*, D10)
 	hover_height = 1.6
+	hover_bob_amplitude = 0.5
+	hover_bob_speed = 2.0
 	super._ready()
 	
 	telekinesis_timer = Timer.new()
@@ -43,9 +43,8 @@ func _ready():
 
 func _physics_process(delta):
 	if current_state == State.DEAD:
+		super._physics_process(delta)
 		return
-	
-	_float(delta)
 	
 	if current_state == State.CHASE and randf() < 0.01:
 		_try_become_invisible()
@@ -53,18 +52,6 @@ func _physics_process(delta):
 	_update_invisibility()
 	
 	super._physics_process(delta)
-
-
-func _float(delta):
-	float_offset += delta * 2.0
-	var hover_y = sin(float_offset) * 0.5
-	
-	if global_position.y < flight_height:
-		velocity.y = 2.0
-	elif global_position.y > flight_height + 1:
-		velocity.y = -2.0
-	else:
-		velocity.y = hover_y
 
 
 func _patrol(delta):

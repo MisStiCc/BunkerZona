@@ -18,6 +18,11 @@ signal spotted_stalker(stalker: Node3D)
 @export var gravity: float = 15.0
 # >0 - мутант летает: держится на этой высоте над землёй (полтергейст)
 @export var hover_height: float = 0.0
+# D10: качание парения живёт в БАЗЕ (раньше наследник перекрывал его регулятором)
+@export var hover_bob_amplitude: float = 0.0   # 0 = без качания
+@export var hover_bob_speed: float = 2.0       # рад/с синуса
+# Грав-аномалии (воронка/лифт) глушат парение; base сам снимает по таймеру
+var hover_suppressed_until_ms: int = 0
 
 enum State { PATROL, CHASE, ATTACK, DEAD }
 var current_state: State = State.PATROL
@@ -343,11 +348,22 @@ func _setup_navigation_component():
 
 func _physics_process(delta):
         if current_state == State.DEAD:
+                # D10: летающий труп не висит в воздухе - плавно оседает на рельеф
+                if hover_height > 0.0 and not is_on_floor():
+                        velocity.x = 0.0
+                        velocity.z = 0.0
+                        velocity.y = maxf(velocity.y - gravity * delta, -3.0)
+                        move_and_slide()
                 return
         
         # Гравитация или парение (летающие мутанты держат высоту над рельефом)
-        if hover_height > 0.0:
+        if hover_height > 0.0 and Time.get_ticks_msec() < hover_suppressed_until_ms:
+                # Парение заглушено грав-аномалией (D10): тело тянет вниз
+                velocity.y -= gravity * delta
+        elif hover_height > 0.0:
                 var target_y := _ground_below_y() + hover_height
+                if hover_bob_amplitude > 0.0:
+                        target_y += sin(Time.get_ticks_msec() / 1000.0 * hover_bob_speed) * hover_bob_amplitude
                 velocity.y = clampf((target_y - global_position.y) * 2.5, -2.5, 2.5)
         elif not is_on_floor():
                 velocity.y -= gravity * delta
@@ -408,6 +424,12 @@ func _physics_process(delta):
                         model.rotation.x = lerp_angle(model.rotation.x, 0.0, 3.0 * delta)
         
         move_and_slide()
+
+
+## Грав-аномалия глушит парение на время (D10); пока флаг активен,
+## тело тянет гравитацией. Повторные вызовы продлевают глушение.
+func suppress_hover(duration: float = 1.0) -> void:
+        hover_suppressed_until_ms = maxi(hover_suppressed_until_ms, Time.get_ticks_msec() + int(duration * 1000.0))
 
 
 func _generate_patrol_points():
