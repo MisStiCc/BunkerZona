@@ -41,6 +41,9 @@ car_img = Image.open(CAR).convert('RGB')
 grave_img = Image.open(GRAVE).convert('RGB')
 canvas = Image.new('RGB', (512, 512), (24, 24, 22))
 
+import random
+random.seed(20261026)
+
 for r in range(8):
     for c in range(8):
         cell = (r, c)
@@ -52,7 +55,15 @@ for r in range(8):
             col = mute(cell_color(grave_img, r, c))
         else:
             continue  # неиспользуемые ячейки остаются тёмными
-        px = Image.new('RGB', (64, 64), tuple(int(v) for v in col))
+        # ячейка с лёгким вертикальным градиентом и зерном — против бандинга
+        px = Image.new('RGB', (64, 64))
+        p = px.load()
+        base = tuple(int(v) for v in col)
+        for yy in range(64):
+            grad = 1.0 + 0.06 * (1.0 - yy / 63.0)
+            for xx in range(64):
+                n = random.randint(-4, 4)
+                p[xx, yy] = tuple(max(0, min(255, int(base[k] * grad) + n)) for k in range(3))
         canvas.paste(px, (c * 64, r * 64))
 
 canvas.save(OUT)
