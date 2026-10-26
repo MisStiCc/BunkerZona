@@ -68,6 +68,17 @@ var run_popups: RunPopups
 # Цикл дня и ночи (v0.29.0 «СВЕТ И ТЕНЬ»): часы суток, покраска света, бонус ночной добычи
 var day_night_manager: DayNightManager
 
+# Эффект Выброса Зоны (emission_fx/, пак подготовщика): инстанс у Монолита,
+# кривую интенсивности ведёт _play_emission_fx() по сигналам пульса
+var _emission_fx: Node3D = null
+var _emission_tween: Tween = null
+
+# Радиационный фон Припяти (RadiationData): зона по расстоянию
+# Монолит -> Саркофаг; "" = процедурная карта, фона нет
+var radiation_zone: String = ""
+var _base_energy_regen: float = -1.0
+var _rad_tick_time: float = 0.0
+
 
 func _ready():
                 pass # print("ZoneController: инициализация...")
@@ -448,8 +459,194 @@ func _initialize_run():
                                 pass # (лог отключён)
                 elif run_params.get("run_mode", "") == "survival":
                                 pass # (лог отключён)
+                # Штандарт Башни у Монолита: флаг окрашен в цвет яруса этажа
+                if run_params.get("run_mode", "") == "tower":
+                                _spawn_tower_banner()
+
+                # Эффект Выброса (обе карты): инстанс на позиции Монолита
+                _setup_emission_fx()
+
+                # Радиационный фон Припяти: после lab-бонусов, множитель поверх прокачки
+                _setup_radiation_zone()
+
                 Signals.run_started.emit(run_number, run_difficulty, pulses)
                 pass # print(run_label + " в фазе подготовки (множитель врагов: " + str(run_difficulty) + "). Расставьте защиты и нажмите СТАРТ.")
+
+
+## Штандарт Башни у Монолита (models/tower/banner_pole.glb): флаг -
+## отдельный меш "flag" с нейтральным материалом, красим в цвет яруса
+## этажа (TowerData.TIER_COLORS). Нет модели или Монолита - тихо пропускаем.
+func _spawn_tower_banner():
+                const PATH := "res://models/tower/banner_pole.glb"
+                if not ResourceLoader.exists(PATH):
+                                return
+                var monolith := get_tree().get_first_node_in_group("monolith") as Node3D
+                if monolith == null:
+                                return
+                var scene := load(PATH) as PackedScene
+                if scene == null:
+                                return
+                var pole := scene.instantiate() as Node3D
+                get_tree().current_scene.add_child(pole)
+
+                # Сбоку от Монолита, лицом к стартовой камере
+                var cam := get_viewport().get_camera_3d()
+                var dir := Vector3(1, 0, 1).normalized()
+                if cam:
+                                var to_cam := cam.global_position - monolith.global_position
+                                to_cam.y = 0.0
+                                if to_cam.length() > 0.5:
+                                                dir = to_cam.normalized()
+                pole.global_position = monolith.global_position + dir * 4.0
+                if cam:
+                                pole.look_at(cam.global_position, Vector3.UP)
+
+                var floor_num: int = int(run_params.get("tower_floor", 1))
+                var idx: int = clampi((floor_num - 1) / 10, 0, TowerData.TIER_COLORS.size() - 1)
+                var flag_mat := StandardMaterial3D.new()
+                flag_mat.albedo_color = TowerData.TIER_COLORS[idx]
+                flag_mat.roughness = 0.9
+                var flag := pole.find_child("flag", true, false) as MeshInstance3D
+                if flag:
+                                flag.material_override = flag_mat
+
+
+## Эффект Выброса Зоны (emission_fx/): багровое небо, ударная волна от
+## Монолита, пепел и столбы света. Нет пака/Монолита - тихий пропуск,
+## выброс работает как раньше (частицы particle_manager + звук).
+func _setup_emission_fx():
+                const PATH := "res://emission_fx/scenes/emission_fx.tscn"
+                if not ResourceLoader.exists(PATH):
+                                return
+                var monolith := get_tree().get_first_node_in_group("monolith") as Node3D
+                if monolith == null:
+                                return
+                var scene := load(PATH) as PackedScene
+                if scene == null:
+                                return
+                _emission_fx = scene.instantiate() as Node3D
+                get_tree().current_scene.add_child(_emission_fx)
+                # Origin сцены = центр волны, y = уровень земли (Монолит на земле)
+                _emission_fx.global_position = monolith.global_position
+
+
+## Кривая интенсивности по длительности пульса: рост -> плато -> спад.
+## Волна/эхо едут сами от start(), интенсивность - отдельная ось эффекта.
+func _play_emission_fx():
+                if _emission_fx == null or not is_instance_valid(_emission_fx):
+                                return
+                if _emission_tween and _emission_tween.is_valid():
+                                _emission_tween.kill()
+                var total: float = maxf(pulse_duration, 4.0)
+                var rise := minf(1.5, total * 0.3)
+                var fall := minf(2.0, total * 0.4)
+                _emission_fx.start()
+                _emission_tween = create_tween()
+                _emission_tween.tween_method(
+                                func(v: float): _emission_fx.set_intensity(v), 0.0, 1.0, rise) \
+                                .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+                _emission_tween.tween_interval(maxf(0.0, total - rise - fall))
+                _emission_tween.tween_method(
+                                func(v: float): _emission_fx.set_intensity(v), 1.0, 0.0, fall) \
+                                .set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+                _emission_tween.tween_callback(_emission_fx.stop)
+
+
+## Досрочная страховка: погасить эффект, даже если твин ещё жив
+func _stop_emission_fx():
+                if _emission_tween and _emission_tween.is_valid():
+                                _emission_tween.kill()
+                _emission_tween = null
+                if _emission_fx and is_instance_valid(_emission_fx):
+                                _emission_fx.set_intensity(0.0)
+                                _emission_fx.stop()
+
+
+## Радиационный фон Припяти (спека pripyat_radiation): зона по расстоянию
+## Монолит -> Саркофаг. Реген/цены/дрейф HP/премия/постэффект - из
+## RadiationData. Процедурная карта и выживание (ярус 1 = clean) - мимо.
+func _setup_radiation_zone():
+                if str(run_params.get("map", "procedural")) != "pripyat":
+                                return
+                var pm := get_tree().get_first_node_in_group("terrain_generator")
+                var mono := get_tree().get_first_node_in_group("monolith") as Node3D
+                if pm == null or mono == null or not pm.has_method("monolith_position_for_level"):
+                                return
+                var dist: float = mono.global_position.distance_to(
+                                pm.monolith_position_for_level(100))
+                radiation_zone = RadiationData.get_zone_by_distance(dist)
+                var fx := RadiationData.get_effects(radiation_zone)
+                var info := RadiationData.get_zone_info(radiation_zone)
+
+                # Реген: множитель ПОВЕРХ прокачки лаборатории, базу сохраняем
+                # один раз (защита от повторного умножения при перезаходе)
+                if resource_manager:
+                                if _base_energy_regen < 0.0:
+                                                _base_energy_regen = resource_manager.energy_regen_rate
+                                resource_manager.energy_regen_rate = maxf(
+                                                _base_energy_regen * float(fx["regen_mult"]),
+                                                _base_energy_regen * RadiationData.MAX_TOTAL_REGEN_MULT)
+
+                # Свет и подпись Монолита зеленеют по зоне
+                if mono is Monolith:
+                                mono.apply_radiation_zone(
+                                                RadiationData.LIGHT_COLORS.get(radiation_zone, Color.WHITE),
+                                                "%s\n☢ %.0f мкЗв/ч" % [info["title_ru"], float(info["bg"])])
+
+                # HUD-индикатор (на процедурной карте не показывается вовсе)
+                var hud = get_tree().get_first_node_in_group("hud")
+                if hud and hud.has_method("show_radiation"):
+                                hud.show_radiation(radiation_zone)
+
+                # Плашка на старте (зона != clean): честный расклад ДО первого клика
+                if radiation_zone != "clean":
+                                _note_hud({
+                                                "title_ru": "☢ " + String(info["title_ru"]),
+                                                "title_en": "☢ " + String(info["title_en"]),
+                                                "desc_ru": "реген ×%.2f · аномалии +%d%% · сталкеры тают · награда ×%.2f" % [
+                                                                float(fx["regen_mult"]),
+                                                                roundi((float(fx["anomaly_cost_mult"]) - 1.0) * 100.0),
+                                                                float(fx["reward_mult"])],
+                                                "desc_en": "regen ×%.2f · anomalies +%d%% · stalkers decay · reward ×%.2f" % [
+                                                                float(fx["regen_mult"]),
+                                                                roundi((float(fx["anomaly_cost_mult"]) - 1.0) * 100.0),
+                                                                float(fx["reward_mult"])],
+                                })
+
+                # Постэффект: множитель зоны поверх базового (кап общий)
+                _update_postfx_strength(1.0)
+
+
+## Тик радиационного дрейфа HP: новичок/ветеран/мастер платят по таблице
+## зоны; мутанты и артефакты-приманки иммунны. Смерть от фона не платит
+## биомассу (метка rad_death до смертельного тика, см. on_stalker_died).
+func _process(delta: float):
+                if radiation_zone == "" or radiation_zone == "clean" or is_run_finished:
+                                return
+                if spawn_manager == null:
+                                return
+                _rad_tick_time += delta
+                if _rad_tick_time < RadiationData.RAD_TICK_INTERVAL:
+                                return
+                _rad_tick_time = 0.0
+                var fx := RadiationData.get_effects(radiation_zone)
+                if float(fx["drain_hp"]) <= 0.0:
+                                return
+                for s in spawn_manager.get_active_stalkers():
+                                if not is_instance_valid(s) or not s.get("health_component"):
+                                                continue
+                                var hc = s.health_component
+                                if not hc.is_alive:
+                                                continue
+                                var is_master := false
+                                if s.has_method("get_stalker_type"):
+                                                is_master = s.get_stalker_type() == "master"
+                                var rate: float = float(fx["drain_hp_master"] if is_master else fx["drain_hp"])
+                                if rate <= 0.0:
+                                                continue
+                                if hc.current_health - rate <= 0.0:
+                                                s.set_meta("rad_death", true)
+                                hc.take_damage(rate, null)
 
 
 func _apply_lab_bonuses():
@@ -546,11 +743,16 @@ func _clear_wave_modifier():
                 _update_postfx_strength(1.0)
 
 
-## Сила постэффекта: база карты x ночь x ступень фазы, кап из спеки
+## Сила постэффекта: база карты x ночь x ступень фазы x радиационный фон,
+## общий кап (ночь + фон делят один, см. RadiationData.POSTFX_TOTAL_CAP)
 func _update_postfx_strength(night_mult: float = 1.0):
                 var base: float = 1.25 if str(run_params.get("map", "procedural")) == "pripyat" else 1.0
                 var phase_mult: float = pow(SurvivalData.PHASE_POSTFX_STEP, SurvivalData.phase_index(spawn_manager.current_wave))
-                var strength: float = clampf(base * night_mult * phase_mult, 0.5, SurvivalData.POSTFX_NIGHT_CAP)
+                var rad_mult: float = 1.0
+                if radiation_zone != "":
+                                rad_mult = RadiationData.get_effects(radiation_zone)["postfx_mult"]
+                var strength: float = clampf(base * night_mult * phase_mult * rad_mult, 0.5,
+                                RadiationData.POSTFX_TOTAL_CAP)
                 for child in get_children():
                                 if child is GrimPostfxLayer:
                                                 child.set_strength(strength)
@@ -713,6 +915,7 @@ func _on_radiation_pulse_started(level: int):
                                 particle_manager.spawn_pulse_effect()
                 if sound_manager:
                                 sound_manager.play_pulse_warning()
+                _play_emission_fx()
 
                 pass # print("ВЫБРОС начался! Уровень: " + str(level))
 
@@ -729,6 +932,7 @@ func _on_radiation_pulse_ended():
                 # когда баланс ниже порога (40% max) - отдельный сброс не нужен.
                 radiation_pulse_ended.emit()
                 Signals.radiation_pulse_ended.emit()
+                _stop_emission_fx()
                 pass # print("Выброс закончился")
 
 
@@ -1096,6 +1300,9 @@ func create_anomaly(type: String, position: Vector3, difficulty: int = 1) -> Nod
                                 return null
 
                 var cost = anomaly_manager.get_anomaly_cost(type)
+                # Радиационный фон Припяти: аномалии дороже ближе к Саркофагу (D3)
+                if radiation_zone != "" and radiation_zone != "clean":
+                                cost = float(cost) * RadiationData.get_effects(radiation_zone)["anomaly_cost_mult"]
                 if not resource_manager.spend_energy(cost):
                                 pass # print("Недостаточно энергии для " + type + " (нужно: " + str(cost) + ")")
                                 return null
@@ -1149,6 +1356,10 @@ func register_stalker(_stalker: Node):
 
 # Прямой метод для добавления биомассы при смерти сталкера
 func on_stalker_died(stalker: Node, biomass_returned: float):
+                # Смерть от радиационного фона не платит биомассу за килл (D3):
+                # метку ставит тик дрейфа до смертельного урона
+                if stalker and stalker.has_meta("rad_death"):
+                                biomass_returned = 0.0
                 if resource_manager:
                                 # ЖАТВА: множитель добычи за убийство (волна легенд x события Зоны)
                                 # Ночь (v0.29.0): сталкеры хуже видят - добыча +25%
@@ -1462,6 +1673,11 @@ func _collect_run_result(success: bool) -> Dictionary:
                 if _event_reward_mult != 1.0:
                                 reward *= _event_reward_mult
 
+                # Припять: премия радиационного фона к награде забега целиком
+                # (после всех надбавок; процедурная карта - radiation_zone == "")
+                if radiation_zone != "" and radiation_zone != "clean":
+                                reward *= RadiationData.get_effects(radiation_zone)["reward_mult"]
+
                 # Выживание: награда за пройденные волны платится при любом исходе -
                 # смерть здесь ожидаемый конец забега, а не провал
                 var waves_survived := 0
@@ -1499,6 +1715,8 @@ func _collect_run_result(success: bool) -> Dictionary:
                                 "success": final_success,
                                 "run_number": run_number,
                                 "mode": str(run_params.get("run_mode", "campaign")),
+                                # Карта нужна гача-итогам башни: премия радиации Припяти (D3)
+                                "map": str(run_params.get("map", "procedural")),
                         "tower_floor": int(run_params.get("tower_floor", 0)),
                         "stalkers_total": (spawn_manager.get_stalkers_killed() if spawn_manager else 0) + (spawn_manager.get_stalker_count() if spawn_manager else 0),
                         "stalkers_killed_sm": spawn_manager.get_stalkers_killed() if spawn_manager else 0,

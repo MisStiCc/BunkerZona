@@ -843,6 +843,27 @@ func update_daynight(text: String, icon: String, color: Color) -> void:
                                 time_label.text = icon + " " + text
                                 time_label.add_theme_color_override("font_color", color)
 
+## Радиационный фон Припяти (RadiationData, D3): строка «☢ N мкЗв/ч» под
+## часами, цвет и тултип - по зоне. Вызывает ZoneController только на Припяти.
+var radiation_label: Label
+
+func show_radiation(zone_id: String) -> void:
+                var info: Dictionary = RadiationData.get_zone_info(zone_id)
+                if radiation_label == null:
+                                radiation_label = Label.new()
+                                radiation_label.name = "RadiationLabel"
+                                radiation_label.position = Vector2(6, 76)
+                                radiation_label.add_theme_font_size_override("font_size", 10)
+                                var res := get_node_or_null("Resources")
+                                if res:
+                                                res.add_child(radiation_label)
+                                else:
+                                                add_child(radiation_label)
+                radiation_label.text = "☢ %.0f мкЗв/ч" % float(info["bg"])
+                radiation_label.tooltip_text = str(info["title_ru" if Loc.lang == "ru" else "title_en"])
+                radiation_label.add_theme_color_override("font_color",
+                                RadiationData.HUD_COLORS.get(zone_id, Color.WHITE))
+
 # ==================== ТОРГОВЕЦ ЗАБЕГА (v0.28.0) ====================
 
 func _build_trader_button() -> void:

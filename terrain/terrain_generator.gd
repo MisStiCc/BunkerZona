@@ -46,6 +46,11 @@ var _box_mesh: BoxMesh
 
 const NAV_SEGMENTS: int = 12  # сетка вершин на чанк (12x12 = 288 треугольников)
 const STALKER_HEIGHT: float = 1.8
+# Запас выреза навмеша под стены строений (с каждой стороны): без него навмеш
+# вплотную к BoxMesh, RVO прижимает агента к стене и он залезает на крышу
+# (лечилось симптоматически - state_machine ставил слезшего на навмеш).
+# Перебор «стало непроходимо между строениями» - 0.8 -> 0.5.
+const NAV_CUT_PAD: float = 0.8
 
 
 func _ready():
@@ -457,12 +462,17 @@ func _find_structure_spot(origin: Vector3, rng: RandomNumberGenerator, placed: A
 	return Vector3.ZERO
 
 
-static func _append_box_faces(faces: PackedVector3Array, center: Vector3, size: Vector3, yaw: float) -> void:
+static func _append_box_faces(faces: PackedVector3Array, center: Vector3, size: Vector3,
+		yaw: float, pad: float = 0.0) -> void:
 	# Грани строения в навмеш: берём грани настоящего BoxMesh (гарантированно
-	# правильный winding - самописные грани вертикальных стен не растеризовались
-	# Recast'ом, стены не вырезались из навмеша и сталкеры застревали в домах)
+	# правильный winding - самописные грани вертикальных стен не растеризовывались
+	# Recast'ом, стены не вырезались из навмеша и сталкеры застревали в домах).
+	# pad расширяет вырез в стороны: полоса «нет навмеша» у стен (анти-крышелазы).
 	var bm = BoxMesh.new()
-	bm.size = size
+	if pad > 0.0:
+		bm.size = Vector3(size.x + pad * 2.0, size.y, size.z + pad * 2.0)
+	else:
+		bm.size = size
 	var box_faces = bm.get_faces()
 	var cs = cos(yaw)
 	var sn = sin(yaw)
@@ -497,7 +507,7 @@ func _add_structures(chunk: Node3D, chunk_pos: Vector2i, nav_faces: PackedVector
 			_add_box_instance(body, _concrete_dark_mat, Vector3(0.0, -size.y * 0.15, size.z / 2.0 + 0.06), Vector3(1.2, size.y * 0.5, 0.12), 0.0)
 			_add_wall_decal(body, size)
 			_add_box_instance(chunk, _concrete_dark_mat, spot + Vector3(rng.randf_range(-4.5, 4.5), -0.4, rng.randf_range(-4.5, 4.5)), size * 0.4, rng.randf() * TAU)
-			_append_box_faces(nav_faces, body.position, size, yaw)
+			_append_box_faces(nav_faces, body.position, size, yaw, NAV_CUT_PAD)
 
 	# Ржавый гараж
 	if rng.randf() < 0.18:
@@ -519,7 +529,7 @@ func _add_structures(chunk: Node3D, chunk_pos: Vector2i, nav_faces: PackedVector
 			_add_box_instance(body, _concrete_dark_mat, Vector3(0.0, size.y * 0.55, 0.0), size * Vector3(1.05, 0.12, 1.05), 0.0)
 			if rng.randf() < 0.5:
 				_add_wall_decal(body, size)
-			_append_box_faces(nav_faces, body.position, size, yaw)
+			_append_box_faces(nav_faces, body.position, size, yaw, NAV_CUT_PAD)
 
 	# Полузатопленная труба
 	if rng.randf() < 0.20:

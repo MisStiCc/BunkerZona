@@ -1,12 +1,55 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=24 format=3]
 [ext_resource type="Shader" path="res://anomaly_fx/shaders/bolt_billboard.gdshader" id="ext_1"]
 [ext_resource type="Shader" path="res://anomaly_fx/shaders/column.gdshader" id="ext_2"]
 [ext_resource type="Texture2D" path="res://anomaly_fx/textures/spark.png" id="ext_3"]
 [ext_resource type="Script" path="res://anomaly_fx/scripts/fx_flicker.gd" id="ext_4"]
-[sub_resource type="ShaderMaterial" id="sub_2"]
+[ext_resource type="Texture2D" path="res://anomaly_fx/textures/bolt_atlas.png" id="ext_5"]
+[sub_resource type="ShaderMaterial" id="sub_m1"]
 shader = ExtResource("ext_1")
+shader_parameter/atlas = ExtResource("ext_5")
 shader_parameter/tint = Color(0.6, 0.85, 1.0, 1.0)
 shader_parameter/fps = 14.0
+shader_parameter/frame_offset = 0.0
+shader_parameter/intensity = 2.2
+
+[sub_resource type="ShaderMaterial" id="sub_m2"]
+shader = ExtResource("ext_1")
+shader_parameter/atlas = ExtResource("ext_5")
+shader_parameter/tint = Color(0.6, 0.85, 1.0, 1.0)
+shader_parameter/fps = 14.0
+shader_parameter/frame_offset = 0.9
+shader_parameter/intensity = 2.2
+
+[sub_resource type="ShaderMaterial" id="sub_m3"]
+shader = ExtResource("ext_1")
+shader_parameter/atlas = ExtResource("ext_5")
+shader_parameter/tint = Color(0.6, 0.85, 1.0, 1.0)
+shader_parameter/fps = 14.0
+shader_parameter/frame_offset = 1.8
+shader_parameter/intensity = 2.2
+
+[sub_resource type="ShaderMaterial" id="sub_m4"]
+shader = ExtResource("ext_1")
+shader_parameter/atlas = ExtResource("ext_5")
+shader_parameter/tint = Color(0.6, 0.85, 1.0, 1.0)
+shader_parameter/fps = 14.0
+shader_parameter/frame_offset = 2.7
+shader_parameter/intensity = 2.2
+
+[sub_resource type="ShaderMaterial" id="sub_m5"]
+shader = ExtResource("ext_1")
+shader_parameter/atlas = ExtResource("ext_5")
+shader_parameter/tint = Color(0.6, 0.85, 1.0, 1.0)
+shader_parameter/fps = 14.0
+shader_parameter/frame_offset = 3.6
+shader_parameter/intensity = 2.2
+
+[sub_resource type="ShaderMaterial" id="sub_m6"]
+shader = ExtResource("ext_1")
+shader_parameter/atlas = ExtResource("ext_5")
+shader_parameter/tint = Color(0.6, 0.85, 1.0, 1.0)
+shader_parameter/fps = 14.0
+shader_parameter/frame_offset = 4.5
 shader_parameter/intensity = 2.2
 
 [sub_resource type="QuadMesh" id="sub_3"]
@@ -71,32 +114,32 @@ size = Vector2(0.5, 0.5)
 
 [node name="Bolt1" type="MeshInstance3D" parent="."]
 mesh = SubResource("sub_3")
-material_override = SubResource("sub_2")
+material_override = SubResource("sub_m1")
 position = Vector3(0.5, 1.5, 0.0)
 
 [node name="Bolt2" type="MeshInstance3D" parent="."]
 mesh = SubResource("sub_4")
-material_override = SubResource("sub_2")
+material_override = SubResource("sub_m2")
 position = Vector3(0.3108049841353322, 1.5, 0.3916634548137417)
 
 [node name="Bolt3" type="MeshInstance3D" parent="."]
 mesh = SubResource("sub_5")
-material_override = SubResource("sub_2")
+material_override = SubResource("sub_m3")
 position = Vector3(-0.16164478343175168, 1.5, 0.47315004384370724)
 
 [node name="Bolt4" type="MeshInstance3D" parent="."]
 mesh = SubResource("sub_6")
-material_override = SubResource("sub_2")
+material_override = SubResource("sub_m4")
 position = Vector3(-0.47111117033432903, 1.5, 0.16749407507795255)
 
 [node name="Bolt5" type="MeshInstance3D" parent="."]
 mesh = SubResource("sub_7")
-material_override = SubResource("sub_2")
+material_override = SubResource("sub_m5")
 position = Vector3(-0.3954838559572084, 1.5, -0.30592894547135946)
 
 [node name="Bolt6" type="MeshInstance3D" parent="."]
 mesh = SubResource("sub_8")
-material_override = SubResource("sub_2")
+material_override = SubResource("sub_m6")
 position = Vector3(0.09325618471128788, 1.5, -0.49122630631216624)
 
 [node name="Column" type="MeshInstance3D" parent="."]

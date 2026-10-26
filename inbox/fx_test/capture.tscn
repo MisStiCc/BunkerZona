@@ -1,0 +1,48 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://inbox/fx_test/capture.gd" id="ext_script"]
+
+[sub_resource type="Environment" id="sub_env"]
+background_mode = 1
+background_color = Color(0.05, 0.06, 0.055, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.3, 0.32, 0.3, 1)
+ambient_light_energy = 0.5
+tonemap_mode = 2
+
+[sub_resource type="PlaneMesh" id="sub_floor"]
+size = Vector2(40, 40)
+
+[sub_resource type="StandardMaterial3D" id="sub_floor_mat"]
+albedo_color = Color(0.09, 0.095, 0.085, 1)
+roughness = 1.0
+
+[sub_resource type="CylinderMesh" id="sub_stub"]
+top_radius = 0.4
+bottom_radius = 0.5
+height = 0.2
+
+[node name="FxTest" type="Node3D"]
+script = ExtResource("ext_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("sub_env")
+
+[node name="Fill" type="DirectionalLight3D" parent="."]
+light_color = Color(0.5, 0.55, 0.5, 1)
+light_energy = 0.25
+rotation = Vector3(-0.9, -0.6, 0)
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("sub_floor")
+material_override = SubResource("sub_floor_mat")
+rotation = Vector3(-1.5707963267948966, 0, 0)
+
+[node name="GroundStub" type="MeshInstance3D" parent="."]
+mesh = SubResource("sub_stub")
+position = Vector3(0, 0.1, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.92, 0.38, 0, -0.38, 0.92, 0, 2.6, 6.8)
+current = true
+fov = 50.0

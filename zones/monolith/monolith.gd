@@ -30,18 +30,31 @@ var run_number: int = 1
 @onready var point_light: OmniLight3D = $OmniLight3D
 @onready var label: Label3D = $Label3D
 
+# Радиационный фон Припяти (RadiationData): цвет света по зоне (D3)
+var _rad_light_color: Color = Color.WHITE
+
 
 func _ready():
     # Добавляем в группу для поиска из других скриптов
     add_to_group("monolith")
-    
+
     current_energy = get_max_energy()
-    
+
     # Визуальная инициализация
     if label:
         label.text = "Монолит\nУровень " + str(current_level)
-    
+
     pass # print("🔮 Monolith: инициализирован на уровне ", current_level)
+
+
+## Радиационный фон Припяти: свет зеленеет по зоне (пульсация энергии в
+## _process остаётся), Label3D получает строку зоны. Вызывает ZoneController.
+func apply_radiation_zone(light_color: Color, label_text: String):
+    _rad_light_color = light_color
+    if point_light:
+        point_light.light_color = light_color
+    if label:
+        label.text = label_text
 
 
 func get_max_energy() -> float:
