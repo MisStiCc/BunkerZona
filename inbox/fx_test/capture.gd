@@ -16,6 +16,8 @@ func _ready() -> void:
 		return
 	var fx := packed.instantiate()
 	add_child(fx)
+	if args.size() > 2:
+		fx.scale = Vector3.ONE * float(args[2])
 	cam.look_at(Vector3(0, 1.6, 0))
 	# дать шейдерам скомпилироваться, партиклам — народиться
 	await get_tree().create_timer(1.4).timeout
