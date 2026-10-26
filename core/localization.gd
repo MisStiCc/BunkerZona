@@ -325,6 +325,7 @@ const STRINGS := {
         "tower_ceremony.cleared": {"ru": "ЭТАЖ ПРОЙДЕН", "en": "FLOOR CLEARED"},
         "tower_ceremony.break_tag": {"ru": "ПРОРЫВ", "en": "BREAKTHROUGH"},
         "tower_ceremony.keeper_down": {"ru": "ХРАНИТЕЛЬ ПАЛ · {name}", "en": "KEEPER DOWN · {name}"},
+        "tower_ceremony.keeper_intro": {"ru": "ХРАНИТЕЛЬ: {name}", "en": "KEEPER: {name}"},
         "tower_ceremony.tier_up": {"ru": "НОВЫЙ ЯРУС: {name}", "en": "NEW TIER: {name}"},
         "tower_ceremony.next_floor": {"ru": "ВПЕРЕДИ ЭТАЖ {n}", "en": "FLOOR {n} AHEAD"},
         "tower_ceremony.floor_up": {"ru": "ПОДЪЁМ НА ЭТАЖ {n}", "en": "RISING TO FLOOR {n}"},
