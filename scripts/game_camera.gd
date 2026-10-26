@@ -55,6 +55,14 @@ func _input(event):
         # На мобилке не мешаем: там своя обработка в _unhandled_input.
         if touch_mode:
                 return
+        # F11 - переключение полноэкранного/оконного (ПК)
+        if event is InputEventKey and event.pressed and event.keycode == KEY_F11:
+                var mode := DisplayServer.window_get_mode()
+                if mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN or mode == DisplayServer.WINDOW_MODE_FULLSCREEN:
+                        DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+                else:
+                        DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
+                return
         if event is InputEventMouseMotion and mouse_captured:
                 rotation_y -= event.relative.x * look_speed
                 rotation_x -= event.relative.y * look_speed
