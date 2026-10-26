@@ -33,7 +33,6 @@ tonemap_mode = 2
 
 [node name="Showcase" type="Node3D"]
 
-
 [node name="Floor" type="MeshInstance3D" parent="."]
 mesh = SubResource("sub_2")
 material_override = SubResource("sub_1")
@@ -51,8 +50,7 @@ environment = SubResource("sub_3")
 script = ExtResource("ext_1")
 position = Vector3(0, 8, 26)
 
-[node name="Showcase" parent="." instance=ExtResource("ext_2")]]
-
+[node name="Fx_base" parent="." instance=ExtResource("ext_2")]
 position = Vector3(-28.0, 0, 8.0)
 
 [node name="L0" type="Label3D" parent="."]
@@ -63,8 +61,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_3")]]
-
+[node name="Fx_electra" parent="." instance=ExtResource("ext_3")]
 position = Vector3(-20.0, 0, 8.0)
 
 [node name="L1" type="Label3D" parent="."]
@@ -75,8 +72,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_4")]]
-
+[node name="Fx_tesla" parent="." instance=ExtResource("ext_4")]
 position = Vector3(-12.0, 0, 8.0)
 
 [node name="L2" type="Label3D" parent="."]
@@ -87,8 +83,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_5")]]
-
+[node name="Fx_vortex" parent="." instance=ExtResource("ext_5")]
 position = Vector3(-4.0, 0, 8.0)
 
 [node name="L3" type="Label3D" parent="."]
@@ -99,8 +94,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_6")]]
-
+[node name="Fx_whirlwind" parent="." instance=ExtResource("ext_6")]
 position = Vector3(4.0, 0, 8.0)
 
 [node name="L4" type="Label3D" parent="."]
@@ -111,8 +105,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_7")]]
-
+[node name="Fx_gravity_lift" parent="." instance=ExtResource("ext_7")]
 position = Vector3(12.0, 0, 8.0)
 
 [node name="L5" type="Label3D" parent="."]
@@ -123,8 +116,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_8")]]
-
+[node name="Fx_fry" parent="." instance=ExtResource("ext_8")]
 position = Vector3(20.0, 0, 8.0)
 
 [node name="L6" type="Label3D" parent="."]
@@ -135,8 +127,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_9")]]
-
+[node name="Fx_comet" parent="." instance=ExtResource("ext_9")]
 position = Vector3(28.0, 0, 8.0)
 
 [node name="L7" type="Label3D" parent="."]
@@ -147,8 +138,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_10")]]
-
+[node name="Fx_steam" parent="." instance=ExtResource("ext_10")]
 position = Vector3(-28.0, 0, 0.0)
 
 [node name="L8" type="Label3D" parent="."]
@@ -159,8 +149,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_11")]]
-
+[node name="Fx_acid_pool" parent="." instance=ExtResource("ext_11")]
 position = Vector3(-20.0, 0, 0.0)
 
 [node name="L9" type="Label3D" parent="."]
@@ -171,8 +160,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_12")]]
-
+[node name="Fx_acid_cloud" parent="." instance=ExtResource("ext_12")]
 position = Vector3(-12.0, 0, 0.0)
 
 [node name="L10" type="Label3D" parent="."]
@@ -183,8 +171,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_13")]]
-
+[node name="Fx_gas" parent="." instance=ExtResource("ext_13")]
 position = Vector3(-4.0, 0, 0.0)
 
 [node name="L11" type="Label3D" parent="."]
@@ -195,8 +182,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_14")]]
-
+[node name="Fx_jelly" parent="." instance=ExtResource("ext_14")]
 position = Vector3(4.0, 0, 0.0)
 
 [node name="L12" type="Label3D" parent="."]
@@ -207,8 +193,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_15")]]
-
+[node name="Fx_burning_fluff" parent="." instance=ExtResource("ext_15")]
 position = Vector3(12.0, 0, 0.0)
 
 [node name="L13" type="Label3D" parent="."]
@@ -219,8 +204,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_16")]]
-
+[node name="Fx_radiation" parent="." instance=ExtResource("ext_16")]
 position = Vector3(20.0, 0, 0.0)
 
 [node name="L14" type="Label3D" parent="."]
@@ -231,8 +215,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_17")]]
-
+[node name="Fx_teleport" parent="." instance=ExtResource("ext_17")]
 position = Vector3(28.0, 0, 0.0)
 
 [node name="L15" type="Label3D" parent="."]
@@ -243,8 +226,7 @@ font_size = 48
 outline_size = 10
 billboard = 1
 
-[node name="Showcase" parent="." instance=ExtResource("ext_18")]]
-
+[node name="Fx_time_dilation" parent="." instance=ExtResource("ext_18")]
 position = Vector3(-28.0, 0, -8.0)
 
 [node name="L16" type="Label3D" parent="."]
@@ -254,4 +236,3 @@ modulate = Color(0.75, 0.8, 0.85, 1)
 font_size = 48
 outline_size = 10
 billboard = 1
-

@@ -279,7 +279,6 @@
   <!-- HUD -->
   <text x="45" y="62" font-family="Arial,sans-serif" font-size="18" fill="#3f5c45" letter-spacing="2">51°23'N 30°06'E · СЕКТОР Д-2</text>
   <text x="955" y="62" text-anchor="end" font-family="Arial,sans-serif" font-size="18" fill="#7c8a7a" letter-spacing="2">ВЫБРОС: 00:47
-    &lt;animate attributeName="opacity" values="1;1;0.25;1;1" keyTimes="0;0.82;0.85;0.88;1" dur="4s" repeatCount="indefinite"/&gt;
   </text>
   <line x1="40" y1="110" x2="150" y2="110" stroke="#233023" stroke-width="2"/>
   <line x1="850" y1="110" x2="960" y2="110" stroke="#233023" stroke-width="2"/>
@@ -301,8 +300,8 @@
     <text x="513" y="903" font-size="84" letter-spacing="20" fill="#000" opacity="0.55">STALKER</text>
     <text x="510" y="900" font-size="84" letter-spacing="20" fill="#ded9c9">STALKER</text>
     <text x="523" y="961" font-size="52" letter-spacing="40" fill="#0e3a20" filter="url(#soft)">REVERT
-      &lt;animate attributeName="opacity" values="0.5;0.9;0.5" dur="4s" repeatCount="indefinite"/&gt;
     </text>
     <text x="520" y="958" font-size="52" letter-spacing="40" fill="#52ff8a" filter="url(#g)">REVERT</text>
   </g>
 </svg>
+

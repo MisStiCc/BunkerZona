@@ -1,3 +1,4 @@
+
 ; Engine configuration file.
 ; It's best edited using the editor UI and not directly,
 ; since the parameters that go here are not all obvious.
@@ -10,22 +11,39 @@ config_version=5
 
 [application]
 
-config/name="StalkerRevert"
+config/name="Бункер: Зона"
+config/version="0.31.1"
+config/version_stamp="v0.31.1 · «Бункер: Зона» · 25.10.26"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
+
 GameManager="*res://core/game_manager.gd"
 Signals="*res://core/signals.gd"
 Enums="*res://core/enums.gd"
 Loc="*res://core/localization.gd"
+Prog="*res://core/progression.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/GodotGetImage/plugin.cfg")
 
 [display]
 
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=false
+pointing/emulate_mouse_from_touch=true
 
 [input]
 
@@ -66,5 +84,9 @@ camera_right={
 
 [rendering]
 
-rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_3d=2
+anti_aliasing/quality/msaa_3d.mobile=1
+textures/default_filters/anisotropic_filtering_level=4
+
+

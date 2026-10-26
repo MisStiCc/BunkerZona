@@ -10,4 +10,3 @@ editable_children = true
 
 [node name="Model" parent="." instance=ExtResource("3_model")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-

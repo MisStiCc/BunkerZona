@@ -15,7 +15,7 @@ class_name SurvivalData
 # Награда за пройденные волны: base x N + growth x N x (N+1).
 # N=10: 1440, N=20: 3680, N=30: 6720, N=50: 15200 биомассы (плюс боевой доход)
 const REWARD_PER_WAVE_BASE: float = 100.0
-const REWARD_PER_WAVE_GROWTH: float = 4.0
+const REWARD_PER_WAVE_GROWTH: float = 2.0
 
 # Потолки, чтобы ранние волны не были пустыми, а поздние - не рвали производительность
 const MAX_COUNT_PER_WAVE: int = 28
@@ -23,6 +23,11 @@ const MAX_MASTER_PERCENT: int = 30
 const MAX_VETERAN_PERCENT: int = 55
 const MAX_SPEED_MULT: float = 1.15
 const MIN_WAVE_BREAK: float = 30.0
+
+# Логика победы (v0.21.0 «ЛИГА ВОЛН»): пережил 30+ волн - ПОБЕДА забега,
+# независимо от волны, на которой Зона пала. До порога гибель Зоны
+# у Монолита остаётся поражением.
+const VICTORY_WAVE: int = 30
 
 # ==================== ФАЗА ЛЕГЕНДЫ (волны 31+) ====================
 # Всё ниже 31-й не меняется. Давление растёт составом/статами/модификаторами,

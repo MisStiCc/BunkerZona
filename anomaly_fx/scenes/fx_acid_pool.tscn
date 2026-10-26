@@ -64,4 +64,3 @@ light_energy = 1.6
 omni_range = 7.0
 script = ExtResource("ext_3")
 position = Vector3(0, 0.6, 0)
-

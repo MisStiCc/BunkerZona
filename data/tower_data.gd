@@ -70,7 +70,7 @@ const STAR_CONDITIONS := {
 	},
 	"rich": {
 		"name": "Богатый улов",
-		"desc": "Заработать 1500 биомассы за забег"
+		"desc": "Заработать норму биомассы за забег"
 	}
 }
 
@@ -78,6 +78,10 @@ const STAR_CONDITIONS := {
 # Выбор детерминированный по номеру этажа - условия меняются от этажа к этажу.
 const EASY_POOL := ["no_steal", "hunter75", "budget8", "no_steal", "budget4"]
 const HARD_POOL := ["no_pulse", "hunter90", "rich", "hunter90", "no_pulse", "rich"]
+
+# «Богатый улов»: порог = доля от ПОТОЛКА дохода этажа (волны x сталкеры x
+# средний чек рангового микса). 0.73 - по решению игрока (было предложение 85%).
+const RICH_FRACTION: float = 0.73
 
 # ==================== НАГРАДЫ ====================
 const REWARD_BASE: float = 120.0          # биомасса: база + за этаж
@@ -90,6 +94,33 @@ const KEEPER_STAT_MULT: float = 1.15
 const KEEPER_COUNT_PCT: float = 0.15
 const STAR_ROLL_BONUS: int = 1            # +1 крутка за звезду сверх первой
 
+# ==================== СТРАЖИ (25/50/75/100) ====================
+# Именные боссы четвертей башни ПОВЕРХ обычных Прорывов/Хранителей.
+# stat_extra - прибавка к множителю статов этажа; count_pct - прибавка к числу
+# сталкеров; elite_pct - доля ЭЛИТЫ в волнах (мастера x2.4 HP, метка «ЭЛИТА»).
+# Награда Стража: биомасса умножается на WARDEN_REWARD_MULT (поверх Прорыва/
+# Хранителя) и +2 аномальные крутки. Условия звёзд не меняются.
+const WARDENS := {
+	25: {
+		"name": "Ткач ржавых троп", "desc": "Четверть пути. Волну ведут те, кто выжил в первых ярусах.",
+		"stat_extra": 1.10, "count_pct": 0.10, "elite_pct": 0.25,
+	},
+	50: {
+		"name": "Хозяин полуденной тени", "desc": "Экватор. Страж собирает лучших: каждый третий - элита.",
+		"stat_extra": 1.12, "count_pct": 0.12, "elite_pct": 0.35,
+	},
+	75: {
+		"name": "Диктор Рубежа", "desc": "Рубеж поёт свою песню. Диктор считает всех, кто вошёл и не вышел.",
+		"stat_extra": 1.15, "count_pct": 0.15, "elite_pct": 0.45,
+	},
+	100: {
+		"name": "Голос Монолита", "desc": "Последний этаж. Здесь говорит сам Монолит - голосом своих слуг.",
+		"stat_extra": 1.18, "count_pct": 0.20, "elite_pct": 0.55,
+	},
+}
+const WARDEN_REWARD_MULT: float = 2.0
+const WARDEN_ANOMALY_ROLLS: int = 2
+
 
 static func get_tier(floor_num: int) -> Dictionary:
 	var f: int = clampi(floor_num, 1, TOTAL_FLOORS)
@@ -99,6 +130,12 @@ static func get_tier(floor_num: int) -> Dictionary:
 
 
 ## Тип этажа: "keeper" (каждый 10-й), "break" (каждый 5-й), "normal"
+## Страж четверти башни (25/50/75/100) - именной босс поверх Прорывов/Хранителей
+static func get_warden(floor_num: int) -> Variant:
+	var f: int = clampi(floor_num, 1, TOTAL_FLOORS)
+	return WARDENS.get(f)
+
+
 static func get_floor_type(floor_num: int) -> String:
 	var f: int = clampi(floor_num, 1, TOTAL_FLOORS)
 	if f % 10 == 0:
@@ -118,6 +155,27 @@ static func get_star_conditions(floor_num: int) -> Array:
 	return [easy, hard]
 
 
+## Порог «Богатого улова» для этажа: доля RICH_FRACTION от потолка дохода.
+## Потолок = волны x (сталкеров на волну + 2) x средний чек рангов (16/30/60).
+## Нижняя граница 150, округление до десятков - для читаемости в HUD.
+static func rich_threshold(floor_num: int) -> int:
+	var tier := get_tier(floor_num)
+	var waves: int = int(tier["waves"])
+	var count: int = int(tier["count"]) + (1 if floor_num % 10 >= 5 else 0)
+	var mix: Array = tier["mix"]
+	var avg: float = (float(mix[0]) * 16.0 + float(mix[1]) * 30.0 + float(mix[2]) * 60.0) / 100.0
+	var ceiling: float = float(waves * (count + 2)) * avg
+	return maxi(150, roundi(ceiling * RICH_FRACTION / 10.0) * 10)
+
+
+## Единый текст условия с реальными числами (тултипы лаборатории, HUD).
+static func condition_text(cond_id: String, floor_num: int) -> String:
+	if cond_id == "rich":
+		return "Заработать %d биомассы за забег" % rich_threshold(floor_num)
+	var c: Dictionary = STAR_CONDITIONS.get(cond_id, {})
+	return str(c.get("desc", ""))
+
+
 ## Награда за этаж: биомасса + крутки обеих гач (без учёта звёзд)
 static func get_floor_rewards(floor_num: int) -> Dictionary:
 	var f: int = clampi(floor_num, 1, TOTAL_FLOORS)
@@ -127,6 +185,9 @@ static func get_floor_rewards(floor_num: int) -> Dictionary:
 		"keeper": mult = KEEPER_REWARD_MULT
 		"break": mult = BREAK_REWARD_MULT
 
+	if WARDENS.has(f):
+		mult *= WARDEN_REWARD_MULT
+
 	var biomass: float = (REWARD_BASE + REWARD_PER_FLOOR * f) * mult
 	var mutant_rolls := roundi((ROLLS_BASE + float(f) / 20.0) * mult)
 	# Аномалийные крутки: на Прорывах и Хранителях щедрее
@@ -135,6 +196,8 @@ static func get_floor_rewards(floor_num: int) -> Dictionary:
 		"keeper": anomaly_rolls = 3
 		"break": anomaly_rolls = 2
 		_: anomaly_rolls = 1 if f % 3 == 0 else 0
+	if WARDENS.has(f):
+		anomaly_rolls += WARDEN_ANOMALY_ROLLS
 	return {"biomass": biomass, "mutant_rolls": mutant_rolls, "anomaly_rolls": anomaly_rolls}
 
 
@@ -160,13 +223,24 @@ static func get_floor_params(floor_num: int) -> Dictionary:
 			title = "ПРОРЫВ: %d-й этаж" % f
 			stat *= BREAK_STAT_MULT
 
+	# Страж четверти: имя поверх типа этажа, свои статы/численность
+	var warden = get_warden(f)
+	var warden_name := ""
+	if warden != null:
+		warden_name = str(warden["name"])
+		title = "СТРАЖ: %s" % warden_name
+		stat *= float(warden["stat_extra"])
+		count = roundi(count * (1.0 + float(warden["count_pct"])))
+
 	return {
 		"level": f,
 		"chapter_title": String(tier["name"]),
 		"chapter_desc": "",
 		"title": title,
-		"desc": "",
-		"is_boss": type == "keeper",
+		"desc": str(warden["desc"]) if warden_name != "" else "",
+		"is_boss": type == "keeper" or warden_name != "",
+		"warden": warden_name,
+		"elite_pct": float(warden["elite_pct"]) if warden_name != "" else 0.0,
 		"waves": waves,
 		"count_min": count,
 		"count_max": count + 2,
@@ -190,13 +264,19 @@ static func evaluate_stars(floor_num: int, result: Dictionary) -> int:
 	var stars := 1
 	var conditions := get_star_conditions(floor_num)
 
+	# ГЛАВНЫЙ ФИКС (fix6): вся статистика забега лежит в result["statistics"]
+	# (zone_controller._collect_run_result кладёт её туда, а game_manager читает
+	# именно оттуда). Раньше поля читали с верхнего уровня - их там НЕТ:
+	# rich видел всегда 0.0 (звезда недостижима), no_steal/budget проходили всегда.
+	# Фолбэк на верхний уровень оставлен для совместимости со старыми тестами.
+	var stats: Dictionary = result.get("statistics", {})
 	var total_stalkers := int(result.get("stalkers_total", 0))
 	# Убитые и всего - из одного источника (SpawnManager), иначе проценты врут
-	var killed := int(result.get("stalkers_killed_sm", result.get("stalkers_killed", 0)))
-	var stolen := int(result.get("artifacts_stolen", 0))
-	var mutants_used := int(result.get("mutants_spawned", 0))
+	var killed := int(result.get("stalkers_killed_sm", stats.get("stalkers_killed", 0)))
+	var stolen := int(stats.get("artifacts_stolen", result.get("artifacts_stolen", 0)))
+	var mutants_used := int(stats.get("mutants_created", result.get("mutants_spawned", 0)))
 	var pulses := int(result.get("pulses_used", 0))
-	var earned := float(result.get("biomass_earned", 0.0))
+	var earned := float(stats.get("biomass_earned", result.get("biomass_earned", 0.0)))
 
 	for cond in conditions:
 		var ok := false
@@ -214,7 +294,7 @@ static func evaluate_stars(floor_num: int, result: Dictionary) -> int:
 			"budget8":
 				ok = mutants_used <= 8
 			"rich":
-				ok = earned >= 1500.0
+				ok = earned >= float(rich_threshold(floor_num))
 		if ok:
 			stars += 1
 		else:

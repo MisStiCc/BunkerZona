@@ -15,7 +15,7 @@ signal critical_biomass_reached(percent: float)
         current_energy = min(current_energy, max_energy)
         energy_changed.emit(current_energy, max_energy)
 
-@export var max_biomass: float = 999999.0:
+@export var max_biomass: float = 5000.0:
     set(value):
         max_biomass = value
         current_biomass = min(current_biomass, max_biomass)

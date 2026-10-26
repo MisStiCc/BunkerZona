@@ -353,7 +353,6 @@
   <!-- HUD -->
   <text x="60" y="70" font-family="Arial,sans-serif" font-size="20" fill="#5d7f62" letter-spacing="2">51°23'N 30°06'E · СЕКТОР Д-2</text>
   <text x="1860" y="70" text-anchor="end" font-family="Arial,sans-serif" font-size="20" fill="#9db296" letter-spacing="2">ВЫБРОС: 00:47
-    &lt;animate attributeName="opacity" values="1;1;0.25;1;1" keyTimes="0;0.82;0.85;0.88;1" dur="4s" repeatCount="indefinite"/&gt;
   </text>
   <line x1="60" y1="96" x2="360" y2="96" stroke="#31452f" stroke-width="2"/>
   <line x1="1560" y1="96" x2="1860" y2="96" stroke="#31452f" stroke-width="2"/>
@@ -375,10 +374,10 @@
     <text x="968" y="1004" font-size="118" letter-spacing="30" fill="#000" opacity="0.4">STALKER</text>
     <text x="960" y="998" font-size="118" letter-spacing="30" fill="#e8e3d3">STALKER</text>
     <text x="970" y="1064" font-size="60" letter-spacing="56" fill="#1a5230" filter="url(#soft)">REVERT
-      &lt;animate attributeName="opacity" values="0.5;0.9;0.5" dur="4s" repeatCount="indefinite"/&gt;
     </text>
     <text x="964" y="1060" font-size="60" letter-spacing="56" fill="#5cff92" filter="url(#g)">REVERT</text>
     <use href="#miniTre" transform="translate(640,1046) scale(0.55)"/>
     <use href="#miniTre" transform="translate(1280,1046) scale(0.55)"/>
   </g>
 </svg>
+

@@ -18,6 +18,31 @@ class_name SaveData
 @export var tower_floor: int = 1
 @export var tower_stars: Dictionary = {}
 
+# Профиль «Сканер личности»: выбранные аватар/рамка/титул и закреплённый
+# статус (id из ProfileData). Разблокировки НЕ хранятся - считаются от
+# прогресса; пустой profile_status = авто-статус по действиям в Зоне.
+@export var profile_avatar: String = "zombie"
+@export var profile_frame: String = "steel"
+@export var profile_title: String = "green"
+@export var profile_status: String = ""
+# Кастомное имя сталкера; пусто = автоматом «СТАЛКЕР-XX» по номеру забега
+@export var profile_name: String = ""
+
+
+
+# Прогрессия: уровень/опыт, задачи, трек сундуков, онбординг (Prog)
+@export var prog_profile: Dictionary = {}
+@export var prog_quests: Dictionary = {}
+@export var prog_track: Dictionary = {}
+@export var prog_onboard: Dictionary = {}
+
+# Календарь входа (Prog): {"last": "YYYY-MM-DD", "claimed": 0..7, "cycles": 0, "popup": ""}
+@export var prog_calendar: Dictionary = {}
+# Медали Зоны: {"claimed": {id: true}}
+@export var prog_medals: Dictionary = {}
+# Пожизненные счётчики медалей: {"runs": N, "wins": N, ...}
+@export var prog_counts: Dictionary = {}
+
 
 func _init():
     lab_data = LabData.new()

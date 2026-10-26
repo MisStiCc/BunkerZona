@@ -65,4 +65,3 @@ light_color = Color(0.7, 0.78, 0.85, 1)
 light_energy = 0.8
 omni_range = 5.0
 position = Vector3(0, 0.8, 0)
-

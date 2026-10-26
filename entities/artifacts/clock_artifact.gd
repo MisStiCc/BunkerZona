@@ -11,4 +11,3 @@ func _ready():
 func _collect_hook(collector: Node):
 	if collector.has_method("apply_time_slow"):
 		collector.apply_time_slow(0.5)
-    

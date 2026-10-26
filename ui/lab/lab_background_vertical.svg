@@ -199,7 +199,6 @@
     <text x="511" y="1019" font-size="98" letter-spacing="22" fill="#000" opacity="0.65">STALKER</text>
     <text x="511" y="1015" font-size="98" letter-spacing="22" fill="#ded9c9">STALKER</text>
     <text x="515" y="1108" font-size="94" letter-spacing="30" fill="#1c8a45" filter="url(#fBlur12)">REVERT
-      &lt;animate attributeName="opacity" values="0.5;0.9;0.5" dur="4s" repeatCount="indefinite"/&gt;
     </text>
     <text x="515" y="1108" font-size="94" letter-spacing="30" fill="#5cff8a" filter="url(#fGlow)">REVERT</text>
     <use href="#miniTre" transform="translate(300,1148) scale(0.55)" opacity="0.8"/>
@@ -207,3 +206,4 @@
     <text x="506" y="1160" font-family="Arial, sans-serif" font-weight="bold" font-size="25" letter-spacing="12" fill="#7c8a7a">ЗОНА — ЭТО ТЫ</text>
   </g>
 </svg>
+

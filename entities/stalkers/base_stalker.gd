@@ -194,6 +194,12 @@ func _attack_target(target: Node):
 
 func _on_died(_source: Node):
 	"""Вызывается при смерти."""
+	# v0.17.1: труп мгновенно выходит из группы целей мутантов и удаляется
+	# гарантированно (call_deferred): при сбое в хвосте логики труп раньше
+	# оставался навсегда - толпа мутантов собиралась вокруг него, а выброс
+	# его больше не доставал (is_alive() уже false).
+	remove_from_group("stalkers")
+	call_deferred("queue_free")
 	# Носимый артефакт (поднятый с убитой аномалии) выпадает на месте смерти.
 	# Не нёс - остаётся только биомасса.
 	if carry_component and carry_component.has_artifact():
@@ -328,6 +334,21 @@ func apply_campaign_scaling(hp_mult: float, damage_mult: float, speed_mult: floa
 		health_component.current_health = health
 	if navigation_component:
 		navigation_component.move_speed = speed
+
+
+func promote_elite():
+	"""Элита Стражей башни (v0.27.0): x2.4 HP, x1.3 урон, крупнее, метка «ЭЛИТА».
+	Вызывается SpawnManager'ом ПОСЛЕ add_child - поверх масштаба кампании."""
+	max_health = max_health * 2.4
+	health = max_health
+	damage = damage * 1.3
+	if health_component:
+		health_component.max_health = max_health
+		health_component.current_health = health
+	scale = scale * 1.15
+	if label:
+		label.text = "ЭЛИТА"
+		label.modulate = Color(1.0, 0.72, 0.25)
 
 
 func take_damage(amount: float, source: Node = null):

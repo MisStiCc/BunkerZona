@@ -58,4 +58,3 @@ local_coords = false
 process_material = SubResource("sub_7")
 draw_pass_1 = SubResource("sub_8")
 visibility_aabb = AABB(-6, -6, -6, 12, 12, 12)
-

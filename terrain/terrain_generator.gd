@@ -1,3 +1,4 @@
+
 # terrain/terrain_generator.gd
 extends Node3D
 class_name TerrainGenerator
@@ -60,6 +61,9 @@ func _ready():
 	# print("TerrainGenerator: камера найдена = ", camera != null)
 
 	_update_chunks()
+
+	# Небо: HDR-панорама (раньше _apply_sky нигде не вызывался - фон был плоским)
+	_apply_sky("res://assets/sky/sky_storm_gloomy_4k.hdr", 0.8)
 
 	# print("TerrainGenerator: _ready() DONE, загружено чанков: ", loaded_chunks.size())
 

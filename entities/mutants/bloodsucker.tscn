@@ -13,4 +13,3 @@ visible = false
 
 [node name="Model" parent="." instance=ExtResource("3")]
 transform = Transform3D(-1.1, 0, 0, 0, 1.1, 0, 0, 0, -1.1, 0, 0, 0)
-

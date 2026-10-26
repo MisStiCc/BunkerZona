@@ -54,11 +54,42 @@ var campaign_level_reached: int = 1
 
 # Очки утилизации копий (10 очков = 1 крутка артефактов)
 @export var recycle_points: int = 0
+## Очки сезона (v0.19.0 «БАЗАР»): победы арены (+5 вызов / +10 оборона),
+## сезонные задачи и медали, пережитые выбросы (+3). Тратятся во вкладке
+## СЕЗОН магазина, обмениваются в ОБМЕННИКЕ (артефакты выбросов, биомасса).
+@export var season_points: int = 0
+
+# АРЕНА ВЫЖИВАНИЯ: победы в вызовах / удержанные обороны + защитный отряд
+# (мутанты, которые держат арену, пока игрок в вылазке)
+@export var arena_wins_challenge: int = 0
+@export var arena_wins_defense: int = 0
+@export var arena_defense_squad: Array[String] = []
+
+# СЕЗОННЫЕ НАГРАДЫ: забранные медали и сезонные задачи (индекс -> true)
+@export var arena_medals_claimed: Dictionary = {}
+@export var arena_season_tasks_claimed: Dictionary = {}
+
+# Эксклюзивные аномалии Чёрных ящиков (типы из GachaData.EXCLUSIVE_ANOMALIES)
+@export var exclusive_anomalies: Array[String] = []
+
+# ПОЛЕВОЙ НАБОР: какие виды берём в бой (макс 9 видов на каждый список).
+# Пусто = автосбор из открытых при входе в бой (старые сейвы совместимы).
+# Выбор - на кнопках HUD до старта забега; после старта доступны только взятые.
+@export var loadout_anomalies: Array[String] = []
+@export var loadout_mutants: Array[String] = []
 
 # КРУТКИ ГАЧИ. DEV: мутантные - миллион по запросу игрока (смотреть шансы),
 # аномалийные крутки - серьёзная валюта (30-й уровень/30 волн = +10), дефолт 0.
 @export var gacha_rolls_mutants: int = 1000000
 @export var gacha_rolls_artifacts: int = 0
+# Супер-гача: прогресс бонуса обычных круток и доступные супер-крутки
+# (каждые GachaData.SUPER_PITY обычных призывов = +1 супер-крутка).
+@export var super_pull_progress: int = 0
+@export var super_pulls: int = 0
+# Приз на выбор: прогресс супер-призывов (каждые GachaData.SUPER_CHOICE_PITY)
+# и накопленные выборы - игрок сам указывает эксклюзив вместо рандома.
+@export var super_choice_progress: int = 0
+@export var super_choice_tokens: int = 0
 
 # Хранилище артефактов
 @export var artifacts_common: Array[Dictionary] = []
@@ -435,6 +466,35 @@ static func stars_text(stars: int) -> String:
     return text
 
 
+# ==================== ПОЛЕВОЙ НАБОР ====================
+
+const MAX_LOADOUT: int = 9
+
+
+func loadout_list(kind: String) -> Array[String]:
+    return loadout_anomalies if kind == "anomaly" else loadout_mutants
+
+
+func loadout_count(kind: String) -> int:
+    return loadout_list(kind).size()
+
+
+func in_loadout(kind: String, type: String) -> bool:
+    return loadout_list(kind).has(type)
+
+
+## Взять/снять вид из набора. "added" / "removed" / "full" (лимит 9)
+func toggle_loadout(kind: String, type: String) -> String:
+    var list := loadout_list(kind)
+    if list.has(type):
+        list.erase(type)
+        return "removed"
+    if list.size() >= MAX_LOADOUT:
+        return "full"
+    list.append(type)
+    return "added"
+
+
 # ==================== СБРОС ====================
 
 func reset():
@@ -461,3 +521,11 @@ func reset():
     mutant_star_progress.clear()
     star_feed_progress.clear()
     recycle_points = 0
+    season_points = 0
+    super_pull_progress = 0
+    super_pulls = 0
+    super_choice_progress = 0
+    super_choice_tokens = 0
+    exclusive_anomalies.clear()
+    loadout_anomalies.clear()
+    loadout_mutants.clear()

@@ -22,3 +22,5 @@ for path in glob.glob(os.path.join(SRC, "*.png")):
     n += 1
     print("gray:", name)
 print("done:", n)
+
+

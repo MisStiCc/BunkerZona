@@ -255,16 +255,16 @@ theme_override_constants/separation = 8
 
 [node name="MenuButton" type="Button" parent="VBox/BottomButtons" unique_id=1920276815]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 62)
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "ГЛАВНОЕ МЕНЮ"
 
 [node name="SettingsButton" type="Button" parent="VBox/BottomButtons" unique_id=414624332]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 62)
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "НАСТРОЙКИ"
 
 [node name="SettingsScreen" type="Control" parent="."]
@@ -355,16 +355,16 @@ text = "НАЗАД"
 
 [node name="ShopButton" type="Button" parent="VBox/BottomButtons" unique_id=445293369]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 62)
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "МАГАЗИН"
 
 [node name="SaveButton" type="Button" parent="VBox/BottomButtons" unique_id=445293368]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 62)
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "СОХРАНИТЬ"
 
 [node name="ShopPanel" type="Control" parent="."]
@@ -421,31 +421,31 @@ horizontal_alignment = 1
 [node name="MutantsHeader" type="Label" parent="ShopPanel/Panel"]
 layout_mode = 0
 offset_left = 20.0
-offset_top = 68.0
+offset_top = 92.0
 offset_right = 540.0
-offset_bottom = 88.0
+offset_bottom = 112.0
 text = "МУТАНТЫ (вступят в бой в начале забега)"
 
 [node name="MutantGrid" type="GridContainer" parent="ShopPanel/Panel"]
 layout_mode = 0
 offset_left = 20.0
-offset_top = 92.0
+offset_top = 116.0
 offset_right = 540.0
-offset_bottom = 230.0
+offset_bottom = 356.0
 columns = 3
 
 [node name="ArtifactsHeader" type="Label" parent="ShopPanel/Panel"]
 layout_mode = 0
 offset_left = 20.0
-offset_top = 240.0
+offset_top = 92.0
 offset_right = 540.0
-offset_bottom = 260.0
+offset_bottom = 112.0
 text = "АРТЕФАКТЫ (приманка у монолита в забеге)"
 
 [node name="ArtifactGrid" type="GridContainer" parent="ShopPanel/Panel"]
 layout_mode = 0
 offset_left = 20.0
-offset_top = 264.0
+offset_top = 116.0
 offset_right = 540.0
 offset_bottom = 356.0
 columns = 2
@@ -457,6 +457,67 @@ offset_top = 366.0
 offset_right = 360.0
 offset_bottom = 401.0
 text = "НАЗАД"
+
+[node name="ShopSP" type="Label" parent="ShopPanel/Panel"]
+visible = false
+layout_mode = 0
+offset_left = 0.0
+offset_top = 36.0
+offset_right = 560.0
+offset_bottom = 56.0
+text = "Очки сезона (СП): 0"
+horizontal_alignment = 1
+
+[node name="ShopTabs" type="TabBar" parent="ShopPanel/Panel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 60.0
+offset_right = 544.0
+offset_bottom = 84.0
+
+[node name="SeasonHeader" type="Label" parent="ShopPanel/Panel"]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 92.0
+offset_right = 540.0
+offset_bottom = 112.0
+text = "СЕЗОН: эксклюзивы Чёрных ящиков, крутки, биомасса, копии"
+
+[node name="SeasonScroll" type="ScrollContainer" parent="ShopPanel/Panel"]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 116.0
+offset_right = 540.0
+offset_bottom = 356.0
+
+[node name="SeasonGrid" type="GridContainer" parent="ShopPanel/Panel/SeasonScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 2
+
+[node name="ExchangeHeader" type="Label" parent="ShopPanel/Panel"]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 92.0
+offset_right = 540.0
+offset_bottom = 112.0
+text = "ОБМЕННИК: артефакты выбросов и биомасса -> очки сезона"
+
+[node name="ExchangeScroll" type="ScrollContainer" parent="ShopPanel/Panel"]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 116.0
+offset_right = 540.0
+offset_bottom = 356.0
+
+[node name="ExchangeBox" type="VBoxContainer" parent="ShopPanel/Panel/ExchangeScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="UpgradePanel" type="Control" parent="." unique_id=1648802834]
 visible = false
@@ -674,5 +735,3 @@ text = "Собрано артефактов:"
 [node name="ContinueButton" type="Button" parent="ResultPanel/Panel/Margin/VBox" unique_id=1878362002]
 layout_mode = 2
 text = "ПРОДОЛЖИТЬ"
-
-

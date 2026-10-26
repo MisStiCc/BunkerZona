@@ -57,7 +57,7 @@ grow_vertical = 2
 
 [node name="Title" type="Label" parent="VBox" unique_id=1129240360]
 layout_mode = 2
-text = "STALKER REVERT"
+text = "БУНКЕР: ЗОНА"
 horizontal_alignment = 1
 
 [node name="Buttons" type="VBoxContainer" parent="VBox" unique_id=505532642]

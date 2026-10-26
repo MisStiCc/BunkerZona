@@ -119,4 +119,3 @@ func should_attack(_threat: Node) -> bool:
 
 func prefers_artifacts() -> bool:
     return true
-
