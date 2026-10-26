@@ -416,6 +416,23 @@ func _showcase_items() -> Array:
 
 # ==================== ПОЛОСЫ ПРИЗЫВА ====================
 
+# Арт-пак карточек (подготовщик, задача 8): ui/gacha/cards/. Все опциональны:
+# нет файла - текстовая заглушка (буква), как в mode_ui/ceremony.
+const CARD_ART_DIR := "res://ui/gacha/cards/"
+# Редкость игры -> ореол пака (ex - фиолетовый эпик по цвету сцены)
+const GLOW_BY_RARITY := {
+        "common": "common", "uncommon": "common", "rare": "rare",
+        "legendary": "legendary", "ex": "epic",
+}
+
+
+func _card_art(key: String) -> Texture2D:
+        var path := CARD_ART_DIR + key + ".png"
+        if ResourceLoader.exists(path):
+                return load(path) as Texture2D
+        return null
+
+
 func _make_strip(kind: String, type: String, rar: String, stars: int, status: String = "") -> Control:
         """Карточная полоса призыва: свечение редкости, тег редкости, буква, звёзды, имя"""
         var is_mut := kind == "mut"
@@ -479,16 +496,78 @@ func _make_strip(kind: String, type: String, rar: String, stars: int, status: St
         tag.add_theme_stylebox_override("normal", tag_sb)
         v.add_child(tag)
 
-        # Большая буква
-        var letter := Label.new()
-        letter.text = Loc.type_name(type).substr(0, 1)
-        letter.add_theme_font_override("font", BunkerUI.font_title())
-        letter.add_theme_font_size_override("font_size", 84)
-        letter.add_theme_color_override("font_color", Color(col, 0.5 if owned else 0.22))
-        letter.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(letter)
+        # Большая иконка карточки (пак gacha_cards): ореол редкости + арт типа,
+        # серый для невладельца; нет файла - прежняя буква-заглушка
+        var icon_slot := Control.new()
+        icon_slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        icon_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        v.add_child(icon_slot)
+
+        var glow := _card_art("glow_" + str(GLOW_BY_RARITY.get(rar, "common")))
+        if glow:
+                var glow_rect := TextureRect.new()
+                glow_rect.texture = glow
+                glow_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+                glow_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                glow_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                glow_rect.modulate = Color(1, 1, 1, 0.9 if owned else 0.45)
+                glow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                icon_slot.add_child(glow_rect)
+
+        var icon_path := GachaData.card_icon_path(type, is_mut, not owned)
+        if ResourceLoader.exists(icon_path):
+                var icon := TextureRect.new()
+                icon.texture = load(icon_path)
+                icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+                icon.offset_left = 18
+                icon.offset_right = -18
+                icon.offset_top = 4
+                icon.offset_bottom = -4
+                icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                icon_slot.add_child(icon)
+        else:
+                var letter := Label.new()
+                letter.text = Loc.type_name(type).substr(0, 1)
+                letter.add_theme_font_override("font", BunkerUI.font_title())
+                letter.add_theme_font_size_override("font_size", 84)
+                letter.add_theme_color_override("font_color", Color(col, 0.5 if owned else 0.22))
+                letter.set_anchors_preset(Control.PRESET_FULL_RECT)
+                letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+                letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                icon_slot.add_child(letter)
+
+        # Вспышка вскрытия за контентом дропа-легендарки/эксклюзива
+        if status != "" and (rar == "legendary" or rar == "ex"):
+                var burst := _card_art("burst_legendary" if rar == "legendary" else "burst_epic")
+                if burst:
+                        var burst_rect := TextureRect.new()
+                        burst_rect.texture = burst
+                        burst_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+                        burst_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                        burst_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+                        burst_rect.modulate = Color(1, 1, 1, 0.55)
+                        burst_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                        strip.add_child(burst_rect)
+                        strip.move_child(burst_rect, 0)
+
+        # Лента статуса дропа (НОВЫЙ/ДУБЛЬ) поверх, уголком; текст остаётся тегом
+        if status == "new" or status == "dup":
+                var ribbon := _card_art("ribbon_new" if status == "new" else "ribbon_dup")
+                if ribbon:
+                        var rib_rect := TextureRect.new()
+                        rib_rect.texture = ribbon
+                        rib_rect.anchor_left = 1.0
+                        rib_rect.anchor_right = 1.0
+                        rib_rect.offset_left = -128.0
+                        rib_rect.offset_right = -8.0
+                        rib_rect.offset_top = 6.0
+                        rib_rect.offset_bottom = 38.0
+                        rib_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                        rib_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+                        rib_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                        strip.add_child(rib_rect)
 
         # Звёзды (для витрины — по редкости, для дропа — реальные)
         var st := Label.new()

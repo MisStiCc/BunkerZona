@@ -47,6 +47,28 @@ static var _f_body: FontFile
 static var _f_mono: FontFile
 static var _shader: Shader
 
+# ==== ОБОЛОЧКА v2 (спека design_inbox/lab_redesign): арт-пак lab_ui ====
+const LAB_ART_DIR := "res://assets/ui/lab/"
+const PANEL_FRAME_MIN: int = 28   # углы nine-patch рамки panel_frame_9patch.png
+
+
+## Рамка-арт больших панелей (болотная окантовка + золотые уголки): NinePatchRect
+## ПОВЕРХ steel-панели — центр рамки прозрачный, фон даёт steel. Нет файла - тихо.
+static func add_frame_overlay(panel: Control) -> void:
+        var tex_path := LAB_ART_DIR + "panel_frame_9patch.png"
+        if not ResourceLoader.exists(tex_path) or panel == null:
+                return
+        var frame := NinePatchRect.new()
+        frame.name = "ArtFrame"
+        frame.texture = load(tex_path)
+        frame.patch_margin_left = PANEL_FRAME_MIN
+        frame.patch_margin_top = PANEL_FRAME_MIN
+        frame.patch_margin_right = PANEL_FRAME_MIN
+        frame.patch_margin_bottom = PANEL_FRAME_MIN
+        frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+        frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        panel.add_child(frame)
+
 
 # ==================== ШРИФТЫ ====================
 

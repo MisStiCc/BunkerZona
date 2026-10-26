@@ -28,14 +28,15 @@ func _ready():
     collectible_name = artifact_name
     value = artifact_value
     rarity = artifact_rarity
-    
+
     add_to_group("artifacts")
     add_to_group("artifacts_" + get_rarity_name())
-    
+
     original_y = position.y
+    _apply_model_mesh()
     _update_visual()
     _ready_hook()
-    
+
     pass # print("Артефакт создан: " + artifact_name + " (" + get_rarity_name() + ") ценность: " + str(value))
 
 
@@ -66,18 +67,74 @@ func _collect_hook(collector: Node):
 
 func _update_visual():
     var rarity_color = _get_rarity_color()
-    
+
     if mesh_instance and mesh_instance.material_override:
         mesh_instance.material_override.albedo_color = rarity_color
         mesh_instance.material_override.emission = rarity_color
-    
+
     if light:
         light.light_color = rarity_color
-    
+
     if particles and particles.process_material:
         var material = particles.process_material as ParticleProcessMaterial
         if material:
             material.color = rarity_color
+
+
+# ==================== 3D-МОДЕЛЬ АРТЕФАКТА (пак подготовщика, задача 13) ====================
+
+## Ключ модели из имени скрипта: battery_artifact.gd -> "battery" ->
+## models/artifacts/artifact_battery.glb. Нет модели - прежняя сфера сцены.
+func _model_key() -> String:
+    var script_path: String = str(get_script().resource_path)
+    var base := script_path.get_file()  # battery_artifact.gd
+    return base.trim_suffix("_artifact.gd").trim_suffix(".gd")
+
+
+## Подмена сферы на модель; редкость читается эмиссией поверх родных
+## материалов (клоны, originals не тронуты) + свет/частицы как раньше.
+func _apply_model_mesh():
+    if mesh_instance == null:
+        return
+    var key := _model_key()
+    if key.is_empty() or key == "base":
+        return
+    var path := "res://models/artifacts/artifact_%s.glb" % key
+    if not ResourceLoader.exists(path):
+        return
+    var ps := load(path) as PackedScene
+    if ps == null:
+        return
+    var inst := ps.instantiate() as Node3D
+    if inst == null:
+        return
+    var src := _find_mesh_instance(inst)
+    if src == null or src.mesh == null:
+        inst.queue_free()
+        return
+    mesh_instance.mesh = src.mesh
+    mesh_instance.material_override = null  # иначе модель зальётся одним цветом
+    var rarity_color := _get_rarity_color()
+    for i in mesh_instance.mesh.get_surface_count():
+        var mat := mesh_instance.mesh.surface_get_material(i) as StandardMaterial3D
+        if mat == null:
+            continue
+        var clone := mat.duplicate() as StandardMaterial3D
+        clone.emission_enabled = true
+        clone.emission = rarity_color
+        clone.emission_energy_multiplier = 0.35
+        mesh_instance.set_surface_override_material(i, clone)
+    inst.queue_free()
+
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+    if node is MeshInstance3D:
+        return node
+    for child in node.get_children():
+        var found := _find_mesh_instance(child)
+        if found != null:
+            return found
+    return null
 
 
 func _get_rarity_color() -> Color:

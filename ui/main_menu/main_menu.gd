@@ -48,9 +48,15 @@ func _ready():
         _maybe_show_disclaimer()
 
 func _load_cover_art():
-        """Фон меню - БУНКЕР: бункерный пультовый зал (ui/main_menu/bunker_menu.svg).
-        Заголовок рисуется кодом (штамп REVERT), поэтому текстовый Title переоформляем."""
+        """Фон меню: арт-пак lab_ui (ночная Зона, ЧАЭС на горизонте) с фолбэком
+        на бункерный зал (ui/main_menu/bunker_menu.svg). Заголовок рисуется
+        кодом (штамп REVERT), поэтому текстовый Title переоформляем."""
+        const PACK_PATH := "res://assets/ui/lab/menu_background_2k.png"
         const COVER_PATH := "res://ui/main_menu/bunker_menu.svg"
+        if ResourceLoader.exists(PACK_PATH):
+                cover_art.texture = load(PACK_PATH)
+                title_label.visible = false
+                return
         if ResourceLoader.exists(COVER_PATH):
                 cover_art.texture = load(COVER_PATH)
                 title_label.visible = false

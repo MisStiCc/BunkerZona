@@ -3368,6 +3368,14 @@ func _apply_bunker_style():
         """Тема и декорации БУНКЕР для лаборатории (вариант 4)."""
         BunkerUI.apply_bunker(self, true)
 
+        # Фон-арт бункера 2K (пак lab_ui, спека lab_redesign): за контентом
+        _apply_lab_background_art()
+
+        # Рамки-арт больших панелей (панель >= 60% экрана по спеке)
+        for pnl in [shop_panel, farm_panel, gallery_panel, arena_panel]:
+                if pnl:
+                        BunkerUI.add_frame_overlay(pnl)
+
         # Заголовок шапки
         var title: Label = get_node_or_null("VBox/Header/Title")
         if title:
@@ -3385,7 +3393,12 @@ func _apply_bunker_style():
         start_run_button.custom_minimum_size = Vector2(340, 62)
         BunkerUI.style_button(start_run_button, "primary", 20, true)
 
-        # Станции - стальные панели с жёлтым уровнем
+        # Станции - стальные панели с жёлтым уровнем + иконки-бейджи из пака
+        var station_icons := {
+                anomaly_station: "station_anomaly",
+                mutant_station: "station_mutant",
+                monolith_station: "station_monolith",
+        }
         for st in [anomaly_station, mutant_station, monolith_station]:
                 BunkerUI.style_button(st, "steel", 16)
                 var nm: Label = st.get_node_or_null("StationName")
@@ -3398,10 +3411,45 @@ func _apply_bunker_style():
                         lv.add_theme_font_override("font", BunkerUI.font_mono())
                         lv.add_theme_font_size_override("font_size", 14)
                         lv.add_theme_color_override("font_color", BunkerUI.HAZARD)
+                var icon_key: String = station_icons.get(st, "")
+                var icon_path := BunkerUI.LAB_ART_DIR + icon_key + ".png"
+                if icon_key != "" and ResourceLoader.exists(icon_path):
+                        var badge := TextureRect.new()
+                        badge.name = "StationBadge"
+                        badge.texture = load(icon_path)
+                        badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                        badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                        badge.anchor_left = 0.0
+                        badge.anchor_top = 0.0
+                        badge.anchor_right = 0.0
+                        badge.anchor_bottom = 0.0
+                        badge.offset_left = 8.0
+                        badge.offset_top = 8.0
+                        badge.offset_right = 52.0
+                        badge.offset_bottom = 52.0
+                        badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                        badge.modulate = Color(1, 1, 1, 0.9)
+                        st.add_child(badge)
 
         # Рядовые кнопки - сталь
         for b in [menu_button, settings_button, shop_button, save_button, artifact_storage_button]:
                 BunkerUI.style_button(b, "steel", 16)
+
+
+## Фон-арт лаборатории: 2K интерьер бункера за контентом (пак lab_ui)
+func _apply_lab_background_art():
+        const BG_PATH := "res://assets/ui/lab/lab_background_2k.png"
+        if not ResourceLoader.exists(BG_PATH):
+                return
+        var bg := TextureRect.new()
+        bg.name = "BackgroundArt"
+        bg.texture = load(BG_PATH)
+        bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+        bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+        bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        add_child(bg)
+        move_child(bg, 1)  # сразу за ColorRect-подложкой, перед всем контентом
 
 
 func _refresh_gacha_deck():
