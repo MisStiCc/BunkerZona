@@ -14,3 +14,4 @@ keystore/
 *.keystore
 *.keystore.asc
 models/bloodsucker.zip
+.zcode/
