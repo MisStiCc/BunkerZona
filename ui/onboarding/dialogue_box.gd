@@ -14,7 +14,7 @@ signal closed
 const CPS := 46.0  # скорость печати, символов в секунду
 
 const WHO_COLOR := {
-        "ПРОВОДНИК": Color("e8b93c"),
+        "ГОЛОС ЗОНЫ": Color("e8b93c"),
         "ДИСПЕТЧЕР": Color("49ff80"),
         "СТАРОЖИЛ": Color("6fc4ff"),
 }

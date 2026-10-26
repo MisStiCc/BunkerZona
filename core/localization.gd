@@ -516,7 +516,7 @@ const STRINGS := {
         "medals.done_msg": {"ru": "МЕДАЛЬ «{title}»: {what}", "en": "MEDAL «{title}»: {what}"},
 
         # ==== Брифинг Проводника (v0.27.0) ====
-        "brf.title": {"ru": "ПРОВОДНИК", "en": "THE GUIDE"},
+        "brf.title": {"ru": "ГОЛОС ЗОНЫ", "en": "VOICE OF THE ZONE"},
         "brf.go": {"ru": "ВЫСТУПАЕМ", "en": "MOVE OUT"},
         "brf.cancel": {"ru": "ОСТАТЬСЯ", "en": "STAY"},
         "brf.hint": {"ru": "коснись текста, чтобы перелистать речь", "en": "tap the text to skip the speech"},
