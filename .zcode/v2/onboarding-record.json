@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "deviceMid": "81c95c6c-813d-4658-a278-43afe86531d1",
+  "entries": [
+    {
+      "userId": "b059af83-a5f0-40e3-bd0c-e2f499ce24a8",
+      "occupation": null,
+      "interfaceMode": null,
+      "memoryEnabled": null,
+      "proactiveSuggestionsEnabled": null,
+      "completedAt": "2026-10-08T00:42:11.485Z",
+      "uploadState": "pending"
+    },
+    {
+      "userId": "616b2fe8-4b79-405d-88d7-ccf343e32cd9",
+      "occupation": "developer",
+      "interfaceMode": "coding",
+      "memoryEnabled": true,
+      "proactiveSuggestionsEnabled": false,
+      "completedAt": "2026-10-16T16:13:24.580Z",
+      "uploadState": "pending"
+    }
+  ],
+  "decisions": [
+    {
+      "userId": "fa1c3e13-af20-44e0-a1af-da83607679ed",
+      "status": "existing_local_user",
+      "reason": "existing_local_task",
+      "decidedAt": "2026-10-16T14:54:59.955Z"
+    },
+    {
+      "userId": "983e2430-87d7-442f-854d-5c96af451067",
+      "status": "existing_local_user",
+      "reason": "existing_local_task",
+      "decidedAt": "2026-10-16T15:21:59.995Z"
+    },
+    {
+      "userId": "dba8f54f-d9d5-4eb3-a81a-c55c223665c6",
+      "status": "existing_local_user",
+      "reason": "existing_local_task",
+      "decidedAt": "2026-10-16T15:34:30.111Z"
+    },
+    {
+      "userId": "859ccf40-fb4d-4ff4-b196-58509106e7c5",
+      "status": "existing_local_user",
+      "reason": "existing_local_task",
+      "decidedAt": "2026-10-16T15:40:31.482Z"
+    }
+  ]
+}

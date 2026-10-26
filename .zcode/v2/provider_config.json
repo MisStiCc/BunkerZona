@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "config": {
+    "providerOrder": [
+      "bigmodel-api"
+    ],
+    "providerConfigRules": {
+      "providerRules": [
+        {
+          "providerId": "bigmodel-api",
+          "templateId": "bigmodel-api",
+          "providerName": "BigModel Coding Plan",
+          "config": {
+            "group": "standard-personal",
+            "personalModelIds": [],
+            "modelOrder": []
+          }
+        }
+      ]
+    },
+    "modelConfigRules": {
+      "providerModelRules": [],
+      "manualProviderModelRules": []
+    }
+  }
+}

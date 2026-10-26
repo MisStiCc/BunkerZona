@@ -10,3 +10,7 @@ android/.gradle/
 .DS_Store
 *.tmp
 *.bak0280
+keystore/
+*.keystore
+*.keystore.asc
+models/bloodsucker.zip
