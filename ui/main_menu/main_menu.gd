@@ -322,6 +322,10 @@ func _build_language_button():
         _lang_button.size = Vector2(340, 36)
         _lang_button.pressed.connect(_on_language_pressed)
         panel.add_child(_lang_button)
+        # D14: настройки доступности (масштаб/дальтоник/тряска/мерцание)
+        var acc := AccessibilityControls.new()
+        acc.position = Vector2(30, 332)
+        panel.add_child(acc)
 
 
 func _on_language_pressed():

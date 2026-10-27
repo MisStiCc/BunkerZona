@@ -619,6 +619,10 @@ func _setup_save_slot_selector():
         selector.position = Vector2(30, 202)
         selector.size = Vector2(340, 28)
         panel.add_child(selector)
+        # D14: настройки доступности (масштаб/дальтоник/тряска/мерцание)
+        var acc := AccessibilityControls.new()
+        acc.position = Vector2(30, 300)
+        panel.add_child(acc)
 
 
 func _set_bus_volume(bus_name: String, value: float):
@@ -705,6 +709,19 @@ func _make_icon_rect(type: String, is_mutant: bool, icon_size: int = 24) -> Text
         rect.custom_minimum_size = Vector2(icon_size, icon_size)
         rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        # D14: дальтоник-режим - форма редкости в углу (▢△◇★)
+        var rar: String = GachaData.get_mutant_rarity(type) if is_mutant else GachaData.get_artifact_rarity(type)
+        var glyph: String = Accessibility.rarity_glyph(rar)
+        if glyph != "":
+                var g := Label.new()
+                g.text = glyph
+                g.add_theme_font_size_override("font_size", maxi(10, icon_size / 2))
+                g.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+                g.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+                g.add_theme_constant_override("outline_size", 3)
+                g.position = Vector2.ZERO
+                g.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                rect.add_child(g)
         return rect
 
 

@@ -510,7 +510,7 @@ func _keeper_preroll(floor_num: int) -> void:
 	var tw := _tween()
 	tw.tween_property(_banner, "scale", Vector2.ONE, 0.25)
 	await _wait(0.25)
-	_shake_banner(CeremonyData.KEEPER_SLAM_SHAKE)
+	_shake_banner(Accessibility.shake(CeremonyData.KEEPER_SLAM_SHAKE))
 	await _wait(CeremonyData.KEEPER_PREROLL - 0.45)
 	if _dead():
 		return
@@ -610,7 +610,7 @@ func _pop_star(slot: Control, gold_index: int) -> void:
 	if _party_level >= 2:
 		_spark_star(slot)
 	if gold_index >= 2 and _party_level >= 3:
-		_shake_banner(CeremonyData.KEEPER_SLAM_SHAKE * 0.6)
+		_shake_banner(Accessibility.shake(CeremonyData.KEEPER_SLAM_SHAKE * 0.6))
 
 
 func _reveal_silver(slot: Control) -> void:
