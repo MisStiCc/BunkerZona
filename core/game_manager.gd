@@ -704,6 +704,7 @@ func exchange_all_artifacts_to_sp() -> Dictionary:
         lab.artifacts_rare.clear()
         lab.artifacts_legendary.clear()
         lab.season_points += sp
+        Prog.note_season_sp("exchange", sp)
         save_to_active_slot()
         return {"count": count, "sp": sp}
 
@@ -721,6 +722,7 @@ func exchange_all_farm_copies_to_sp() -> Dictionary:
         var sp: int = count * int(GachaData.EXCHANGE_COPY_SP)
         lab.farm_copies.clear()
         lab.season_points += sp
+        Prog.note_season_sp("exchange", sp)
         save_to_active_slot()
         return {"count": count, "sp": sp}
 
@@ -731,6 +733,7 @@ func exchange_biomass_to_sp() -> bool:
                 return false
         lab.biomass -= float(GachaData.EXCHANGE_BIOMASS_STEP)
         lab.season_points += GachaData.EXCHANGE_BIOMASS_SP
+        Prog.note_season_sp("exchange", GachaData.EXCHANGE_BIOMASS_SP)
         save_to_active_slot()
         return true
 
@@ -1293,6 +1296,7 @@ func process_run_result(result: Dictionary):
                 # Пережитый выброс (v0.19.0 «БАЗАР»): успешный забег = +3 очка сезона
                 if bool(result.get("success", false)):
                         lab.season_points += 3
+                        Prog.note_season_sp("blowouts", 3)
 
                 # Победы арены: вызовы/оборона; каждая 5-я победа = +1 крутка мутантов
                 if not arena_run_kind.is_empty():
@@ -1300,9 +1304,11 @@ func process_run_result(result: Dictionary):
                                 if arena_run_kind == "defense":
                                         lab.arena_wins_defense += 1
                                         lab.season_points += 10
+                                        Prog.note_season_sp("arena_def", 10)
                                 else:
                                         lab.arena_wins_challenge += 1
                                         lab.season_points += 5
+                                        Prog.note_season_sp("arena_ch", 5)
                                 var total_wins: int = lab.arena_wins_challenge + lab.arena_wins_defense
                                 if total_wins % 5 == 0:
                                         lab.gacha_rolls_mutants += 1

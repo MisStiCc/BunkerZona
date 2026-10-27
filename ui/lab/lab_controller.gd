@@ -117,6 +117,7 @@ func _ready():
         # Виджет задач + календарь входа (v0.26.0)
         Prog.tasks_changed.connect(_tw_refresh)
         Prog.track_changed.connect(_tw_refresh)
+        Prog.season_closed.connect(_on_season_closed)
         Prog.calendar_changed.connect(_tw_refresh)
         _tw_intro.call_deferred()
         _maybe_calendar_popup.call_deferred()
@@ -5706,6 +5707,42 @@ func _cal_open() -> void:
 
 func _cal_close() -> void:
         _cal_root.visible = false
+
+
+# ==================== ЗАКРЫТИЕ СЕЗОНА (D13) ====================
+# Очередь сводок: несколько закрытий подряд показываются по одному
+
+var _season_queue: Array = []
+var _season_overlay: SeasonCloseOverlay = null
+
+
+func _on_season_closed(summary: Dictionary) -> void:
+        _season_queue.append(summary)
+        _season_next()
+
+
+func _season_next() -> void:
+        if _season_queue.is_empty() or (is_instance_valid(_season_overlay)):
+                return
+        var summary: Dictionary = _season_queue.pop_front()
+        var mut: int = SeasonCloseData.REWARD_MUTANT_ROLLS
+        var ano: int = SeasonCloseData.REWARD_ANOMALY_ROLLS
+        var great: bool = int(summary.get("sp", 0)) >= SeasonCloseData.GREAT_SEASON_SP
+        if great:
+                mut += SeasonCloseData.GREAT_BONUS_ROLLS
+                ano += SeasonCloseData.GREAT_BONUS_ROLLS
+        # Награда через существующую гачу (панель итогов подхватит)
+        if game_manager:
+                if game_manager.has_method("grant_mutant_rolls"):
+                        game_manager.grant_mutant_rolls(mut, "season_close")
+                if game_manager.has_method("grant_anomaly_rolls"):
+                        game_manager.grant_anomaly_rolls(ano, "season_close")
+        _season_overlay = SeasonCloseOverlay.new()
+        add_child(_season_overlay)
+        _season_overlay.play(summary, mut, ano, great)
+        _season_overlay.closed.connect(func():
+                _season_overlay = null
+                _season_next())
 
 
 ## Раз в день показывать календарь сами (награда ждёт)

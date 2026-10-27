@@ -17,6 +17,7 @@ signal tasks_changed
 signal task_completed(title: String, xp: int, pts: int)
 signal track_changed
 signal toast(text: String)
+signal season_closed(summary: Dictionary)
 
 const DAILY_SLOTS := 6
 const WEEKLY_SLOTS := 5
@@ -306,6 +307,16 @@ func tier_claimed(tier: int) -> bool:
 		return bool(_track()["claimed"].get(str(tier), false))
 
 
+## D13: накопители сводки сезона (для церемонии закрытия). kind:
+## arena_ch / arena_def / blowouts / exchange / tasks
+func note_season_sp(kind: String, amount: int) -> void:
+		if amount <= 0:
+				return
+		var t := _track()
+		var key := "sp_" + kind
+		t[key] = int(t.get(key, 0)) + amount
+
+
 func add_points(amount: int) -> void:
 		if amount <= 0:
 				return
@@ -421,10 +432,23 @@ func claim_tier(tier: int) -> Dictionary:
 						all_done = false
 						break
 		if all_done:
+				# D13: сводка сезона снимается ДО сброса накопителей
+				var summary := {
+						"cycle": track_cycle(),
+						"sp": int(t.get("points", 0)),
+						"arena_ch": int(t.get("sp_arena_ch", 0)),
+						"arena_def": int(t.get("sp_arena_def", 0)),
+						"blowouts": int(t.get("sp_blowouts", 0)),
+						"exchange": int(t.get("sp_exchange", 0)),
+						"tasks": int(t.get("sp_tasks", 0)),
+				}
 				t["cycle"] = track_cycle() + 1
 				t["points"] = 0
 				t["claimed"] = {}
+				for spk in ["sp_arena_ch", "sp_arena_def", "sp_blowouts", "sp_exchange", "sp_tasks"]:
+						t[spk] = 0
 				toast.emit("ТРЕК ЗАКРЫТ! Цикл %d: сундуки жирнее на 25%%" % track_cycle())
+				season_closed.emit(summary)
 		_persist()
 		track_changed.emit()
 		xp_changed.emit(level(), xp_in_level(), xp_need(level()))
@@ -840,5 +864,6 @@ func _apply_reward(rew: Dictionary, source: String) -> void:
 				gm.grant_anomaly_rolls(int(rew["ano"]), source)
 		if int(rew.get("sp", 0)) > 0 and lab != null:
 				lab.season_points += int(rew["sp"])
+				note_season_sp("tasks", int(rew["sp"]))
 		if int(rew.get("super", 0)) > 0 and lab != null:
 				lab.super_pulls += int(rew["super"])
