@@ -20,6 +20,7 @@ const COL_BG := Color(0.05, 0.045, 0.03, 0.97)
 var _root: Control = null
 var _center: CenterContainer = null
 var _pause_set: bool = false
+var _prev_mouse_mode: int = -1
 # Магазин
 var _on_buy: Callable = Callable()
 var _biomass_getter: Callable = Callable()
@@ -259,7 +260,9 @@ func _open_root() -> void:
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var dim := ColorRect.new()
-	dim.color = Color(0.0, 0.0, 0.0, 0.66)
+	# 0.45 (было 0.66): затемнение не должно гасить HUD - кнопки забега
+	# остаются читаемыми, поп-ап и так поверх со своей плотной подложкой
+	dim.color = Color(0.0, 0.0, 0.0, 0.45)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	_root.add_child(dim)
@@ -272,6 +275,11 @@ func _open_root() -> void:
 	if not get_tree().paused:
 		get_tree().paused = true
 		_pause_set = true
+	# Пауза глушит _input камеры - ESC не освободит курсор. Показываем сами,
+	# иначе на ПК поп-ап не кликнуть вовсе. Прежний режим помним - вернём его.
+	if not DisplayServer.is_touchscreen_available():
+		_prev_mouse_mode = Input.mouse_mode
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _close_root() -> void:
@@ -285,12 +293,25 @@ func _close_root() -> void:
 	if _pause_set:
 		_pause_set = false
 		get_tree().paused = false
+	# Курсор возвращаем в тот режим, что был до поп-апа (ПК)
+	if _prev_mouse_mode >= 0 and not DisplayServer.is_touchscreen_available():
+		Input.mouse_mode = _prev_mouse_mode
+		_prev_mouse_mode = -1
 	var tw := create_tween()
 	tw.tween_property(root, "modulate:a", 0.0, 0.12)
 	tw.tween_callback(func():
 		if is_instance_valid(root):
 			root.queue_free()
 		modal_closed.emit())
+
+
+func _exit_tree() -> void:
+	# Поп-ап жил при смене сцены (итог забега) - не оставлять паузу и захват
+	if _pause_set:
+		_pause_set = false
+		get_tree().paused = false
+	if not DisplayServer.is_touchscreen_available():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _show_panel(panel: PanelContainer) -> void:

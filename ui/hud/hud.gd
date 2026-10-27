@@ -1146,6 +1146,17 @@ func _rescale_battle_panels() -> void:
                 """v0.31.0: аномалии — вертикальный блок 4 колонки слева (HUD не перекрывает),
                 мутанты — 5 колонок справа со сворачиваемым заголовком, старт/выброс —
                 крупные кнопки внизу по центру. Кнопки в цветах стихий (_style_el_button)."""
+                # v0.31.2: подложка панелей боя - плотный тёмный бункер с окантовкой,
+                # кнопки читаемы и на светлой Зоне, и ночью за событием Зоны
+                var hud_sb := StyleBoxFlat.new()
+                hud_sb.bg_color = Color(0.043, 0.055, 0.031, 0.8)
+                hud_sb.border_color = Color(0.26, 0.29, 0.21, 0.95)
+                hud_sb.set_border_width_all(1)
+                hud_sb.set_corner_radius_all(8)
+                for pname in ["Resources", "AnomalyPanel", "MutantPanel", "EmissionPanel", "StartPanel"]:
+                                var pp: Panel = get_node_or_null(pname)
+                                if pp:
+                                                pp.add_theme_stylebox_override("panel", hud_sb)
                 var bw := 100.0
                 var bh := 54.0
                 var gx := 6.0

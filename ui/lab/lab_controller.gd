@@ -5703,7 +5703,7 @@ var _brf_root: Control = null
 var _brf_text: Label = null
 var _brf_place: Label = null
 var _brf_header: Label = null
-var _brf_chips_box: HBoxContainer = null
+var _brf_chips_box: HFlowContainer = null
 var _brf_tween: Tween = null
 var _brf_hot := false
 
@@ -5808,8 +5808,9 @@ func _briefing_build():
                         _brf_skip_typing())
         right.add_child(_brf_text)
 
-        _brf_chips_box = HBoxContainer.new()
-        _brf_chips_box.add_theme_constant_override("separation", 8)
+        _brf_chips_box = HFlowContainer.new()
+        _brf_chips_box.add_theme_constant_override("h_separation", 8)
+        _brf_chips_box.add_theme_constant_override("v_separation", 6)
         right.add_child(_brf_chips_box)
 
         var hint := BunkerUI.make_mono_label(Loc.t("brf.hint"), 11, BunkerUI.TEXT_FAINT)
