@@ -415,19 +415,27 @@ func _refresh_campaign_ui():
                 return
 
         var frontier: int = game_manager.get_campaign_level()
+        # NG+ (D12): кампания пройдена - вход свободный на любой уровень 1..100
+        if game_manager.is_campaign_completed():
+                frontier = CampaignData.TOTAL_LEVELS
         _campaign_level = clampi(_campaign_level, 1, frontier)
         if _gates_button:
                 _gates_button.visible = false
 
-        var params: Dictionary = CampaignData.get_level_params(_campaign_level, game_manager.get_campaign_mode())
+        var cycle: int = game_manager.get_campaign_cycle()
+        var params: Dictionary = CampaignData.get_level_params(_campaign_level, game_manager.get_campaign_mode(), cycle)
         var text: String
         if params.get("is_boss", false):
                 text = "КАРАВАН %d/100: «%s»" % [_campaign_level, params.get("title", "")]
         else:
                 text = "Уровень %d/100 - %s" % [_campaign_level, params.get("chapter_title", "")]
-        if _campaign_level < frontier:
+        if _campaign_level < game_manager.get_campaign_level():
                 text += " (пройден)"
-        if game_manager.is_campaign_completed() and _campaign_level >= CampaignData.TOTAL_LEVELS:
+        if cycle > 1:
+                # Бейдж NG+: что растёт в этом цикле
+                text += "  ·  ЦИКЛ %d - враги x%.2f, награды x%.2f" % [
+                                cycle, CampaignData.cycle_enemy_mult(cycle), CampaignData.cycle_reward_mult(cycle)]
+        if game_manager.is_campaign_completed() and _campaign_level >= CampaignData.TOTAL_LEVELS and cycle <= 1:
                 text = "КАМПАНИЯ ПРОЙДЕНА! Финальный уровень: 100/100"
         _campaign_label.text = text
 
@@ -2467,6 +2475,9 @@ func _gallery_tile(type: String, is_mutant: bool) -> Control:
         rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
         rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+        # Клик по арту должен открывать карточку: игнорируем мышь, иначе
+        # TextureRect съедает нажатие и gui_input плитки не срабатывает
+        rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
         if not unlocked:
                 rect.modulate = Color(0.85, 0.85, 0.9, 0.9)
         tile.add_child(rect)
@@ -2503,6 +2514,7 @@ func _gallery_tile(type: String, is_mutant: bool) -> Control:
 func _gallery_ex_tile(type: String, is_mutant: bool) -> Control:
         """Плитка эксклюзива Чёрного ящика: фиолетовая рамка, серый силуэт если не получен"""
         var wrap := PanelContainer.new()
+        wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
         var sb := StyleBoxFlat.new()
         sb.bg_color = Color("0a100b")
         sb.set_border_width_all(2)
@@ -2551,45 +2563,53 @@ func _build_card_detail():
         panel.anchor_top = 0.5
         panel.anchor_right = 0.5
         panel.anchor_bottom = 0.5
-        panel.offset_left = -230.0
-        panel.offset_top = -230.0
-        panel.offset_right = 230.0
-        panel.offset_bottom = 230.0
+        panel.offset_left = -280.0
+        panel.offset_top = -290.0
+        panel.offset_right = 280.0
+        panel.offset_bottom = 290.0
+        var psb := StyleBoxFlat.new()
+        psb.bg_color = Color(0.031, 0.045, 0.026, 0.99)
+        psb.border_color = BunkerUI.GREEN
+        psb.set_border_width_all(2)
+        psb.set_corner_radius_all(12)
+        psb.shadow_color = Color(0, 0, 0, 0.55)
+        psb.shadow_size = 20
+        panel.add_theme_stylebox_override("panel", psb)
         detail_panel.add_child(panel)
 
         detail_image = TextureRect.new()
-        detail_image.position = Vector2(110, 16)
-        detail_image.size = Vector2(240, 240)
+        detail_image.position = Vector2(130, 20)
+        detail_image.size = Vector2(300, 300)
         detail_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         detail_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
         panel.add_child(detail_image)
 
         detail_name = Label.new()
-        detail_name.position = Vector2(20, 262)
-        detail_name.size = Vector2(420, 26)
+        detail_name.position = Vector2(20, 330)
+        detail_name.size = Vector2(520, 30)
         detail_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        detail_name.add_theme_font_size_override("font_size", 17)
+        detail_name.add_theme_font_size_override("font_size", 19)
         panel.add_child(detail_name)
 
         detail_meta = Label.new()
-        detail_meta.position = Vector2(20, 290)
-        detail_meta.size = Vector2(420, 20)
+        detail_meta.position = Vector2(20, 364)
+        detail_meta.size = Vector2(520, 22)
         detail_meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        detail_meta.add_theme_font_size_override("font_size", 11)
+        detail_meta.add_theme_font_size_override("font_size", 12)
         panel.add_child(detail_meta)
 
         detail_desc = Label.new()
-        detail_desc.position = Vector2(30, 318)
-        detail_desc.size = Vector2(400, 90)
+        detail_desc.position = Vector2(40, 396)
+        detail_desc.size = Vector2(480, 120)
         detail_desc.autowrap_mode = TextServer.AUTOWRAP_WORD
-        detail_desc.add_theme_font_size_override("font_size", 11)
+        detail_desc.add_theme_font_size_override("font_size", 12)
         detail_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         panel.add_child(detail_desc)
 
         var close := Button.new()
         close.text = Loc.t("lab.back")
-        close.position = Vector2(150, 412)
-        close.size = Vector2(160, 34)
+        close.position = Vector2(190, 526)
+        close.size = Vector2(180, 40)
         close.pressed.connect(func(): _play_click_sound(); detail_panel.visible = false)
         panel.add_child(close)
 

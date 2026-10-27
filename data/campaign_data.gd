@@ -193,6 +193,26 @@ const BOSSES := {
 const REPLAY_REWARD_FACTOR: float = 0.3
 
 
+# ==================== NG+ (D12, design_inbox/_done/endgame_ngplus) ====================
+
+## Множитель врагов (HP/урон) цикла NG+. Цикл 1 = база; 2-4 таблично,
+## дальше линейный рост без потолка-стены. В спеке блок имел выход за
+## границы массива при n=5 - здесь границы честные (1..4).
+static func cycle_enemy_mult(cycle: int) -> float:
+	var n := maxi(int(cycle), 1)
+	if n <= 4:
+		return [1.0, 1.15, 1.30, 1.45][n - 1]
+	return 1.45 + 0.10 * float(n - 4)
+
+
+## Множитель награды (боевой доход) цикла NG+: каждый цикл прибыльнее
+static func cycle_reward_mult(cycle: int) -> float:
+	var n := maxi(int(cycle), 1)
+	if n <= 4:
+		return [1.0, 1.25, 1.50, 1.75][n - 1]
+	return 1.75 + 0.20 * float(n - 4)
+
+
 static func get_chapter(level: int) -> Dictionary:
 	var lvl: int = clampi(level, 1, TOTAL_LEVELS)
 	for chapter in CHAPTERS:
@@ -205,8 +225,9 @@ static func get_boss_data(level: int) -> Dictionary:
 	return BOSSES.get(clampi(level, 1, TOTAL_LEVELS), {})
 
 
-## Полный набор параметров уровня: их применяют ZoneController и SpawnManager
-static func get_level_params(level: int, mode: String = MODE_NORMAL) -> Dictionary:
+## Полный набор параметров уровня: их применяют ZoneController и SpawnManager.
+## cycle - цикл NG+ (D12): враги множатся cycle_enemy_mult.
+static func get_level_params(level: int, mode: String = MODE_NORMAL, cycle: int = 1) -> Dictionary:
 	var lvl: int = clampi(level, 1, TOTAL_LEVELS)
 	var chapter: Dictionary = get_chapter(lvl)
 	var span: float = float(int(chapter["end"]) - int(chapter["start"]))
@@ -243,6 +264,12 @@ static func get_level_params(level: int, mode: String = MODE_NORMAL) -> Dictiona
 			damage_mult *= 1.0 + float(boss["damage_extra"])
 		if boss.has("speed_extra"):
 			speed_mult *= 1.0 + float(boss["speed_extra"])
+
+	# NG+ (D12): "Зона вернулась сильнее" - враги всего уровня множатся циклом
+	if cycle > 1:
+		var em: float = cycle_enemy_mult(cycle)
+		hp_mult *= em
+		damage_mult *= em
 
 	var wave_break: float = float(boss.get("wave_break", chapter["wave_break"]))
 	var reward_bonus: float = (100.0 + 8.0 * float(lvl)) * (2.5 if is_boss else 1.0)

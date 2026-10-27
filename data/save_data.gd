@@ -11,6 +11,12 @@ class_name SaveData
 # Кампания: самый высокий ОТКРЫТЫЙ уровень (1-100)
 @export var campaign_level: int = 1
 @export var campaign_completed: bool = false
+# NG+ (D12): цикл кампании после 100 колец; campaign_cycle_100 - за какой
+# цикл 100-е кольцо уже закрыто (инкремент цикла только за ПЕРВУЮ победу
+# на 100-м в рамках цикла). У старых сейвов поля отсутствуют -> дефолты
+# (цикл 1, миграция не нужна)
+@export var campaign_cycle: int = 1
+@export var campaign_cycle_100: int = 0
 # Режим сложности кампании: easy / normal / hard (CampaignData)
 @export var campaign_mode: String = "normal"
 

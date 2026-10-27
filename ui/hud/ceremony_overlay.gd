@@ -212,30 +212,152 @@ func _art(key: String) -> Texture2D:
 
 ## Играет церемонию по результату забега Башни и возвращается по концу/скипу.
 ## Вызов awaits из zone_controller.finish_run.
-func play(result: Dictionary) -> void:
-	if str(result.get("mode", "")) != "tower":
-		return
-
-	var success: bool = bool(result.get("success", false))
-	var summary: Dictionary = result.get("tower_summary", {})
-	var floor_num: int = int(summary.get("floor", int(result.get("tower_floor", 1))))
-	var stars: int = int(summary.get("stars", 1 if success else 0))
-	var stars_before: int = int(summary.get("stars_before", 0))
-
+func play(result: Dictionary) -> bool:
+	var mode := str(result.get("mode", ""))
+	var played := true
 	_begin()
 
-	if success:
-		await _play_victory(summary, floor_num, maxi(stars, 1), stars_before)
+	# Диспетчер режимов: у каждого свой финал; скип и построение общие
+	if mode == "tower":
+		var success: bool = bool(result.get("success", false))
+		var summary: Dictionary = result.get("tower_summary", {})
+		var floor_num: int = int(summary.get("floor", int(result.get("tower_floor", 1))))
+		var stars: int = int(summary.get("stars", 1 if success else 0))
+		var stars_before: int = int(summary.get("stars_before", 0))
+		if success:
+			await _play_victory(summary, floor_num, maxi(stars, 1), stars_before)
+		else:
+			var bio: int = int(summary.get("biomass", 0))
+			await _play_defeat(Loc.t("tower_ceremony.consolation", {"b": bio}))
+	elif mode == "campaign":
+		await _play_campaign(result)
+	elif mode == "survival":
+		await _play_survival(result)
 	else:
-		await _play_defeat(summary)
+		played = false  # неизвестный режим - вызывающий делает свой фолбэк
 
 	# Скип - короткое затемнение и выход; естественный конец уже в чёрном
-	if _skipped:
+	if played and _skipped:
 		_fade.color.a = 0.0
 		var tw := create_tween()
 		tw.tween_property(_fade, "color:a", 1.0, CeremonyData.SKIP_FADE_TIME)
 		await _wait_raw(CeremonyData.SKIP_FADE_TIME)
 	finished.emit()
+	return played
+
+
+# ==================== ВАРИАНТ: КАМПАНИЯ ====================
+
+## Победа: «КОЛЬЦО N ЗАХВАЧЕНО» -> доход -> глиф перехода -> «КОЛЬЦО N+1».
+## Поражение: баннер поражения с боевым доходом (кампания платит его всегда).
+func _play_campaign(result: Dictionary) -> void:
+	var level: int = int(result.get("campaign_level", 0))
+	var success: bool = bool(result.get("success", false))
+	var bio: int = int(float(result.get("reward", 0.0)))
+	var is_final: bool = level >= CampaignData.TOTAL_LEVELS
+
+	_party_level = 2 if success else 0
+	_time_scale = 1.0
+
+	if not success:
+		await _play_defeat(Loc.t("tower_ceremony.income_line", {"b": bio}))
+		return
+
+	_fade_to(CeremonyData.DIM_ALPHA, CeremonyData.FADE_IN_TIME)
+	await _wait(CeremonyData.FADE_IN_TIME)
+	if _dead():
+		return
+
+	_set_banner("ring", Loc.t("tower_ceremony.ring_captured", {"n": level}), "")
+	_slam_banner("banner_slam")
+	await _wait(CeremonyData.BANNER_IN_TIME)
+	if _dead():
+		return
+
+	_confetti(CeremonyData.CONFETTI_WAVE_2STARS, "wave")
+	_sfx("confetti_burst")
+	await _wait(0.8)
+	_show_line(Loc.t("tower_ceremony.income_line", {"b": bio}))
+	await _wait(1.2)
+	if _dead():
+		return
+
+	var next_title: String = Loc.t("tower_ceremony.next_ring", {"n": level + 1})
+	await _transition("stairs", next_title, 0)
+	if _dead():
+		return
+	# NG+ (D12): 100-е кольцо - «ЗОНА ПОКОРЕНА», строка мутации Зоны, залп конфетти
+	if bool(result.get("campaign_victory", false)):
+		var cyc_done: int = int(result.get("campaign_cycle_done", 1))
+		var e_m: float = CampaignData.cycle_enemy_mult(cyc_done + 1)
+		var r_m: float = CampaignData.cycle_reward_mult(cyc_done + 1)
+		_confetti(CeremonyData.CONFETTI_WAVE_3STARS, "wave")
+		_sfx("confetti_burst")
+		await _wait(0.9)
+		if _dead():
+			return
+		_show_line(Loc.t("ngplus.cycle_line",
+			{"n": cyc_done, "e": "%.2f" % e_m, "r": "%.2f" % r_m}))
+		await _wait(1.6)
+		if _dead():
+			return
+		await _show_title(Loc.t("ngplus.victory_title"), CeremonyData.TITLE_HOLD_MAX)
+		return
+	await _show_title(
+		Loc.t("tower_ceremony.campaign_done") if is_final else next_title,
+		CeremonyData.TITLE_HOLD_MAX if is_final else CeremonyData.TITLE_HOLD)
+
+
+# ==================== ВАРИАНТ: ВЫЖИВАНИЕ ====================
+
+## Победа (30+ волн / арена): баннер рекорда, строки волн и дохода, титр итога.
+## Поражение: баннер поражения; награда за волны платится и показывается.
+func _play_survival(result: Dictionary) -> void:
+	var waves := maxi(0, int(result.get("waves_survived", 0)))
+	var success: bool = bool(result.get("success", false))
+	var bio: int = int(float(result.get("reward", 0.0)))
+
+	_party_level = 2 if success else 0
+	_time_scale = 1.0
+
+	if not success:
+		await _play_defeat(Loc.t("tower_ceremony.surv_line", {"w": waves, "b": bio}))
+		return
+
+	_fade_to(CeremonyData.DIM_ALPHA, CeremonyData.FADE_IN_TIME)
+	await _wait(CeremonyData.FADE_IN_TIME)
+	if _dead():
+		return
+
+	_set_banner("record", Loc.t("tower_ceremony.surv_record"), "")
+	_slam_banner("banner_slam")
+	await _wait(CeremonyData.BANNER_IN_TIME)
+	if _dead():
+		return
+
+	_confetti(CeremonyData.CONFETTI_WAVE_3STARS, "wave")
+	_sfx("confetti_burst")
+	await _wait(0.8)
+	_show_line(Loc.t("tower_ceremony.surv_line", {"w": waves, "b": bio}))
+	await _wait(1.4)
+	if _dead():
+		return
+
+	_fade_to(1.0, CeremonyData.FADE_OUT_TIME)
+	await _wait(CeremonyData.FADE_OUT_TIME)
+	if _dead():
+		return
+	await _show_title(Loc.t("tower_ceremony.surv_title", {"w": waves}),
+		CeremonyData.TITLE_HOLD_MAX)
+
+
+## Одна строка текста в слоте наград (общие режимы)
+func _show_line(text: String) -> void:
+	if _skipped:
+		return
+	_rewards_label.text = text
+	var tw := _tween()
+	tw.tween_property(_rewards_label, "modulate:a", 1.0, 0.3)
 
 
 ## Подготовка: курсор, музыка, HUD, отключение боевой камеры
@@ -357,7 +479,8 @@ func _play_victory(summary: Dictionary, floor_num: int, stars: int, stars_before
 	await _wait(maxf(0.05, CeremonyData.T_TRANSITION + shift - t))
 	if _dead():
 		return
-	await _transition("portal" if use_portal else "stairs", floor_num, stars)
+	await _transition("portal" if use_portal else "stairs",
+		Loc.t("tower_ceremony.floor_up", {"n": floor_num + 1}), stars)
 	if _dead():
 		return
 
@@ -402,7 +525,7 @@ func _keeper_preroll(floor_num: int) -> void:
 
 # ==================== ВАРИАНТ: ПОРАЖЕНИЕ ====================
 
-func _play_defeat(summary: Dictionary) -> void:
+func _play_defeat(sub_text: String) -> void:
 	_party_level = 0
 	_time_scale = 1.0
 
@@ -411,8 +534,7 @@ func _play_defeat(summary: Dictionary) -> void:
 	if _dead():
 		return
 
-	_set_banner("defeat", Loc.t("result.defeat"),
-		Loc.t("tower_ceremony.consolation", {"b": int(summary.get("biomass", 0))}))
+	_set_banner("defeat", Loc.t("result.defeat"), sub_text)
 	_slam_banner("defeat")
 	await _wait(maxf(0.1, CeremonyData.DEFEAT_TOTAL - CeremonyData.FADE_IN_TIME
 		- CeremonyData.BANNER_IN_TIME))
@@ -529,6 +651,8 @@ func _accent_for(kind: String) -> Color:
 		"victory": Color(0.85, 0.7, 0.25),
 		"floor_up": Color(0.45, 0.5, 0.35),
 		"defeat": Color(0.4, 0.22, 0.22),
+		"ring": Color(0.85, 0.7, 0.25),
+		"record": Color(0.9, 0.75, 0.2),
 	}
 	return accents.get(kind, Color(0.45, 0.5, 0.3))
 
@@ -698,7 +822,7 @@ func _spark_star(slot: Control) -> void:
 
 ## Лестница/портал у Монолита + кат-камера. Нет glb - чисто 2D-переход
 ## (глиф + затемнение), ошибки не ломают выход в лабораторию.
-func _transition(kind: String, floor_num: int, stars: int) -> void:
+func _transition(kind: String, next_title: String, stars: int) -> void:
 	var prop := _spawn_transition_prop(kind)
 	if prop:
 		if kind == "portal":
@@ -715,12 +839,12 @@ func _transition(kind: String, floor_num: int, stars: int) -> void:
 		ok_3d = await _cut_camera_fly(prop)
 
 	if ok_3d:
-		_swap_banner("floor_up", Loc.t("tower_ceremony.floor_up", {"n": floor_num + 1}))
+		_swap_banner("floor_up", next_title)
 		await _wait(_scaled(CeremonyData.CAM_TO_TARGET_TIME + CeremonyData.CAM_RISE_TIME))
 		if kind == "portal" and stars >= 3:
 			_confetti(CeremonyData.CONFETTI_PORTAL_FOUNTAIN, "fountain")
 	else:
-		await _transition_2d_fallback(floor_num)
+		await _transition_2d_fallback(next_title)
 
 
 func _spawn_transition_prop(kind: String) -> Node3D:
@@ -802,8 +926,8 @@ func _fly(to: Vector3, look_target: Vector3, time: float) -> void:
 
 
 ## 2D-фолбэк перехода: глиф (арт или «▲») всплывает по центру экрана
-func _transition_2d_fallback(floor_num: int) -> void:
-	_swap_banner("floor_up", Loc.t("tower_ceremony.floor_up", {"n": floor_num + 1}))
+func _transition_2d_fallback(banner_title: String) -> void:
+	_swap_banner("floor_up", banner_title)
 	var vp := get_viewport().get_visible_rect().size
 
 	var glyph := Control.new()

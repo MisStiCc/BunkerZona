@@ -998,7 +998,10 @@ func _setup_run_params(params: Dictionary):
                 # Кампания: уровень выбран в лаборатории (или текущий рубеж)
                 var campaign_level := get_selected_or_frontier_level()
                 params["campaign_level"] = campaign_level
-                params["campaign_params"] = CampaignData.get_level_params(campaign_level, get_campaign_mode())
+                # NG+ (D12): цикл кампании - множители врагов/награды
+                var cycle := get_campaign_cycle()
+                params["campaign_cycle"] = cycle
+                params["campaign_params"] = CampaignData.get_level_params(campaign_level, get_campaign_mode(), cycle)
                 # Переигрывание пройденного уровня: награда урезана, рубеж не двигается
                 params["campaign_replay"] = campaign_level < get_campaign_level()
 
@@ -1212,6 +1215,11 @@ func is_campaign_completed() -> bool:
         return current_save_data != null and current_save_data.campaign_completed
 
 
+## NG+ (D12): текущий цикл кампании (1 = базовая кампания)
+func get_campaign_cycle() -> int:
+        return current_save_data.campaign_cycle if current_save_data else 1
+
+
 ## Победа в забеге: сдвигаем рубеж кампании, если пройден frontier-уровень
 func _apply_campaign_result(result: Dictionary):
         # Башня: этажи Башни Монолита не двигают рубеж кампании
@@ -1222,7 +1230,13 @@ func _apply_campaign_result(result: Dictionary):
         if not success or level <= 0:
                 return
 
+        # NG+ (D12): кампания пройдена - каждая победа на 100-м закрывает цикл
+        # (ровно один инкремент на цикл: гвард campaign_cycle_100)
         if current_save_data.campaign_completed:
+                if level >= CampaignData.TOTAL_LEVELS                                 and current_save_data.campaign_cycle_100 < current_save_data.campaign_cycle:
+                                current_save_data.campaign_cycle_100 = current_save_data.campaign_cycle
+                                current_save_data.campaign_cycle += 1
+                                pass # print("NG+ : цикл закрыт, Зона мутирует - цикл " + str(current_save_data.campaign_cycle))
                 return
 
         if level >= CampaignData.TOTAL_LEVELS:

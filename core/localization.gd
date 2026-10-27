@@ -336,6 +336,14 @@ const STRINGS := {
         "tower_ceremony.rewards_line": {"ru": "+{b} биомассы · крутки: {m} мутанты, {a} аномалии", "en": "+{b} biomass · rolls: {m} mutants, {a} anomalies"},
         "tower_ceremony.record_note": {"ru": "ЛУЧШИЙ РЕЗУЛЬТАТ ЭТАЖА: {n} ★", "en": "FLOOR BEST: {n} ★"},
         "tower_ceremony.consolation": {"ru": "Утешительный доход: {b} биомассы", "en": "Consolation income: {b} biomass"},
+        "tower_ceremony.ring_captured": {"ru": "КОЛЬЦО {n} ЗАХВАЧЕНО", "en": "RING {n} CAPTURED"},
+        "tower_ceremony.next_ring": {"ru": "КОЛЬЦО {n}", "en": "RING {n}"},
+        "tower_ceremony.campaign_done": {"ru": "КАМПАНИЯ ПРОЙДЕНА", "en": "CAMPAIGN COMPLETE"},
+        "tower_ceremony.income_line": {"ru": "+{b} биомассы", "en": "+{b} biomass"},
+        "tower_ceremony.surv_record": {"ru": "НОВЫЙ РЕКОРД ВЫЖИВАНИЯ", "en": "NEW SURVIVAL RECORD"},
+        "tower_ceremony.surv_line": {"ru": "{w} волн · +{b} биомассы", "en": "{w} waves · +{b} biomass"},
+        "tower_ceremony.surv_title": {"ru": "ИТОГ: {w} ВОЛН", "en": "RESULT: {w} WAVES"},
+        "hud.star_recipe": {"ru": "★ Рецепт: копии цели + 1 корм той же ★ + простые (2/4/6/8)", "en": "★ Recipe: target copies + 1 same-★ feed + simple (2/4/6/8)"},
 
         # ==== Профиль: сканер личности ====
         "profile.title_btn": {"ru": "ПРОФИЛЬ", "en": "PROFILE"},
@@ -521,7 +529,11 @@ const STRINGS := {
         "brf.title": {"ru": "ГОЛОС ЗОНЫ", "en": "VOICE OF THE ZONE"},
         "brf.go": {"ru": "ВЫСТУПАЕМ", "en": "MOVE OUT"},
         "brf.cancel": {"ru": "ОСТАТЬСЯ", "en": "STAY"},
-        "brf.hint": {"ru": "коснись текста, чтобы перелистать речь", "en": "tap the text to skip the speech"},
+                # ==== NG+ (D12) ====
+        "ngplus.victory_title": {"ru": "ЗОНА ПОКОРЕНА", "en": "THE ZONE IS YOURS"},
+        "ngplus.cycle_line": {"ru": "ЦИКЛ %d ЗАВЕРШЁН. Зона мутирует: враги x%s, награды x%s",
+                "en": "CYCLE %d COMPLETE. The Zone mutates: enemies x%s, rewards x%s"},
+"brf.hint": {"ru": "коснись текста, чтобы перелистать речь", "en": "tap the text to skip the speech"},
         "brf.place.lv": {"ru": "УРОВЕНЬ", "en": "LEVEL"},
         "brf.place.cb": {"ru": "КАРАВАН", "en": "CARAVAN"},
         "brf.place.campaign": {"ru": "Кампания", "en": "Campaign"},

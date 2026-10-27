@@ -40,7 +40,8 @@ var sound_manager: SoundManager
 @export var mutant_scenes: Dictionary = {}
 
 @export var max_energy: float = 1000.0
-@export var max_biomass: float = 5000.0
+@export var max_biomass: float = 999999.0  # капа дохода НЕТ (решение владельца);
+                                           # инфляцию сдерживают стоки (магазин/обменник/базар), не потолок
 @export var critical_biomass_threshold: float = 0.4
 @export var pulse_duration: float = 5.0
 # Победа: 3 выброса (от кнопки или от переполнения биомассы) ИЛИ отбить все волны
@@ -1974,16 +1975,43 @@ func finish_run(success: bool):
                 if gm and gm.has_method("process_run_result"):
                                 gm.process_run_result(result)
 
-                # Церемония башни вместо мёртвой паузы (баннер/звёзды/конфетти/переход);
-                # остальные режимы - как раньше, короткая пауза
-                if run_params.get("run_mode", "") == "tower":
-                                var ceremony := CeremonyOverlay.new()
-                                add_child(ceremony)
-                                await ceremony.play(result)
-                                ceremony.queue_free()
-                else:
+                # NG+ (D12): победа на 100-м кольце - церемония «ЗОНА ПОКОРЕНА»
+                # (цикл уже инкрементился в process_run_result, закрытый = текущий - 1)
+                if run_params.get("run_mode", "") == "campaign" and success \
+                                                and int(run_params.get("campaign_level", 0)) >= CampaignData.TOTAL_LEVELS:
+                                result["campaign_victory"] = true
+                                result["campaign_cycle_done"] = maxi(int(gm.get_campaign_cycle()) - 1, 1) if gm else 1
+
+                # Выброс: плавно гасим эффект (забег закрыт - не обрываем кадром)
+                _fade_out_emission_fx(0.6)
+
+                # Церемония финала для ВСЕХ режимов (баннер/итог/титр/конфетти);
+                # вернёт false, если для режима церемонии нет - тогда прежняя пауза
+                var ceremony := CeremonyOverlay.new()
+                add_child(ceremony)
+                var played: bool = await ceremony.play(result)
+                ceremony.queue_free()
+                if not played:
                                 await get_tree().create_timer(3.0).timeout
                 get_tree().change_scene_to_file("res://scenes/lab/lab.tscn")
+
+
+## Мягкое гашение эффекта Выброса при закрытии забега (вместо обрыва)
+func _fade_out_emission_fx(duration: float):
+                if _emission_tween and _emission_tween.is_valid():
+                                _emission_tween.kill()
+                _emission_tween = null
+                if _emission_fx == null or not is_instance_valid(_emission_fx):
+                                return
+                var cur: float = clampf(float(_emission_fx.get("_intensity")), 0.0, 1.0)
+                if cur <= 0.01:
+                                _stop_emission_fx()
+                                return
+                var tw := create_tween()
+                tw.tween_method(
+                                func(v: float): _emission_fx.set_intensity(v), cur, 0.0,
+                                maxf(0.1, duration * cur))
+                tw.tween_callback(_emission_fx.stop)
 
 
 func _collect_run_result(success: bool) -> Dictionary:
@@ -1999,12 +2027,23 @@ func _collect_run_result(success: bool) -> Dictionary:
                                                 reward += leftover
 
                 # Кампания: бонус за уровень поверх боевого дохода; реплей пройденного - 30% бонуса
+                var leftover_paid: float = 0.0
+                if resource_manager:
+                                var leftover2: float = resource_manager.current_biomass - resource_manager.accumulated_biomass
+                                if leftover2 > 0.0:
+                                                leftover_paid = leftover2
                 if success and run_params.has("campaign_params"):
                                 var campaign: Dictionary = run_params["campaign_params"]
                                 var bonus: float = float(campaign.get("reward_bonus", 0.0))
                                 if bool(run_params.get("campaign_replay", false)):
                                                 bonus *= CampaignData.REPLAY_REWARD_FACTOR
                                 reward += bonus
+                                # NG+ (D12): множитель цикла к боевому доходу и бонусу;
+                                # стартовый капитал (возврат своих припасов) не множится.
+                                # Реплей x0.3 поверх цикла - фарм по любви остаётся выгодным
+                                var cyc: int = int(run_params.get("campaign_cycle", 1))
+                                if cyc > 1:
+                                                reward = leftover_paid + (reward - leftover_paid) * CampaignData.cycle_reward_mult(cyc)
 
                 # События Зоны: плоский бонус и множитель итоговой награды
                 if _event_biomass_flat > 0.0:
