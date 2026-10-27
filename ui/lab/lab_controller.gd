@@ -1510,16 +1510,26 @@ func _make_farm_card(type: String) -> Control:
         chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         v.add_child(chip)
 
-        # Большая буква питомца со свечением редкости
-        var letter := Label.new()
-        letter.text = GachaData.display_name(type).substr(0, 1)
-        letter.add_theme_font_override("font", BunkerUI.font_title())
-        letter.add_theme_font_size_override("font_size", 88)
-        letter.add_theme_color_override("font_color", Color(rcol, 0.75))
-        letter.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(letter)
+        # Большой арт карточки питомца (ui/cards); нет файла - буква как фолбэк
+        var art_path: String = GachaData.card_icon_path(type, true)
+        if ResourceLoader.exists(art_path):
+                var art := TextureRect.new()
+                art.texture = load(art_path)
+                art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                art.size_flags_vertical = Control.SIZE_EXPAND_FILL
+                art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                v.add_child(art)
+        else:
+                var letter := Label.new()
+                letter.text = GachaData.display_name(type).substr(0, 1)
+                letter.add_theme_font_override("font", BunkerUI.font_title())
+                letter.add_theme_font_size_override("font_size", 88)
+                letter.add_theme_color_override("font_color", Color(rcol, 0.75))
+                letter.size_flags_vertical = Control.SIZE_EXPAND_FILL
+                letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+                letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                v.add_child(letter)
 
         # Звёзды
         var st := Label.new()
@@ -1756,7 +1766,7 @@ func _rebuild_farm_altar():
         var rar: String = GachaData.get_mutant_rarity(type)
         var rcol: Color = BunkerUI.RARHEX.get(rar, BunkerUI.TEXT)
 
-        # Круг питомца
+        # Круг питомца: арт карточки по кругу; нет файла - буква как фолбэк
         var big := Panel.new()
         big.custom_minimum_size = Vector2(140, 140)
         big.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -1771,15 +1781,29 @@ func _rebuild_farm_altar():
         big.add_theme_stylebox_override("panel", bsb)
         _farm_altar_box.add_child(big)
 
-        var big_l := Label.new()
-        big_l.set_anchors_preset(Control.PRESET_FULL_RECT)
-        big_l.text = GachaData.display_name(type).substr(0, 1)
-        big_l.add_theme_font_override("font", BunkerUI.font_title())
-        big_l.add_theme_font_size_override("font_size", 64)
-        big_l.add_theme_color_override("font_color", Color(rcol, 0.6))
-        big_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        big_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        big.add_child(big_l)
+        var altar_art_path: String = GachaData.card_icon_path(type, true)
+        if ResourceLoader.exists(altar_art_path):
+                var big_art := TextureRect.new()
+                big_art.set_anchors_preset(Control.PRESET_FULL_RECT)
+                big_art.offset_left = 10
+                big_art.offset_top = 10
+                big_art.offset_right = -10
+                big_art.offset_bottom = -10
+                big_art.texture = load(altar_art_path)
+                big_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                big_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                big_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                big.add_child(big_art)
+        else:
+                var big_l := Label.new()
+                big_l.set_anchors_preset(Control.PRESET_FULL_RECT)
+                big_l.text = GachaData.display_name(type).substr(0, 1)
+                big_l.add_theme_font_override("font", BunkerUI.font_title())
+                big_l.add_theme_font_size_override("font_size", 64)
+                big_l.add_theme_color_override("font_color", Color(rcol, 0.6))
+                big_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                big_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+                big.add_child(big_l)
 
         var big_st := Label.new()
         if stars >= LabData.MAX_STARS:
