@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_mix, depth_draw_never, unshaded, cull_disabled;
 // Газовое облако: медленный fbm, мягкий край, лёгкая подсветка.
 uniform vec4 tint : source_color = vec4(0.55, 0.75, 0.4, 1.0);
@@ -32,6 +35,6 @@ void fragment() {
 	float r = length(p) * 2.0;
 	float shape = smoothstep(0.35, 0.8, n) * smoothstep(1.0, 0.35, r);
 	ALBEDO = tint.rgb * 0.7;
-	EMISSION = tint.rgb * shape * 0.35;
+	ALBEDO = tint.rgb * shape * 0.35;
 	ALPHA = shape * alpha;
 }

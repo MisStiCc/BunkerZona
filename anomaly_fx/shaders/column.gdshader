@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Светящийся столб (гравилифт/телепорт): шум поднимается вверх по стенке.
 uniform vec4 tint : source_color = vec4(0.4, 0.9, 1.0, 1.0);
@@ -23,6 +26,6 @@ void fragment() {
 	float rings = 0.5 + 0.5 * sin(UV.y * TAU * 6.0 - TIME * 3.0);
 	float fade = smoothstep(0.0, 0.15, UV.y) * smoothstep(1.0, 0.55, UV.y);
 	float m = (0.35 + 0.65 * n) * (0.6 + 0.4 * rings) * fade;
-	EMISSION = tint.rgb * m * intensity;
+	ALBEDO = tint.rgb * m * intensity;
 	ALPHA = m * 0.8;
 }

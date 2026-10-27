@@ -1,6 +1,6 @@
 [gd_scene load_steps=15 format=3]
 
-[ext_resource type="Shader" path="res://anomaly_fx/shaders/funnel.gdshader" id="ext_1"]
+[ext_resource type="Shader" path="res://anomaly_fx/variants/shaders/funnel.gdshader" id="ext_1"]
 [ext_resource type="Texture2D" path="res://anomaly_fx/textures/smoke_soft.png" id="ext_2"]
 [ext_resource type="Texture2D" path="res://anomaly_fx/textures/soft_glow.png" id="ext_3"]
 [ext_resource type="Script" path="res://anomaly_fx/scripts/fx_flicker.gd" id="ext_4"]
@@ -9,7 +9,7 @@
 shader = ExtResource("ext_1")
 shader_parameter/tint = Color(0.5, 0.48, 0.45, 1.0)
 shader_parameter/speed = 4.6
-shader_parameter/intensity = 1.1
+shader_parameter/intensity = 0.8
 
 [sub_resource type="CylinderMesh" id="sub_3"]
 top_radius = 0.3
@@ -54,7 +54,7 @@ albedo_texture = ExtResource("ext_3")
 billboard_mode = 3
 disable_receive_shadows = true
 blend_mode = 1
-
+transparency = 1
 [sub_resource type="Gradient" id="sub_11"]
 offsets = PackedFloat32Array(0.0, 1.0)
 colors = PackedColorArray(0.75, 0.72, 0.68, 1, 0.3, 0.29, 0.27, 0)
@@ -104,7 +104,7 @@ visibility_aabb = AABB(-8, -6, -8, 16, 14, 16)
 
 [node name="Glow" type="OmniLight3D" parent="."]
 light_color = Color(0.6, 0.58, 0.55, 1)
-light_energy = 0.7
+light_energy = 0.45
 omni_range = 8.0
 script = ExtResource("ext_4")
 position = Vector3(0, 2.4, 0)

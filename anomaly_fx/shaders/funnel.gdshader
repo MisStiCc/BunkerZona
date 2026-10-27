@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Смерч/вихрь: конус со скроллящимся шумом и вертикальными прожилками.
 uniform vec4 tint : source_color = vec4(0.62, 0.62, 0.78, 1.0);
@@ -23,6 +26,6 @@ void fragment() {
 	float streaks = 0.5 + 0.5 * sin(UV.x * TAU * 18.0 + TIME * 4.0 + n * 6.0);
 	float fade = smoothstep(0.0, 0.25, UV.y) * smoothstep(1.0, 0.75, UV.y);
 	float m = (0.45 + 0.55 * n) * mix(1.0, streaks, 0.35) * fade;
-	EMISSION = tint.rgb * m * intensity;
+	ALBEDO = tint.rgb * m * intensity;
 	ALPHA = m * 0.85;
 }

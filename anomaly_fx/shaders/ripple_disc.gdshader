@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Замедление времени: расходящиеся круги-рябь.
 uniform vec4 tint : source_color = vec4(0.45, 0.7, 1.0, 1.0);
@@ -12,6 +15,6 @@ void fragment() {
 	float band = smoothstep(0.7, 1.0, w);
 	float fade = smoothstep(1.0, 0.2, r);
 	float m = band * fade;
-	EMISSION = tint.rgb * m * intensity;
+	ALBEDO = tint.rgb * m * intensity;
 	ALPHA = m * 0.9;
 }

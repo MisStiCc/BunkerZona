@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_mix, depth_draw_opaque, cull_disabled;
 // Желеобразная масса: колышется вершинным шумом, полупрозрачное свечение.
 uniform vec4 tint : source_color = vec4(0.65, 0.95, 0.3, 1.0);
@@ -13,7 +16,7 @@ void vertex() {
 }
 void fragment() {
 	float fres = pow(1.0 - abs(dot(normalize(NORMAL), normalize(-VERTEX))), 1.6);
-	EMISSION = tint.rgb * (0.25 + fres * 1.1) * intensity;
+	ALBEDO = tint.rgb * (0.25 + fres * 1.1) * intensity;
 	ALBEDO = tint.rgb;
 	ALPHA = 0.72;
 }

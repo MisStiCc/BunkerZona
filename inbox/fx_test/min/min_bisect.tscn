@@ -1,0 +1,36 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Shader" path="res://inbox/fx_test/min/mix_shader.gdshader" id="ext_1"]
+[ext_resource type="Shader" path="res://inbox/fx_test/min/add_shader.gdshader" id="ext_2"]
+
+[sub_resource type="ShaderMaterial" id="sub_1"]
+shader = ExtResource("ext_1")
+
+[sub_resource type="ShaderMaterial" id="sub_2"]
+shader = ExtResource("ext_2")
+
+[sub_resource type="QuadMesh" id="sub_3"]
+size = Vector2(1.8, 1.8)
+
+[sub_resource type="Environment" id="sub_env"]
+background_mode = 1
+background_color = Color(0, 0, 0, 1)
+
+[node name="MinBisect" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("sub_env")
+
+[node name="Mix" type="MeshInstance3D" parent="."]
+mesh = SubResource("sub_3")
+material_override = SubResource("sub_1")
+position = Vector3(-1.1, 1, 0)
+
+[node name="Add" type="MeshInstance3D" parent="."]
+mesh = SubResource("sub_3")
+material_override = SubResource("sub_2")
+position = Vector3(1.1, 1, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5.5)
+current = true

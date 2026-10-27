@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_back;
 // Ядро «Электры»: пульсирующая сфера с бегущими дуговыми поясами.
 uniform vec4 core_color : source_color = vec4(0.35, 0.65, 1.0, 1.0);
@@ -32,6 +35,6 @@ void fragment() {
 	float fres = pow(1.0 - abs(dot(normalize(NORMAL), normalize(-VERTEX))), 2.0);
 	float pulse = 0.7 + 0.3 * sin(TIME * pulse_speed * TAU);
 	float m = clamp(fres * 1.2 + arc * 1.5, 0.0, 1.0);
-	EMISSION = core_color.rgb * fres * pulse * intensity + arc_color.rgb * arc * 3.5 * pulse * intensity;
+	ALBEDO = core_color.rgb * fres * pulse * intensity + arc_color.rgb * arc * 3.5 * pulse * intensity;
 	ALPHA = m;
 }

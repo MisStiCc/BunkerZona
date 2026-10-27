@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Shader" path="res://anomaly_fx/shaders/fire_billboard.gdshader" id="ext_1"]
+
+[sub_resource type="ShaderMaterial" id="sub_1"]
+shader = ExtResource("ext_1")
+shader_parameter/col_low = Color(0.72, 0.06, 0.02, 1.0)
+shader_parameter/col_high = Color(1.0, 0.32, 0.08, 1.0)
+shader_parameter/intensity = 1.0
+
+[sub_resource type="QuadMesh" id="sub_2"]
+size = Vector2(2, 2)
+
+[node name="MinFire" type="Node3D"]
+
+[node name="Fire" type="MeshInstance3D" parent="."]
+mesh = SubResource("sub_2")
+material_override = SubResource("sub_1")
+position = Vector3(0, 1, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5)
+current = true

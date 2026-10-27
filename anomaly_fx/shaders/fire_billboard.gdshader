@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Процедурное пламя: fbm поднимается, форма гаснет к вершине.
 uniform vec4 col_low : source_color = vec4(1.0, 0.22, 0.04, 1.0);
@@ -34,6 +37,6 @@ void fragment() {
 	float f = clamp((1.0 - UV.y) * (0.45 + 0.9 * n) * 1.9 * (0.35 + 0.65 * radial) - 0.25, 0.0, 1.0);
 	float body = smoothstep(0.02, 0.4, f) * smoothstep(1.0, 0.55, UV.y + (1.0 - n) * 0.35);
 	vec3 col = mix(col_low.rgb, col_high.rgb, smoothstep(0.15, 0.8, f));
-	EMISSION = col * body * intensity;
+	ALBEDO = col * body * intensity;
 	ALPHA = clamp(body * 1.25, 0.0, 1.0);
 }

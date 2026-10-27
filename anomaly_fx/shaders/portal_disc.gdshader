@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Телепорт: закрученное кольцо с бегущей волной внутрь.
 uniform vec4 tint : source_color = vec4(0.3, 0.85, 1.0, 1.0);
@@ -27,6 +30,6 @@ void fragment() {
 	float ring = smoothstep(0.35, 0.75, r) * smoothstep(1.05, 0.8, r);
 	float core = smoothstep(0.45, 0.0, r);
 	float m = (0.4 + 0.6 * swirl) * ring + core * wave * 0.5;
-	EMISSION = tint.rgb * m * intensity;
+	ALBEDO = tint.rgb * m * intensity;
 	ALPHA = clamp(m, 0.0, 1.0);
 }

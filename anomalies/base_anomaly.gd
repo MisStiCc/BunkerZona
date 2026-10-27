@@ -177,11 +177,21 @@ var _exclusive_accent: Color = Color.WHITE
 var _exclusive_dmg: float = 1.0
 var _exclusive_rad: float = 1.0
 var _exclusive_props: Dictionary = {}
+var _exclusive_type: String = ""
+
+# FX-сцены вариантов (пак подготовщика, задача 16): вариант выглядит
+# собственным эффектом, а не перекрашенной базой. Нет сцены - как раньше.
+const VARIANT_FX := {
+	"ash_tornado": "res://anomaly_fx/variants/scenes/fx_ash_tornado.tscn",
+	"crimson_heat": "res://anomaly_fx/variants/scenes/fx_crimson_heat.tscn",
+	"void_loop": "res://anomaly_fx/variants/scenes/fx_void_loop.tscn",
+}
 
 
 func apply_exclusive_anomaly(ex: Dictionary) -> void:
 	if ex.is_empty():
 		return
+	_exclusive_type = str(ex.get("type", ""))
 	_exclusive_label = str(ex.get("label", ""))
 	var col_arr: Array = ex.get("color", [1.0, 1.0, 1.0])
 	_exclusive_color = Color(float(col_arr[0]), float(col_arr[1]), float(col_arr[2]))
@@ -223,3 +233,22 @@ func _apply_exclusive_look():
 		lbl.outline_modulate = Color(0.05, 0.04, 0.03, 0.95)
 		add_child(lbl)
 		lbl.position = Vector3(0.0, radius + 1.4, 0.0)
+	_apply_variant_fx()
+
+
+## Вариантный FX поверх: собственный визуал из пака; родные меши/частицы
+## гасим (свет и подпись остаются). Нет сцены/типа - база как была.
+func _apply_variant_fx():
+	var path: String = VARIANT_FX.get(_exclusive_type, "")
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return
+	var ps := load(path) as PackedScene
+	if ps == null:
+		return
+	var fx := ps.instantiate() as Node3D
+	if fx == null:
+		return
+	for child in get_children():
+		if child is MeshInstance3D or child is GPUParticles3D or child is GPUParticles2D:
+			child.visible = false
+	add_child(fx)

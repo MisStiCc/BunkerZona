@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Вспышки молний: атлас 4 кадра, кадр меняется по TIME.
 uniform sampler2D atlas : source_color, filter_linear;
@@ -20,6 +23,6 @@ void fragment() {
 	vec2 uv = vec2(UV.x / frames + f / frames, UV.y);
 	float t = texture(atlas, uv).r;
 	float flick = 0.55 + 0.45 * fract(sin(floor(TIME * fps * 2.0) + frame_offset) * 437.58);
-	EMISSION = tint.rgb * t * intensity * flick;
+	ALBEDO = tint.rgb * t * intensity * flick;
 	ALPHA = t;
 }

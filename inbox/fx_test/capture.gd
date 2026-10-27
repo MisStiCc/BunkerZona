@@ -21,6 +21,8 @@ func _ready() -> void:
 	cam.look_at(Vector3(0, 1.6, 0))
 	# дать шейдерам скомпилироваться, партиклам — народиться
 	await get_tree().create_timer(1.4).timeout
+	# кадр должен ДОРИСОВАТЬСЯ, иначе снимок прилетает из середины отрисовки
+	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(out_path)
 	print('снято: ', out_path, ' ', img.get_size())

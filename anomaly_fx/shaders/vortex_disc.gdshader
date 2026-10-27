@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Воронка на земле: спиральные рукава, вращение по TIME.
 uniform vec4 tint : source_color = vec4(0.55, 0.4, 0.95, 1.0);
@@ -27,6 +30,6 @@ void fragment() {
 	float swirl = fbm(vec2(a * 2.5 + r * twist * 0.5 - TIME * speed * 2.5, r * 5.0 - TIME * speed));
 	float spiral = 0.5 + 0.5 * sin(a * arms + r * twist - TIME * speed * 4.0);
 	float m = mix(swirl, spiral, 0.4) * smoothstep(1.0, 0.15, r);
-	EMISSION = tint.rgb * m * intensity * (0.7 + 0.3 * sin(TIME * 2.0));
+	ALBEDO = tint.rgb * m * intensity * (0.7 + 0.3 * sin(TIME * 2.0));
 	ALPHA = m * smoothstep(1.05, 0.55, r);
 }

@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Кислотная лужа: пузырящиеся ячейки + свечение кромки.
 uniform vec4 tint : source_color = vec4(0.45, 1.0, 0.25, 1.0);
@@ -26,6 +29,6 @@ void fragment() {
 	float rim = smoothstep(0.62, 0.95, r) * smoothstep(1.02, 0.9, r);
 	float body = smoothstep(1.0, 0.55, r);
 	float m = body * (0.25 + 0.75 * bub) + rim * 0.9;
-	EMISSION = tint.rgb * m * intensity * (0.8 + 0.2 * sin(TIME * 3.0));
+	ALBEDO = tint.rgb * m * intensity * (0.8 + 0.2 * sin(TIME * 3.0));
 	ALPHA = clamp(m, 0.0, 1.0);
 }

@@ -1,4 +1,7 @@
 shader_type spatial;
+// Фикс подготовщика: ALBEDO вместо EMISSION — EMISSION в пайплайне проекта
+// клипается в белое (проверено тест-квадами, см. anomaly_fx/README).
+
 render_mode blend_add, depth_draw_never, unshaded, cull_disabled;
 // Радиационное пятно: пульсирующий жар с «гейгер»-дрожью.
 uniform vec4 tint : source_color = vec4(1.0, 0.75, 0.25, 1.0);
@@ -25,6 +28,6 @@ void fragment() {
 	float geiger = step(0.82, fract(sin(floor(TIME * 11.0) * 12.9898) * 43758.5453));
 	float pulse = 0.65 + 0.35 * sin(TIME * speed * TAU);
 	float m = smoothstep(1.0, 0.05, r) * (0.4 + 0.6 * n) * pulse + geiger * smoothstep(0.9, 0.4, r) * 0.35;
-	EMISSION = tint.rgb * m * intensity;
+	ALBEDO = tint.rgb * m * intensity;
 	ALPHA = clamp(m, 0.0, 1.0);
 }

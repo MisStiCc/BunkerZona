@@ -18,7 +18,7 @@ albedo_texture = ExtResource("ext_2")
 billboard_mode = 3
 disable_receive_shadows = true
 blend_mode = 1
-
+transparency = 1
 [sub_resource type="Gradient" id="sub_6"]
 offsets = PackedFloat32Array(0.0, 1.0)
 colors = PackedColorArray(1, 0.85, 0.4, 0.9, 0.8, 0.6, 0.2, 0)
