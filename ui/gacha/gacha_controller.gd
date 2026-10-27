@@ -816,6 +816,9 @@ func _on_arm_pressed(arm: String) -> void:
         _session_drops.clear()
         _refresh_all()
         _animate_strips(dir)
+        var sm_flip = get_tree().get_first_node_in_group("sound_manager")
+        if sm_flip and sm_flip.has_method("play_sound"):
+                sm_flip.play_sound("card_flip", 0.7)
 
 
 func _on_swipe_gui(event: InputEvent) -> void:
@@ -887,6 +890,8 @@ func _on_spin(times: int) -> void:
                 Prog.notify_gacha(times)
 
         _refresh_all()
+        # Церемония раскрытия (задача 18): whoosh + звон по редкости + лента
+        _play_reveal_fx(results)
         # Тост: заработанная супер-крутка важнее легендарки
         var lab2 = _lab()
         var super_earned: bool = lab2 != null and int(lab2.super_pulls) > super_before
@@ -913,6 +918,34 @@ func _on_back_pressed() -> void:
                 _game_manager.change_scene("lab")
         else:
                 get_tree().change_scene_to_file("res://scenes/lab/lab.tscn")
+
+
+## Звуки церемонии (задача 18): whoosh вылета карт, звон вскрытия по ЛУЧШЕЙ
+## редкости батча (игрок слышит редкость до чтения), лента НОВЫЙ, искры легендарки
+func _play_reveal_fx(results: Array) -> void:
+        var sm = get_tree().get_first_node_in_group("sound_manager")
+        if sm == null or not sm.has_method("play_sound"):
+                return
+        sm.play_sound("card_whoosh", 0.8)
+        var best: int = -1
+        var any_new := false
+        var any_legend := false
+        for r in results:
+                var rar: String = str(r.get("rarity", "common"))
+                # СУПЕР-рукав всегда «ex» — звон эпика
+                var idx: int = 4 if _arm == "super" else RAR_ORDER.find(rar)
+                if rar == "legendary" and _arm != "super":
+                        any_legend = true
+                if str(r.get("status", "")) == "new":
+                        any_new = true
+                best = maxi(best, idx)
+        var reveal_keys := ["reveal_common", "reveal_common", "reveal_rare", "reveal_legendary", "reveal_epic"]
+        if best >= 0:
+                sm.play_sound(reveal_keys[best], 0.9)
+        if any_new:
+                sm.play_sound("ribbon_pop", 0.7)
+        if any_legend:
+                sm.play_sound("burst_sparks", 1.0)
 
 
 

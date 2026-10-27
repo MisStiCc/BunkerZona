@@ -80,10 +80,17 @@ var _base_energy_regen: float = -1.0
 var _rad_tick_time: float = 0.0
 
 
+func _exit_tree():
+                # Ушли из забега (лаборатория/меню): эмбиент ветра/ночи не должен
+                # звучать за пределами зоны
+                var sm_ex = get_tree().get_first_node_in_group("sound_manager")
+                if sm_ex and sm_ex.has_method("stop_ambient"):
+                                sm_ex.stop_ambient()
+
+
 func _ready():
                 pass # print("ZoneController: инициализация...")
                 add_to_group("zone_controller")
-
                 # Мобильный режим «тап = ставить»: камера шлёт тапы по земле
                 Signals.ground_tapped.connect(_on_ground_tapped)
                 # D8: движение пальца при активной кисти - призрак следует за пальцем
@@ -117,6 +124,11 @@ func _ready():
                 var sm = get_tree().get_first_node_in_group("sound_manager")
                 if sm and sm.has_method("play_music"):
                                 sm.play_music("run")
+                # Эмбиент забега (задача 15): ветер - лесной на Припяти, степной в Зоне
+                if sm and sm.has_method("play_ambient"):
+                                sm.play_ambient("wind_forest_01" if str(run_params.get("map", "procedural")) == "pripyat" else "wind_open_01")
+                if day_night_manager:
+                                day_night_manager.phase_changed.connect(_on_day_phase_changed)
 
                 is_initialized = true
 
@@ -577,6 +589,20 @@ func _setup_emission_fx():
                 _emission_fx.global_position = monolith.global_position
 
 
+## Смена фазы суток (v0.29.0): на ночь эмбиент меняется на стрекот,
+## редкий дальний вой; на день - ветер обратно
+func _on_day_phase_changed(phase: String) -> void:
+                var sm_dn = get_tree().get_first_node_in_group("sound_manager")
+                if sm_dn == null or not sm_dn.has_method("play_ambient"):
+                                return
+                if phase == "night":
+                                sm_dn.play_ambient("night_insects_01")
+                                if randf() < 0.5:
+                                                sm_dn.play_sound("howl_distant_01", 0.5)
+                else:
+                                sm_dn.play_ambient("wind_forest_01" if str(run_params.get("map", "procedural")) == "pripyat" else "wind_open_01")
+
+
 ## Кривая интенсивности по длительности пульса: рост -> плато -> спад.
 ## Волна/эхо едут сами от start(), интенсивность - отдельная ось эффекта.
 func _play_emission_fx():
@@ -588,6 +614,12 @@ func _play_emission_fx():
                 var rise := minf(1.5, total * 0.3)
                 var fall := minf(2.0, total * 0.4)
                 _emission_fx.start()
+                # Звук катастрофы (задача 17): удар волны + гул; огибающая гула
+                # совпадает с кривой (рост 1.5/плато/спад 2) - громкость не ведём
+                var sm_fx = get_tree().get_first_node_in_group("sound_manager")
+                if sm_fx:
+                                sm_fx.play_sound("emission_burst", 0.9)
+                                sm_fx.play_sound("emission_rumble", 1.0)
                 _emission_tween = create_tween()
                 _emission_tween.tween_method(
                                 func(v: float): _emission_fx.set_intensity(v), 0.0, 1.0, rise) \
@@ -607,6 +639,9 @@ func _stop_emission_fx():
                 if _emission_fx and is_instance_valid(_emission_fx):
                                 _emission_fx.set_intensity(0.0)
                                 _emission_fx.stop()
+                var sm_st = get_tree().get_first_node_in_group("sound_manager")
+                if sm_st and sm_st.has_method("stop_sound"):
+                                sm_st.stop_sound("emission_rumble", 0.3)
 
 
 ## Радиационный фон Припяти (спека pripyat_radiation): зона по расстоянию

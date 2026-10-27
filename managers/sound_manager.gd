@@ -76,6 +76,19 @@ func _register_real_sounds():
         if ResourceLoader.exists(path):
             music_tracks[track] = load(path)
 
+    # Пак подготовщика (задачи 15/17/18): эмбиент Зоны, Выброс, церемония гачи.
+    # Имя файла = ключ; эмбиент-лупы играются через play_ambient,
+    # остальные ключи доступны обычному play_sound.
+    var extra := ["wind_open_01", "wind_forest_01", "geiger_loop", "night_insects_01",
+        "howl_distant_01", "rain_medium_01", "thunder_far_01",
+        "emission_burst", "emission_rumble",
+        "card_whoosh", "card_flip", "reveal_common", "reveal_rare",
+        "reveal_epic", "reveal_legendary", "ribbon_pop", "burst_sparks"]
+    for key in extra:
+        var extra_path := "res://assets/audio/sfx/%s.ogg" % key
+        if ResourceLoader.exists(extra_path):
+            ambient_sounds[key] = load(extra_path)
+
 
 func _setup_players():
     # Музыка
@@ -233,6 +246,62 @@ func _find_sound(sound_name: String) -> AudioStream:
         return mutant_sounds[sound_name]
     
     return null
+
+
+## Досрочная остановка длинного звука (гул Выброса при раннем гашении)
+func stop_sound(sound_name: String, fade: float = 0.3) -> void:
+    var stream := _find_sound(sound_name)
+    if stream == null:
+        return
+    for player in _sfx_players:
+        if player.playing and player.stream == stream:
+            if fade > 0.0:
+                var tw := create_tween()
+                tw.tween_property(player, "volume_db", -40.0, fade)
+                tw.tween_callback(player.stop)
+            else:
+                player.stop()
+
+
+# ==================== ЭМБИЕНТ ====================
+
+var _current_ambient: String = ""
+
+
+## Луп окружения (задача 15): ветер/ночь/дождь. Повтор того же ключа не
+## перезапускает; смена — коротким кроссфейдом. volume_mod приглушает.
+func play_ambient(key: String, fade: float = 1.0, volume_mod: float = 1.0) -> void:
+    var stream: AudioStream = ambient_sounds.get(key)
+    if stream == null or _ambient_player == null:
+        return
+    if _current_ambient == key and _ambient_player.playing:
+        return
+    if stream is AudioStreamOggVorbis:
+        stream.loop = true
+    var target_db := linear_to_db(sfx_volume * master_volume * 0.5 * volume_mod)
+    _current_ambient = key
+    if _ambient_player.playing and fade > 0.0:
+        var tw := create_tween()
+        tw.tween_property(_ambient_player, "volume_db", -40.0, fade)
+        tw.tween_callback(func():
+            _ambient_player.stream = stream
+            _ambient_player.volume_db = target_db
+            _ambient_player.play())
+    else:
+        _ambient_player.stream = stream
+        _ambient_player.volume_db = target_db
+        _ambient_player.play()
+
+
+func stop_ambient(fade: float = 0.8) -> void:
+    _current_ambient = ""
+    if _ambient_player and _ambient_player.playing:
+        if fade > 0.0:
+            var tw := create_tween()
+            tw.tween_property(_ambient_player, "volume_db", -40.0, fade)
+            tw.tween_callback(_ambient_player.stop)
+        else:
+            _ambient_player.stop()
 
 
 func _get_free_sfx_player() -> AudioStreamPlayer:
