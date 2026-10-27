@@ -502,7 +502,7 @@ const DISCLAIMER_CFG := "user://disclaimer.cfg"
 func _maybe_show_disclaimer():
         """Юридический дисклеймер фан-проекта — один раз при первом запуске (v0.31.1)"""
         var cfg := ConfigFile.new()
-        if cfg.load(DISCLAIMER_CFG) == OK and cfg.get_value("legal", "acknowledged", false):
+        if cfg.load(DISCLAIMER_CFG) == OK and cfg.get_value("legal", "acknowledged_2", false):
                 return
 
         var overlay := ColorRect.new()
@@ -557,6 +557,24 @@ func _maybe_show_disclaimer():
         body.add_theme_color_override("font_color", BunkerUI.TEXT)
         vb.add_child(body)
 
+        # Атрибуция ассетов (ODbL/CC-BY/OFL — обязательна в билде)
+        var credits_head := Label.new()
+        credits_head.text = Loc.t("disclaim.credits_head")
+        credits_head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        credits_head.add_theme_font_override("font", BunkerUI.font_mono())
+        credits_head.add_theme_font_size_override("font_size", 12)
+        credits_head.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+        vb.add_child(credits_head)
+
+        var credits := Label.new()
+        credits.text = Loc.t("disclaim.credits")
+        credits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        credits.custom_minimum_size = Vector2(560, 0)
+        credits.add_theme_font_override("font", BunkerUI.font_body())
+        credits.add_theme_font_size_override("font_size", 12)
+        credits.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+        vb.add_child(credits)
+
         var stripes := BunkerUI.hazard_stripes(10.0)
         vb.add_child(stripes)
 
@@ -569,10 +587,12 @@ func _maybe_show_disclaimer():
 
 
 func _on_disclaimer_ack():
-        """Кнопка «Понятно»: запоминаем и больше не показываем"""
+        """Кнопка «Понятно»: запоминаем и больше не показываем.
+        Ключ acknowledged_2: сброс после добавления атрибуции (v0.31.2),
+        чтобы её увидели и прежние инсталляции."""
         _play_click_sound()
         var cfg := ConfigFile.new()
-        cfg.set_value("legal", "acknowledged", true)
+        cfg.set_value("legal", "acknowledged_2", true)
         cfg.save(DISCLAIMER_CFG)
         var overlay := get_node_or_null("DisclaimerOverlay")
         if overlay:

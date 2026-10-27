@@ -1,8 +1,10 @@
-# STALKER REVERT · «Сталкер наоборот»
+# Бункер: Зона (Bunker: Zona)
 
-![version](https://img.shields.io/badge/версия-v0.22.0_«ПОЛНЫЙ БАЗАР»-b48cff) ![engine](https://img.shields.io/badge/Godot-4.6.1-478cbf) ![platform](https://img.shields.io/badge/платформы-Windows_·_Android-9aa89a)
+![version](https://img.shields.io/badge/версия-v0.31.1-49ff80) ![engine](https://img.shields.io/badge/Godot-4.6.1-478cbf) ![platform](https://img.shields.io/badge/платформы-Windows_·_Android-9aa89a)
 
-Стратегия в реальном времени, где игрок управляет **самой Зоной**. Сталкеры приходят на территорию, чтобы украсть артефакты, а Зона защищается: создаёт аномалии, призывает мутантов, управляет ресурсами и устраивает выбросы.
+Независимая фанатская игра **по мотивам вселенной S.T.A.L.K.E.R.** — стратегия в реальном времени, где игрок управляет **самой Зоной**. Сталкеры приходят на территорию, чтобы украсть артефакты, а Зона защищается: создаёт аномалии, призывает мутантов, управляет ресурсами и устраивает выбросы.
+
+> **Правовой статус:** игра не связана с GSC Game World, не одобрена и не поддерживается ею; все права на вселенную S.T.A.L.K.E.R. принадлежат GSC Game World. Игра распространяется бесплатно и не используется для извлечения прибыли. Слово «сталкер» употребляется в нарицательном значении.
 
 | Кампания «Карта Зоны» | Выживание «Тропа в туман» | Трек наград |
 |---|---|---|
@@ -105,4 +107,9 @@
 ## Атрибуция
 
 - Картовые данные Припяти: © участники [OpenStreetMap](https://www.openstreetmap.org/copyright), ODbL 1.0. Высоты: AWS Terrain Tiles / SRTM (NASA/USGS).
-- Модели пропсов: Kenney (CC0), Quaternius (CC0), а также **Bus, Swing set, Tumbleweed, Dead Tree by Poly by Google, CC-BY 4.0** и **Dead Tree Trunk, Bus Stop by Zsky, CC-BY 4.0** (poly.pizza). Полные списки: `models/props/CREDITS.md`, `models/animals/CREDITS.md`, `assets/textures/CREDITS.md`, `assets/audio/CREDITS.md`.
+- Модели: Kenney (CC0), Quaternius (CC0), iPoly3D (CC0); CC-BY 4.0 — **Bus, Swing set, Tumbleweed, Dead tree, Analog clock, Hourglass, Kettlebell, Comet by Poly by Google**, **Dead Tree Trunk, Bus Stop by Zsky**, **Drop water by moriarty** (poly.pizza).
+- Звук: CC0 (opengameart.org и др.); CC-BY 3.0 — **«Pig SFX Pack» by vinrax**, **«Zombie groan» by gustavoasilveira**.
+- Текстуры: ambientCG (CC0), Poly Haven (CC0).
+- Шрифты: JetBrains Mono, Oswald, Russo One — SIL Open Font License 1.1 (`fonts/CREDITS.md`).
+- Полные списки по каждому паку: `CREDITS.md` рядом с ассетами (`models/`, `assets/`, `ui/gacha/cards/`, `anomaly_fx/`, `emission_fx/`).
+- Атрибуция также показывается в самой игре (юридический экран при первом запуске).
