@@ -37,6 +37,6 @@ void fragment() {
 	float grad = mix(1.0, 0.4, clamp(v_h, 0.0, 1.0));   // ярче у горизонта
 	vec3 col = mix(col_horizon.rgb, col_zenith.rgb, clamp(v_h, 0.0, 1.0));
 	float f = band * grad * (0.6 + 0.4 * n) * intensity;
-	EMISSION = col * f;
+	ALBEDO = col * f;
 	ALPHA = clamp(f, 0.0, 1.0);
 }

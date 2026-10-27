@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://cit8ihcgjhdm"
-path="res://.godot/imported/night_insects_01.ogg-41ef2bed9f185b09b72981e3b9e34e99.oggvorbisstr"
+path="res://.godot/imported/night_insects_01.ogg-a3c37b93f895982076dcdcc95600b2fa.oggvorbisstr"
 
 [deps]
 
-source_file="res://inbox/ambient_zone/night_insects_01.ogg"
-dest_files=["res://.godot/imported/night_insects_01.ogg-41ef2bed9f185b09b72981e3b9e34e99.oggvorbisstr"]
+source_file="res://inbox/_done/ambient_zone/night_insects_01.ogg"
+dest_files=["res://.godot/imported/night_insects_01.ogg-a3c37b93f895982076dcdcc95600b2fa.oggvorbisstr"]
 
 [params]
 

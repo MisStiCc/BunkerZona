@@ -26,6 +26,6 @@ void fragment() {
 	float inner = clamp(smoothstep(r, 0.0, d) * 0.3 * (0.7 + 0.3 * sin(ang * 6.0 + TIME * 2.0)), 0.0, 1.0);
 	vec3 col = ring_col.rgb * band + inner_col.rgb * inner;
 	float f = clamp(band + inner, 0.0, 1.0);
-	EMISSION = col * intensity;
+	ALBEDO = col * intensity;
 	ALPHA = f;
 }

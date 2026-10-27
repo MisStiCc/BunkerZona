@@ -20,6 +20,6 @@ void fragment() {
 	float grad = pow(clamp(1.0 - v_uv.y, 0.0, 1.0), 1.7);   // гаснет к вершине
 	float f = grad * flick * streaks * intensity;
 	vec3 col = mix(col_low.rgb, col_high.rgb, clamp(v_uv.y, 0.0, 1.0));
-	EMISSION = col * f;
+	ALBEDO = col * f;
 	ALPHA = clamp(f * 1.3, 0.0, 1.0);
 }

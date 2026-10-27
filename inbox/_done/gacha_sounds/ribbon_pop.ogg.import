@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://r5bh3u0oetim"
-path="res://.godot/imported/ribbon_pop.ogg-31ff8536cbb62baa8616105e295135c5.oggvorbisstr"
+path="res://.godot/imported/ribbon_pop.ogg-bf2882ff5e69ae8f7276244ce29d960c.oggvorbisstr"
 
 [deps]
 
-source_file="res://inbox/gacha_sounds/ribbon_pop.ogg"
-dest_files=["res://.godot/imported/ribbon_pop.ogg-31ff8536cbb62baa8616105e295135c5.oggvorbisstr"]
+source_file="res://inbox/_done/gacha_sounds/ribbon_pop.ogg"
+dest_files=["res://.godot/imported/ribbon_pop.ogg-bf2882ff5e69ae8f7276244ce29d960c.oggvorbisstr"]
 
 [params]
 
