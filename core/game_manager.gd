@@ -1287,6 +1287,10 @@ func process_run_result(result: Dictionary):
                 if waves_survived > stats.best_survival_wave:
                         stats.best_survival_wave = waves_survived
                         pass # print("Новый рекорд выживания: %d волн" % waves_survived)
+                        # Задача 24: стингер нового рекорда
+                        var sm_rec = get_tree().get_first_node_in_group("sound_manager")
+                        if sm_rec and sm_rec.has_method("play_sound"):
+                                        sm_rec.play_sound("record_new", 0.8)
 
                 # Благословение сезона (арена): +10% биомассы с волн выживания
                 if reward > 0.0:

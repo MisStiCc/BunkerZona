@@ -114,6 +114,14 @@ func _apply_damage():
 		if is_instance_valid(stalker) and stalker.has_method("take_damage"):
 			stalker.take_damage(damage_per_second, self)
 			energy_consumed.emit(damage_per_second)
+			# Задача 21: треск накрытия - не чаще 0.4 с на цель
+			var now_ms: int = Time.get_ticks_msec()
+			var last_ms: float = float(stalker.get_meta("anom_hit_sfx", -1000.0))
+			if now_ms - last_ms > 400.0:
+				stalker.set_meta("anom_hit_sfx", float(now_ms))
+				var sm = get_tree().get_first_node_in_group("sound_manager")
+				if sm and sm.has_method("play_sound"):
+					sm.play_sound("anomaly_hit", 0.45, randf_range(0.95, 1.05))
 
 
 func take_damage(amount: float, _attacker = null):

@@ -150,7 +150,7 @@ func _build_header() -> void:
         head.add_child(arms)
 
         # Пластина круток текущего рукава
-        var rolls_plate := BunkerUI.make_plate("0", "КРУТКИ", 150.0)
+        var rolls_plate := BunkerUI.make_plate("0", "КРУТКИ", 150.0, "res://assets/ui/currency/icon_pull.png")
         rolls_plate.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         head.add_child(rolls_plate)
         _rolls_plate_value = rolls_plate.get_child(0).get_child(0)

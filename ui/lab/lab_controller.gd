@@ -1366,11 +1366,11 @@ func _build_farm_ui():
         spacer0.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         head.add_child(spacer0)
 
-        var bio_plate := BunkerUI.make_plate("0", "БИО", 150.0)
+        var bio_plate := BunkerUI.make_plate("0", "БИО", 150.0, "res://assets/ui/currency/icon_biomass.png")
         head.add_child(bio_plate)
         _farm_biomass_chip = bio_plate.get_child(0).get_child(0)
 
-        var rolls_plate := BunkerUI.make_plate("0", "КРУТКИ", 130.0)
+        var rolls_plate := BunkerUI.make_plate("0", "КРУТКИ", 130.0, "res://assets/ui/currency/icon_pull.png")
         head.add_child(rolls_plate)
         _farm_rolls_chip = rolls_plate.get_child(0).get_child(0)
 
@@ -2186,10 +2186,10 @@ func _build_gacha_ui():
                 gacha_btn.mouse_entered.connect(_play_hover_sound)
                 dk.add_child(gacha_btn)
 
-                var mut_plate := BunkerUI.make_plate("0", Loc.t("gacha.plate_mut_rolls"))
+                var mut_plate := BunkerUI.make_plate("0", Loc.t("gacha.plate_mut_rolls"), 120.0, "res://assets/ui/currency/icon_pull.png")
                 mut_plate.name = "MutRollsPlate"
                 dk.add_child(mut_plate)
-                var art_plate := BunkerUI.make_plate("0", Loc.t("gacha.plate_art_rolls"))
+                var art_plate := BunkerUI.make_plate("0", Loc.t("gacha.plate_art_rolls"), 120.0, "res://assets/ui/currency/icon_pull.png")
                 art_plate.name = "ArtRollsPlate"
                 dk.add_child(art_plate)
 
@@ -4555,7 +4555,7 @@ func _build_gates_ui():
         head.add_child(floor_plate)
         _gates_floor_plate = floor_plate.get_child(0).get_child(0)
 
-        var star_plate := BunkerUI.make_plate("0", "ЗВЁЗД ИЗ 300", 150.0)
+        var star_plate := BunkerUI.make_plate("0", "ЗВЁЗД ИЗ 300", 150.0, "res://assets/ui/currency/icon_star.png")
         head.add_child(star_plate)
         _gates_star_plate = star_plate.get_child(0).get_child(0)
 

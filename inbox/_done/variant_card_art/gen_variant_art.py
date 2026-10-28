@@ -32,7 +32,13 @@ VARIANTS = {
     'obsidian_titan':         ('mut_pseudogiant',      [0.35, 0.32, 0.38]),
 }
 
-ANOMALIES = ['ash_tornado', 'crimson_heat', 'void_loop']
+# Аномалии-варианты: живописный реколор артов-баз (Гроза/Огненный шар/Пустота)
+# (база, tint, доп. десатурация 0..1)
+ANOM_ART = {
+    'ash_tornado':  ('art_storm_artifact',   [0.66, 0.66, 0.72], 0.78),
+    'crimson_heat': ('art_fireball_artifact', [1.24, 0.44, 0.38], 0.12),
+    'void_loop':    ('art_void_artifact',    [0.86, 0.60, 1.30], 0.08),
+}
 
 
 def smoothstep(x, a, b):
@@ -40,7 +46,7 @@ def smoothstep(x, a, b):
     return t * t * (3 - 2 * t)
 
 
-def recolor(img, tint):
+def recolor(img, tint, ds_extra: float = 0.0):
     """Живописный реколор: пер-канальное умножение с защитой теней (рамка/тени
     почти не меняются), мягкий клип светов, десатурация для ярких мастей."""
     a = np.asarray(img.convert('RGB')).astype(np.float32) / 255.0
@@ -52,7 +58,8 @@ def recolor(img, tint):
     out = 1.0 - np.exp(-out * 1.25)
     # яркие масти (tint_luma > 1) тянутся к белому: десатурация
     tint_luma = 0.299 * tint[0] + 0.587 * tint[1] + 0.114 * tint[2]
-    ds = np.clip((tint_luma - 1.0) * 0.9, 0.0, 0.8)
+    ds = np.clip((tint_luma - 1.0) * 0.9, 0.0, 0.8) + ds_extra
+    ds = min(ds, 0.9)
     if ds > 0:
         g = out.mean(axis=2, keepdims=True)
         out = out * (1 - ds) + g * ds
@@ -245,13 +252,12 @@ if __name__ == '__main__':
         gray_version(art).save(os.path.join(CARDS, 'gray', f'mut_{var}.png'))
         made.append(var)
         print('вариант:', var, '<-', base)
-    corners = corners_of(os.path.join(CARDS, 'mut_chimera.png'))
-    for name, gen in [('ash_tornado', anomaly_ash_tornado),
-                      ('crimson_heat', anomaly_crimson_heat),
-                      ('void_loop', anomaly_void_loop)]:
-        art = compose_anomaly(name, gen(), corners)
-        art.save(os.path.join(CARDS, f'art_{name}.png'))
-        gray_version(art).save(os.path.join(CARDS, 'gray', f'art_{name}.png'))
+    for name, (base, tint, dsx) in ANOM_ART.items():
+        src = Image.open(os.path.join(CARDS, base + '.png'))
+        art = recolor(src, tint, dsx)
+        art.save(os.path.join(CARDS, 'art_' + name + '.png'))
+        gray_version(art).save(os.path.join(CARDS, 'gray', 'art_' + name + '.png'))
         made.append('art_' + name)
-        print('аномалия:', name)
+        print('аномалия:', name, '<-', base)
     print('всего:', len(made))
+

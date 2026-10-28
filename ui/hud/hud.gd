@@ -318,13 +318,24 @@ func _apply_prices():
                 _anomaly_base_costs = {}
                 for btn in anomalies:
                                 var cost: int = int(am.get_anomaly_cost(anomalies[btn][0])) if am else 0
-                                btn.text = Loc.t(anomalies[btn][1]) + "\n⚡" + str(cost)
+                                # Имя и цена в ОДНОЙ строке; шрифт 9 - цена влезает в узкую кнопку
+                                btn.text = Loc.t(anomalies[btn][1]) + " ⚡" + str(cost)
+                                btn.clip_text = true
+                                btn.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+                                btn.add_theme_font_size_override("font_size", 9)
+                                btn.tooltip_text = Loc.t(anomalies[btn][1]) + " ⚡" + str(cost)
+                                _apply_ability_icon(btn, "anomaly", anomalies[btn][0])
                                 _anomaly_buttons[btn] = anomalies[btn][0]
                                 _anomaly_base_costs[anomalies[btn][0]] = cost
                                 _style_el_button(btn, anomalies[btn][2])
                 for btn in mutants:
                                 var cost: int = int(sm.get_mutant_cost(mutants[btn][0])) if sm else 0
-                                btn.text = Loc.t(mutants[btn][1]) + "\n🧬" + str(cost)
+                                btn.text = Loc.t(mutants[btn][1]) + " 🧬" + str(cost)
+                                btn.clip_text = true
+                                btn.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+                                btn.add_theme_font_size_override("font_size", 9)
+                                btn.tooltip_text = Loc.t(mutants[btn][1]) + " 🧬" + str(cost)
+                                _apply_ability_icon(btn, "mutant", mutants[btn][0])
                                 _mutant_buttons[btn] = mutants[btn][0]
                                 _mutant_base_costs[mutants[btn][0]] = cost
                                 _style_el_button(btn, mutants[btn][2])
@@ -1061,6 +1072,19 @@ func _announce(title: String, desc: String = "", title_color: Color = Color("ffd
 
 # ==================== СТИХИИ/СОСТОЯНИЯ КНОПОК (v0.31.0) ====================
 
+## Задача 23: иконка способности на кнопку забега (assets/ui/abilities).
+## Нет файла - кнопка без иконки, как раньше. Иконка слева от текста
+## (имя + цена), 30 px - читаемость сохраняется.
+func _apply_ability_icon(btn: Button, kind: String, type: String) -> void:
+                var path := "res://assets/ui/abilities/%s/%s.png" % [kind, type]
+                if not FileAccess.file_exists(path):
+                                return
+                btn.icon = load(path)
+                btn.expand_icon = true
+                btn.add_theme_constant_override("icon_max_width", 30)
+                btn.add_theme_constant_override("h_separation", 4)
+
+
 func _style_el_button(btn: Button, elem: String) -> void:
                 """Кнопка боевого вида в цвете стихии: тёмный фон + яркий кант (v0.31.0).
                 Состояния: доступно — цвет стихии, дорого — красный текст (_update_affordability),
@@ -1404,11 +1428,16 @@ func _layout_taken(taken: Array, panel, cols: int) -> void:
                                 for c in panel.get_children():
                                                 if c is Button and c != _mut_header_btn:
                                                                 c.visible = false
+                                                elif c is Label:
+                                                                c.visible = false  # StarRecipe: в доке не нужен
                                 panel.offset_bottom = panel.offset_top + 28.0
                                 return
                 var met: Dictionary = _loadout_grid.get(panel, {})
                 if met.is_empty():
                                 met = {"x0": 2.0, "y0": 20.0, "bw": 74.0, "bh": 46.0, "px": 78.0, "py": 58.0} if cols == 4 else {"x0": 2.0, "y0": 32.0, "bw": 90.0, "bh": 46.0, "px": 96.0, "py": 52.0}
+                # Кнопки однострочные (имя ⚡цена, шрифт 9): ряды ниже и плотнее
+                met["bh"] = 22.0
+                met["py"] = 28.0
                 var px: float = float(met["px"])
                 var py: float = float(met["py"])
                 var use_cols: int = mini(cols, taken.size())
@@ -1440,6 +1469,16 @@ func _layout_taken(taken: Array, panel, cols: int) -> void:
                                 btn.offset_top = float(met["y0"]) + float(row) * py
                                 btn.offset_right = btn.offset_left + float(met["bw"])
                                 btn.offset_bottom = btn.offset_top + float(met["bh"])
+                # Панель поджимается под компактную сетку однострочных рядов
+                var grid_bottom: float = float(met["y0"]) + float(rows) * float(met["py"])
+                # Строка рецепта ★ (мутанты) - ПОД сеткой, чтобы не спорила с заголовком
+                if panel.name == "MutantPanel":
+                                var recipe: Label = panel.get_node_or_null("StarRecipe")
+                                if recipe:
+                                                recipe.position = Vector2(2.0, grid_bottom + 1.0)
+                                                panel.offset_bottom = panel.offset_top + grid_bottom + 18.0
+                                                return
+                panel.offset_bottom = panel.offset_top + grid_bottom + 6.0
 
 
 # ==================== ТАЧ-UI: АККОРДЕОН, ПОДТВЕРЖДЕНИЕ, SAFE-AREA (D8) ====================

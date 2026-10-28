@@ -82,7 +82,7 @@ func _register_real_sounds():
     var extra := ["wind_open_01", "wind_forest_01", "geiger_loop", "night_insects_01",
         "howl_distant_01", "rain_medium_01", "thunder_far_01",
         "emission_burst", "emission_rumble",
-        "ceremony_win", "ceremony_star", "portal_woosh", "card_whoosh", "card_flip", "reveal_common", "reveal_rare",
+        "ceremony_win", "ceremony_star", "portal_woosh", "stalker_death_01", "stalker_death_02", "stalker_death_03", "anomaly_hit", "wave_horn", "record_new", "gates_open", "keeper_awake", "card_whoosh", "card_flip", "reveal_common", "reveal_rare",
         "reveal_epic", "reveal_legendary", "ribbon_pop", "burst_sparks"]
     for key in extra:
         var extra_path := "res://assets/audio/sfx/%s.ogg" % key

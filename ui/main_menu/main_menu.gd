@@ -326,24 +326,6 @@ func _build_language_button():
         var acc := AccessibilityControls.new()
         acc.position = Vector2(30, 332)
         panel.add_child(acc)
-        # Кодекс Зоны: маленькая «?» в углу панели настроек
-        var codex_btn := Button.new()
-        codex_btn.text = "?"
-        codex_btn.position = Vector2(390, 10)
-        codex_btn.size = Vector2(40, 40)
-        codex_btn.tooltip_text = Loc.t("codex.open_hint")
-        codex_btn.focus_mode = Control.FOCUS_NONE
-        codex_btn.pressed.connect(_on_codex_pressed)
-        panel.add_child(codex_btn)
-
-
-var _codex: CodexOverlay = null
-
-func _on_codex_pressed() -> void:
-        if _codex == null:
-                _codex = CodexOverlay.new()
-                add_child(_codex)
-        _codex.open()
 
 
 func _on_language_pressed():

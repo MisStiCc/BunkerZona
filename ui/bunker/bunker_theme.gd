@@ -170,7 +170,7 @@ static func make_stamp(text: String) -> PanelContainer:
 
 
 ## Пластина с цифрой и подписью (шапка меню/гачи)
-static func make_plate(value: String, caption: String, width: float = 120.0) -> PanelContainer:
+static func make_plate(value: String, caption: String, width: float = 120.0, icon_path: String = "") -> PanelContainer:
         var p := PanelContainer.new()
         p.add_theme_stylebox_override("panel", steel())
         p.custom_minimum_size = Vector2(width, 0)
@@ -190,6 +190,15 @@ static func make_plate(value: String, caption: String, width: float = 120.0) -> 
         lk.add_theme_color_override("font_color", TEXT_DIM)
         v.add_child(lv)
         v.add_child(lk)
+        # Задача 22: иконка валюты ПОСЛЕ цифры (get_child(0) чужого кода
+        # ожидает value-Label, не ломаем порядок детей)
+        if icon_path != "" and FileAccess.file_exists(icon_path):
+                var iv := TextureRect.new()
+                iv.texture = load(icon_path)
+                iv.custom_minimum_size = Vector2(0, 26)
+                iv.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                iv.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                v.add_child(iv)
         p.add_child(v)
         return p
 

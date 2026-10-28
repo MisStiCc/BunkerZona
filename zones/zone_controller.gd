@@ -1196,6 +1196,10 @@ func _on_radiation_pulse_ended():
 func _on_wave_started(wave_number: int, count: int):
                 wave_started.emit(wave_number, count)
                 Signals.wave_started.emit(wave_number, count, progression_manager.get_current_difficulty())
+                # Задача 21: зловещий рог на старте волны
+                var sm_wave = get_tree().get_first_node_in_group("sound_manager")
+                if sm_wave and sm_wave.has_method("play_sound"):
+                                sm_wave.play_sound("wave_horn", 0.7)
 
                 pass # print("Волна " + str(wave_number) + " началась, сталкеров: " + str(count))
 
@@ -1288,12 +1292,15 @@ func _show_floor_intro_banner(floor_type: String):
                                 title.text = Loc.t("tower_ceremony.break_tag")
                 banner.add_child(title)
 
-                # Звук: рык Хранителя, глухой слэм Прорыва
+                # Звук: пробуждение Хранителя (зад.24), слэм Прорыва, врата яруса (старт x10+1)
+                var floor_num := int(run_params.get("tower_floor", 1))
                 var sm = get_tree().get_first_node_in_group("sound_manager")
                 if sm and sm.has_method("play_sound"):
                                 if floor_type == "keeper":
+                                                sm.play_sound("keeper_awake", 0.8)
                                                 sm.play_sound("chimera", 0.5, 0.7)
-                                                sm.play_sound("pulse_warning", 0.6, 0.65)
+                                elif floor_num > 1 and floor_num % 10 == 1:
+                                                sm.play_sound("gates_open", 0.8)
                                 else:
                                                 sm.play_sound("exchange", 0.9, 1.1)
 
@@ -1532,6 +1539,10 @@ func _on_stalker_died(stalker: Node, biomass_returned: float):
                                 stalker_type = stalker.get_stalker_type()
                 if _kills_by_rank.has(stalker_type):
                                 _kills_by_rank[stalker_type] += 1
+                # Задача 21: крик смерти - случайный вариант из трёх
+                var sm_death = get_tree().get_first_node_in_group("sound_manager")
+                if sm_death and sm_death.has_method("play_sound"):
+                                sm_death.play_sound("stalker_death_0%d" % (randi() % 3 + 1), 0.65)
 
                 Signals.stalker_died.emit(stalker, stalker_type, stalker.global_position, biomass_returned)
                 # (лог отключён)
