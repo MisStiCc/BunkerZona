@@ -1292,9 +1292,13 @@ func _loadout_tap(kind: String, type: String) -> bool:
                 if lab == null:
                                 return false
                 if start_panel.visible:
+                                # D16: лимит набора 9/12 (conv_slots12 за флагом)
+                                var gm_lim = get_tree().get_first_node_in_group("game_manager")
+                                lab.loadout_limit = StoreData.slots_allowed(
+                                                gm_lim.current_save_data.owned if gm_lim and gm_lim.current_save_data else {})
                                 var res: String = lab.toggle_loadout(kind, type)
                                 if res == "full":
-                                                show_reward_note("В наборе максимум 9 видов - снимите лишний")
+                                                show_reward_note("В наборе максимум %d видов - снимите лишний" % lab.loadout_limit)
                                 _refresh_loadout_ui()
                                 return true
                 if not lab.in_loadout(kind, type):

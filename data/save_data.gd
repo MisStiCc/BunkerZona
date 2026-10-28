@@ -17,6 +17,11 @@ class_name SaveData
 # (цикл 1, миграция не нужна)
 @export var campaign_cycle: int = 1
 @export var campaign_cycle_100: int = 0
+# D16 монетизация (за флагом StoreData.ENABLED): владение nc-покупками
+# и наградами пропуска {sku/cos_id: true|token}; pass_cycle - цикл,
+# на котором куплен последний пропуск (0 = не покупал). Старые сейвы - пусто.
+@export var owned: Dictionary = {}
+@export var pass_cycle: int = 0
 # Режим сложности кампании: easy / normal / hard (CampaignData)
 @export var campaign_mode: String = "normal"
 

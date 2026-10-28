@@ -534,7 +534,27 @@ const STRINGS := {
                 # ==== Итоги забега (v0.31.2, RU/EN) ====
                 # ==== Станции/хранилище (долокализация) ====
 	# ==== Кодекс Зоны (ui/lab/codex_overlay.gd, D15/zona_codex) ====
-	"codex.title": {"ru": "КОДЕКС ЗОНЫ", "en": "ZONE CODEX"},
+	        # ==== Монетизация D16 (за флагом StoreData.ENABLED) ====
+        "store.title": {"ru": "МАГАЗИН", "en": "STORE"},
+        "store.note_power": {"ru": "Покупки влияют на прогресс. Арена: сезонный сброс - догоняемы. Никогда не продаём: энергию, победы, уровни.", "en": "Purchases affect progress. Arena: seasonal reset keeps it fair. Never sold: energy, victories, levels."},
+        "store.buy": {"ru": "КУПИТЬ", "en": "BUY"},
+        "store.unavailable": {"ru": "магазин недоступен", "en": "store unavailable"},
+        "store.chances_btn": {"ru": "ШАНСЫ", "en": "ODDS"},
+        "store.chances_title": {"ru": "ШАНСЫ ПРИЗЫВА", "en": "SUMMON ODDS"},
+        "store.chances_sum": {"ru": "Сумма: {p}% (уровень кампании {lvl}). Публикуется по политике лутбоксов.", "en": "Total: {p}% (campaign level {lvl}). Published per loot-box policy."},
+        "store.sku_pass_s1": {"ru": "ПРОПУСК СЕЗОНА", "en": "SEASON PASS"},
+        "store.sku_offer_first": {"ru": "СТАРТОВЫЙ ПАК", "en": "STARTER PACK"},
+        "store.sku_rolls_mut_3": {"ru": "3 КРУТКИ МУТАНТОВ", "en": "3 MUTANT ROLLS"},
+        "store.sku_rolls_mut_10": {"ru": "10 КРУТОК МУТАНТОВ", "en": "10 MUTANT ROLLS"},
+        "store.sku_rolls_mut_10p": {"ru": "12 КРУТОК (+2 БОНУС)", "en": "12 ROLLS (+2 BONUS)"},
+        "store.sku_rolls_art_5": {"ru": "5 АНОМАЛИЙНЫХ КРУТОК", "en": "5 ANOMALY ROLLS"},
+        "store.sku_rolls_art_15": {"ru": "15 АНОМАЛИЙНЫХ КРУТОК", "en": "15 ANOMALY ROLLS"},
+        "store.sku_excl_choice": {"ru": "ЭКСКЛЮЗИВ НА ВЫБОР", "en": "EXCLUSIVE OF CHOICE"},
+        "store.sku_bio_50k": {"ru": "БИОМАССА 50 000", "en": "50K BIOMASS"},
+        "store.sku_bio_200k": {"ru": "БИОМАССА 200 000", "en": "200K BIOMASS"},
+        "store.sku_conv_slots12": {"ru": "СЛОТЫ НАБОРА 12", "en": "12 LOADOUT SLOTS"},
+        "store.sku_conv_autofill": {"ru": "АВТОСБОР ФЕРМЫ", "en": "FARM AUTOFILL"},
+"codex.title": {"ru": "КОДЕКС ЗОНЫ", "en": "ZONE CODEX"},
 	"codex.title_btn": {"ru": "КОДЕКС", "en": "CODEX"},
 	"codex.menu_hint": {"ru": "справка о правилах Зоны", "en": "how the Zone works"},
 	"codex.tab_res": {"ru": "РЕСУРСЫ", "en": "RESOURCES"},

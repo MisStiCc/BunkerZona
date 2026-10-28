@@ -386,9 +386,11 @@ func ensure_loadout(anomaly_order: Array, mutant_order: Array) -> void:
         var lab = get_lab_data()
         if lab == null:
                 return
+        # D16: слоты набора 9 -> 12 с conv_slots12 (за флагом)
+        lab.loadout_limit = StoreData.slots_allowed(current_save_data.owned if current_save_data else {})
         if lab.loadout_anomalies.is_empty():
                 for t in anomaly_order:
-                        if lab.loadout_anomalies.size() >= LabData.MAX_LOADOUT:
+                        if lab.loadout_anomalies.size() >= lab.loadout_limit:
                                 break
                         var art_key := GachaData.get_artifact_for_anomaly(str(t))
                         if art_key.is_empty() or is_artifact_unlocked(art_key):
@@ -404,7 +406,7 @@ func ensure_loadout(anomaly_order: Array, mutant_order: Array) -> void:
         lab.loadout_mutants = normalized
         if lab.loadout_mutants.is_empty():
                 for t in mutant_order:
-                        if lab.loadout_mutants.size() >= LabData.MAX_LOADOUT:
+                        if lab.loadout_mutants.size() >= lab.loadout_limit:
                                 break
                         if is_mutant_unlocked(str(t)) or not owned_mutant_exclusive_for(str(t)).is_empty():
                                 lab.loadout_mutants.append(str(t))

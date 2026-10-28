@@ -402,6 +402,24 @@ func claim_tier(tier: int) -> Dictionary:
 				return {}
 		var rewards := chest_contents(tier)
 		t["claimed"][str(tier)] = true
+		# D16: премиум-ветка пропуска сезона (за флагом ENABLED; без пропуска
+		# строка в UI с замком "открыть за 299"). Косметика - в save.owned.
+		if StoreData.ENABLED:
+				var owned: Dictionary = _save().owned if _save() else {}
+				if StoreData.pass_active(track_cycle(), owned):
+						var prem: Dictionary = StoreData.premium_reward(tier, track_cycle())
+						var gm_p = _gm()
+						if gm_p:
+								if int(prem.get("rolls_mut", 0)) > 0:
+										gm_p.grant_mutant_rolls(int(prem["rolls_mut"]), "пропуск сезона")
+								if int(prem.get("rolls_art", 0)) > 0:
+										gm_p.grant_anomaly_rolls(int(prem["rolls_art"]), "пропуск сезона")
+								if float(prem.get("bio", 0.0)) > 0.0 and gm_p.get_lab_data():
+										gm_p.get_lab_data().biomass += float(prem["bio"])
+						for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
+								if prem.has(cos_key) and _save():
+										_save().owned["cos_" + str(prem[cos_key])] = true
+						rewards["premium"] = prem
 		var gm = _gm()
 		if gm:
 				if int(rewards["biomass"]) > 0 and gm.get_lab_data():

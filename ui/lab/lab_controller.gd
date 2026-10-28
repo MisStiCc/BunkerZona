@@ -1278,6 +1278,16 @@ var _farm_modes_wrap: Control = null
 
 
 var _codex: CodexOverlay = null
+var _store_panel: StorePanel = null
+
+func _on_store_pressed() -> void:
+        _play_click_sound()
+        if _store_panel == null:
+                _store_panel = StorePanel.new()
+                add_child(_store_panel)
+                _store_panel.build()
+        _store_panel.open()
+
 
 func _on_codex_pressed() -> void:
         _play_click_sound()
@@ -1300,6 +1310,18 @@ func _build_farm_ui():
                 farm_btn.pressed.connect(_on_farm_pressed)
                 farm_btn.mouse_entered.connect(_play_hover_sound)
                 bottom.add_child(farm_btn)
+                # D16: вкладка магазина - ТОЛЬКО при включённой монетизации
+                # (после деговнизации D17); сейчас флаг false - кнопки нет
+                if StoreData.ENABLED:
+                                var store_btn := Button.new()
+                                store_btn.name = "StoreButton"
+                                store_btn.text = Loc.t("store.title")
+                                store_btn.custom_minimum_size = Vector2(0, 62)
+                                store_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                                BunkerUI.style_button(store_btn, "hazard", 18)
+                                store_btn.pressed.connect(_on_store_pressed)
+                                store_btn.mouse_entered.connect(_play_hover_sound)
+                                bottom.add_child(store_btn)
                 # Кодекс Зоны: справка по правилам (спека zona_codex)
                 var codex_btn := Button.new()
                 codex_btn.name = "CodexButton"

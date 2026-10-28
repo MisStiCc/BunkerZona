@@ -29,6 +29,7 @@ var _jackpot_line: Label
 var _rolls_plate_value: Label = null
 var _tries_label: Label
 var _chances_label: Label
+var _chances_btn_holder: Button = null
 var _spin1_btn: Button
 var _spin10_btn: Button
 # ПРИЗ НА ВЫБОР: кнопка супер-рукава + оверлей выбора из шести эксклюзивов
@@ -258,6 +259,14 @@ func _build_bottom() -> void:
         center.add_child(_tries_label)
 
         # Шансы справа внизу
+        # D16 принцип 3: публикация шансов гачи (политика лутбоксов)
+        var chances_btn := Button.new()
+        chances_btn.text = Loc.t("store.chances_btn")
+        chances_btn.custom_minimum_size = Vector2(110, 26)
+        chances_btn.add_theme_font_size_override("font_size", 12)
+        chances_btn.focus_mode = Control.FOCUS_NONE
+        chances_btn.pressed.connect(_show_chances_popup)
+        _chances_btn_holder = chances_btn
         _chances_label = BunkerUI.make_mono_label("", 13, Color("66794f"))
         _chances_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
         _chances_label.anchor_left = 1.0
@@ -1137,3 +1146,77 @@ func _play_click_sound() -> void:
         var sm = get_tree().get_first_node_in_group("sound_manager")
         if sm and sm.has_method("play_sound"):
                 sm.play_sound("ui_click", 0.6)
+
+
+# ==================== ШАНСЫ ГАЧИ (D16 принцип 3) ====================
+
+func _show_chances_popup() -> void:
+        _play_click_sound()
+        var vp := get_viewport().get_visible_rect().size
+        var root := Control.new()
+        root.set_anchors_preset(Control.PRESET_FULL_RECT)
+        root.mouse_filter = Control.MOUSE_FILTER_STOP
+        add_child(root)
+        var dim := ColorRect.new()
+        dim.color = Color(0, 0, 0, 0.7)
+        dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+        dim.mouse_filter = Control.MOUSE_FILTER_STOP
+        dim.gui_input.connect(func(_ev): root.queue_free())
+        root.add_child(dim)
+        var panel := Panel.new()
+        panel.anchor_left = 0.5
+        panel.anchor_top = 0.5
+        panel.anchor_right = 0.5
+        panel.anchor_bottom = 0.5
+        panel.offset_left = -260
+        panel.offset_right = 260
+        panel.offset_top = -230
+        panel.offset_bottom = 230
+        var sb := StyleBoxFlat.new()
+        sb.bg_color = Color(0.031, 0.045, 0.026, 0.99)
+        sb.border_color = BunkerUI.HAZARD
+        sb.set_border_width_all(2)
+        sb.set_corner_radius_all(10)
+        panel.add_theme_stylebox_override("panel", sb)
+        root.add_child(panel)
+        var v := VBoxContainer.new()
+        v.set_anchors_preset(Control.PRESET_FULL_RECT)
+        v.offset_left = 20
+        v.offset_right = -20
+        v.offset_top = 14
+        v.offset_bottom = -14
+        v.add_theme_constant_override("separation", 8)
+        panel.add_child(v)
+        var title := Label.new()
+        title.text = Loc.t("store.chances_title")
+        title.add_theme_font_override("font", BunkerUI.font_title())
+        title.add_theme_font_size_override("font_size", 20)
+        title.add_theme_color_override("font_color", BunkerUI.HAZARD)
+        title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        v.add_child(title)
+        var lvl: int = 1
+        if _game_manager and _game_manager.current_save_data:
+                lvl = _game_manager.get_selected_or_frontier_level()
+        var w: Dictionary = GachaData.rarity_weights(lvl)
+        var total: float = 0.0
+        for rar in ["common", "uncommon", "rare", "legendary"]:
+                var pct: float = float(w.get(rar, 0.0))
+                total += pct
+                var row := Label.new()
+                row.text = "%s - %.1f%%" % [RAR_RU.get(rar, rar), pct]
+                row.add_theme_font_size_override("font_size", 15)
+                row.add_theme_color_override("font_color", BunkerUI.RARHEX.get(rar, BunkerUI.TEXT))
+                v.add_child(row)
+        var note := Label.new()
+        note.text = Loc.t("store.chances_sum", {"p": "%.1f" % total, "lvl": lvl})
+        note.add_theme_font_size_override("font_size", 12)
+        note.add_theme_color_override("font_color", Color("7d8f6a"))
+        note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        v.add_child(note)
+        var close := Button.new()
+        close.text = Loc.t("lab.back")
+        close.custom_minimum_size = Vector2(180, 42)
+        close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+        BunkerUI.style_button(close, "steel", 15)
+        close.pressed.connect(func(): root.queue_free())
+        v.add_child(close)

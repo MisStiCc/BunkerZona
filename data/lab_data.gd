@@ -473,6 +473,10 @@ static func stars_text(stars: int) -> String:
 
 const MAX_LOADOUT: int = 9
 
+## D16: действующий лимит слотов набора (9; 12 с conv_slots12).
+## Инстанс-переменная - game_manager проставляет из StoreData.slots_allowed.
+var loadout_limit: int = MAX_LOADOUT
+
 
 func loadout_list(kind: String) -> Array[String]:
     return loadout_anomalies if kind == "anomaly" else loadout_mutants
@@ -492,7 +496,8 @@ func toggle_loadout(kind: String, type: String) -> String:
     if list.has(type):
         list.erase(type)
         return "removed"
-    if list.size() >= MAX_LOADOUT:
+    # D16: лимит поднимается купленным conv_slots12 (12); по умолчанию 9
+    if list.size() >= loadout_limit:
         return "full"
     list.append(type)
     return "added"
