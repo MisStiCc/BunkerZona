@@ -84,6 +84,15 @@ func build() -> void:
 	_grid.add_theme_constant_override("v_separation", 10)
 	scroll.add_child(_grid)
 
+	if StoreData.EMULATE_PURCHASES:
+		var emu := Label.new()
+		emu.text = Loc.t("store.emulate_note")
+		emu.add_theme_font_override("font", BunkerUI.font_title())
+		emu.add_theme_font_size_override("font_size", 14)
+		emu.add_theme_color_override("font_color", Color(1.0, 0.62, 0.2))
+		emu.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(emu)
+
 	var close := Button.new()
 	close.text = Loc.t("lab.back")
 	close.custom_minimum_size = Vector2(220, 50)
@@ -151,9 +160,15 @@ func _make_card(sku: String) -> Control:
 
 
 func _on_buy(sku: String) -> void:
-	if not is_instance_valid(_billing) or not _billing.store_available():
+	if is_instance_valid(_billing) and _billing.store_available():
+		_billing.purchase(sku)
 		return
-	_billing.purchase(sku)
+	# Эмуляция (dev): мгновенная "оплата", начисление настоящее
+	if StoreData.EMULATE_PURCHASES:
+		_grant_sku(sku)
+		_fill()
+	else:
+		_note.text = Loc.t("store.unavailable")
 
 
 func _has_key(key: String) -> bool:
@@ -171,3 +186,65 @@ func open() -> void:
 		_billing.start()
 	visible = true
 	_fill()
+
+
+# ==================== НАЧИСЛЕНИЕ ПОКУПКИ (payload SKU) ====================
+
+func _grant_sku(sku: String) -> void:
+	var gm = get_tree().get_first_node_in_group("game_manager")
+	if gm == null or gm.current_save_data == null:
+		return
+	var info: Dictionary = StoreData.PRODUCTS.get(sku, {})
+	var save = gm.current_save_data
+	var lab = gm.get_lab_data()
+	var note_text := ""
+	match str(info.get("kind", "")):
+		"pass":
+			save.owned[sku] = "emulated"
+			save.pass_cycle = Prog.track_cycle()
+			note_text = Loc.t("store.got_pass")
+		"pack", "rolls":
+			if int(info.get("rolls_mut", 0)) > 0:
+				gm.grant_mutant_rolls(int(info["rolls_mut"]), "магазин")
+			if int(info.get("rolls_art", 0)) > 0:
+				gm.grant_anomaly_rolls(int(info["rolls_art"]), "магазин")
+			if info.has("cos_frame"):
+				save.owned["cos_" + str(info["cos_frame"])] = true
+			note_text = Loc.t("store.got_rolls")
+		"bio":
+			if lab:
+				lab.biomass += float(info.get("bio", 0.0))
+			note_text = Loc.t("store.got_bio")
+		"conv":
+			save.owned[sku] = "emulated"
+			note_text = Loc.t("store.got_conv")
+		"excl":
+			note_text = _grant_random_exclusive(gm)
+		_:
+			note_text = sku
+	gm.save_to_active_slot()
+	if _note:
+		_note.text = note_text
+		_note.add_theme_color_override("font_color", Color("a8ff7a"))
+
+## Эксклюзив на выбор (v1 эмуляции: случайный неполученный; выбор руками -
+## к реальному подключению биллинга)
+func _grant_random_exclusive(gm) -> String:
+	var lab = gm.get_lab_data()
+	var candidates: Array = []
+	for ex in GachaData.EXCLUSIVE_MUTANTS:
+		if not lab.unlocked_mutants.has(str(ex["type"])):
+			candidates.append(["mut", str(ex["type"]), str(ex["name"])])
+	for ax in GachaData.EXCLUSIVE_ANOMALIES:
+		if not lab.won_artifacts.has(str(ax["type"])) and not lab.exclusive_anomalies.has(str(ax["type"])):
+			candidates.append(["ano", str(ax["type"]), str(ax.get("name", ""))])
+	if candidates.is_empty():
+		if lab:
+			lab.biomass += 50000.0
+		return Loc.t("store.excl_all_owned")
+	var pick: Array = candidates[randi() % candidates.size()]
+	if pick[0] == "mut":
+		gm.grant_exclusive_mutant(pick[1])
+	else:
+		gm.grant_exclusive_anomaly(pick[1])
+	return Loc.t("store.got_excl", {"n": pick[2]})

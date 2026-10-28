@@ -1485,6 +1485,18 @@ func _build_farm_ui():
         recycle_btn.mouse_entered.connect(_play_hover_sound)
         foot.add_child(recycle_btn)
 
+        # D16 (conv_autofill): разовый сбор всех копий в СП
+        var gm_af = get_tree().get_first_node_in_group("game_manager")
+        var owned_af: Dictionary = gm_af.current_save_data.owned if gm_af and gm_af.current_save_data else {}
+        if StoreData.autofill_enabled(owned_af):
+                var autofill_btn := Button.new()
+                autofill_btn.text = Loc.t("store.autofill_btn")
+                autofill_btn.custom_minimum_size = Vector2(280, 62)
+                BunkerUI.style_button(autofill_btn, "hazard", 18)
+                autofill_btn.pressed.connect(_on_farm_autofill_pressed)
+                autofill_btn.mouse_entered.connect(_play_hover_sound)
+                foot.add_child(autofill_btn)
+
         var heater_btn := Button.new()
         heater_btn.text = "КОРМОВАЯ ГРЕЛКА"
         heater_btn.custom_minimum_size = Vector2(280, 62)
@@ -3299,6 +3311,58 @@ var _recycle_batch: Dictionary = {}
 var _recycle_filter: Array = []  # фильтр редкости (1/2/3/5); пусто = все
 
 
+
+
+## D16 (conv_autofill): все копии фермы -> СП одним тапом
+
+
+## D16: сколько пройденных ступеней ещё не получило премиум пропуска
+var _tasks_prem_btn: Button = null
+
+func _prem_pending_count(owned: Dictionary, cycle: int) -> int:
+        var n: int = 0
+        for t in range(1, Prog.TRACK_TIERS + 1):
+                if Prog.tier_claimed(t) and not owned.has("prem_%d_%d" % [cycle, t]):
+                        n += 1
+        return n
+
+func _on_prem_claim_all() -> void:
+        _play_click_sound()
+        if game_manager == null or game_manager.current_save_data == null:
+                return
+        var owned: Dictionary = game_manager.current_save_data.owned
+        var cyc: int = Prog.track_cycle()
+        var granted: int = 0
+        for t in range(1, Prog.TRACK_TIERS + 1):
+                if Prog.tier_claimed(t) and not owned.has("prem_%d_%d" % [cyc, t]):
+                        var prem: Dictionary = StoreData.premium_reward(t, cyc)
+                        if int(prem.get("rolls_mut", 0)) > 0:
+                                game_manager.grant_mutant_rolls(int(prem["rolls_mut"]), "пропуск сезона")
+                        if int(prem.get("rolls_art", 0)) > 0:
+                                game_manager.grant_anomaly_rolls(int(prem["rolls_art"]), "пропуск сезона")
+                        if float(prem.get("bio", 0.0)) > 0.0 and game_manager.get_lab_data():
+                                game_manager.get_lab_data().biomass += float(prem["bio"])
+                        for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
+                                if prem.has(cos_key):
+                                        owned["cos_" + str(prem[cos_key])] = true
+                        owned["prem_%d_%d" % [cyc, t]] = true
+                        granted += 1
+        game_manager.save_to_active_slot()
+        if granted > 0:
+                _show_message(Loc.t("store.claimed_all", {"n": granted}))
+        _tw_refresh()
+
+func _on_farm_autofill_pressed() -> void:
+        _play_click_sound()
+        if game_manager == null:
+                return
+        var res: Dictionary = game_manager.exchange_all_farm_copies_to_sp()
+        if res.is_empty():
+                _show_message(Loc.t("store.autofill_empty"))
+        else:
+                _show_message(Loc.t("store.autofill_done", {"n": int(res.get("sp", 0))}))
+                _refresh_ui()
+
 func _on_recycle_pressed():
         _play_click_sound()
         _recycle_mode = true
@@ -5003,6 +5067,25 @@ func _refresh_tasks_panel():
         else:
                 _tasks_track_sub.text = "трек закрыт — собирай очки нового цикла"
                 _tasks_track_bar_max(1, 0)
+        # D16: бейдж пропуска сезона + "забрать всё" за пройденные ступени
+        if StoreData.ENABLED and game_manager and game_manager.current_save_data:
+                var owned_p: Dictionary = game_manager.current_save_data.owned
+                var cyc_p: int = Prog.track_cycle()
+                if StoreData.pass_active(cyc_p, owned_p):
+                        _tasks_track_sub.text += "  ·  ПРЕМИУМ СЕЗОНА АКТИВЕН"
+                        if _tasks_prem_btn == null:
+                                _tasks_prem_btn = Button.new()
+                                _tasks_prem_btn.custom_minimum_size = Vector2(240, 34)
+                                _tasks_prem_btn.add_theme_font_size_override("font_size", 13)
+                                BunkerUI.style_button(_tasks_prem_btn, "hazard", 13)
+                                _tasks_prem_btn.pressed.connect(_on_prem_claim_all)
+                                if _tasks_points_label and _tasks_points_label.get_parent():
+                                        _tasks_points_label.get_parent().add_child(_tasks_prem_btn)
+                        var pending: int = _prem_pending_count(owned_p, cyc_p)
+                        _tasks_prem_btn.visible = pending > 0
+                        _tasks_prem_btn.text = Loc.t("store.claim_all", {"n": pending})
+                elif _tasks_prem_btn:
+                        _tasks_prem_btn.visible = false
         # Задачи и сундуки
         _rebuild_tasks_lists()
         _rebuild_tasks_track()
