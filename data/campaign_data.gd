@@ -87,7 +87,7 @@ const CHAPTERS := [
 		"pulses_to_win": 4, "wave_break": 45.0
 	},
 	{
-		"start": 51, "end": 60, "title": "Тёмная долина",
+		"start": 51, "end": 60, "title": "Глухая падь",
 		"desc": "Пять волн без различий день-ночь: сталкеры больше не пугаются.",
 		"waves_start": 5, "waves_extra_from": 0,
 		"count_start": 14, "count_end": 16,

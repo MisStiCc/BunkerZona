@@ -214,14 +214,14 @@ offset_top = 32.0
 offset_right = 284.0
 offset_bottom = 78.0
 theme_override_font_sizes/font_size = 10
-text = "Снорк"
+text = "Болотник"
 [node name="PseudodogButton" type="Button" parent="MutantPanel"]
 offset_left = 290.0
 offset_top = 32.0
 offset_right = 380.0
 offset_bottom = 78.0
 theme_override_font_sizes/font_size = 10
-text = "Псевдо"
+text = "Сумеречник"
 [node name="ControllerButton" type="Button" parent="MutantPanel"]
 offset_left = 386.0
 offset_top = 32.0
@@ -242,7 +242,7 @@ offset_top = 84.0
 offset_right = 188.0
 offset_bottom = 130.0
 theme_override_font_sizes/font_size = 10
-text = "Кровосос"
+text = "Пиявец"
 [node name="ChimeraButton" type="Button" parent="MutantPanel"]
 offset_left = 194.0
 offset_top = 84.0
@@ -256,7 +256,7 @@ offset_top = 84.0
 offset_right = 380.0
 offset_bottom = 130.0
 theme_override_font_sizes/font_size = 10
-text = "Псевдогигант"
+text = "Кряж"
 [node name="ZombieButton" type="Button" parent="MutantPanel"]
 offset_left = 386.0
 offset_top = 84.0

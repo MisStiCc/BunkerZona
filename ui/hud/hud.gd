@@ -1246,7 +1246,7 @@ func _rescale_battle_panels() -> void:
 const ANOMALY_ORDER := ["heat_anomaly", "electric_anomaly", "acid_anomaly", "gravity_vortex", "gravity_lift", "gravity_whirlwind", "thermal_steam", "thermal_comet", "chemical_jelly", "chemical_gas", "chemical_acid_cloud", "radiation_hotspot", "time_dilation", "teleport", "electric_tesla", "bio_burning_fluff"]
 const MUTANT_ORDER := ["zombie", "dog_mutant", "flesh", "snork_mutant", "pseudodog", "poltergeist", "controller_mutant", "bloodsucker", "chimera", "pseudogiant"]
 # Короткие имена эксклюзивов для боевых кнопок (полные - в подсказке и галерее)
-const EXCLUSIVE_SHORT := {"alpha_pseudodog": "Альфа-пёс", "ash_snork": "Пепел.снорк", "obsidian_controller": "Чёрн.контр."}
+const EXCLUSIVE_SHORT := {"alpha_pseudodog": "Альфа-вожак", "ash_snork": "Пепельник", "obsidian_controller": "Обсидиан.пастырь"}
 
 
 func _loadout_init():

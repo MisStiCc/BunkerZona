@@ -338,7 +338,7 @@ func get_footstep_stream(surface: String) -> AudioStream:
     return null
 
 
-## Рык мутанта: ключи пака; пёс падает на псевдопса
+## Рык мутанта: ключи пака; пёс падает на сумеречника
 func play_mutant_spawn_sound(mutant_type: String):
     var key := mutant_type
     if key == "dog_mutant":

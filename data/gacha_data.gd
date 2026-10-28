@@ -142,22 +142,22 @@ const ARTIFACT_BONUS := {
 ## только 30-я ступень трека + базар). family — для синергий (см. SynergyData).
 const EXCLUSIVE_MUTANTS := [
 		{
-				"type": "alpha_pseudodog", "name": "Альфа-псевдопёс", "base": "pseudodog",
-				"label": "🐺 АЛЬФА-ПСЕВДОПЁС", "accent": "e8eae6", "tint": [1.9, 1.85, 1.8],
+				"type": "alpha_pseudodog", "name": "Альфа-вожак", "base": "pseudodog",
+				"label": "🐺 АЛЬФА-ВОЖАК", "accent": "e8eae6", "tint": [1.9, 1.85, 1.8],
 				"hp": 1.4, "dmg": 1.0, "speed": 1.15,
 				"desc": "Белая масть, вожак стаи",
 				"rarity": "ex", "family": "dog",
 		},
 		{
-				"type": "ash_snork", "name": "Пепельный снорк", "base": "snork_mutant",
-				"label": "🌫 ПЕПЕЛЬНЫЙ СНОРК", "accent": "b9b4a8", "tint": [0.56, 0.55, 0.52],
+				"type": "ash_snork", "name": "Пепельник", "base": "snork_mutant",
+				"label": "🌫 ПЕПЕЛЬНИК", "accent": "b9b4a8", "tint": [0.56, 0.55, 0.52],
 				"hp": 1.0, "dmg": 1.15, "speed": 1.3,
 				"desc": "Серый камуфляж, быстрый и злой",
 				"rarity": "ex", "family": "predator",
 		},
 		{
-				"type": "obsidian_controller", "name": "Чёрный контролёр", "base": "controller_mutant",
-				"label": "👁 ЧЁРНЫЙ КОНТРОЛЁР", "accent": "b48cff", "tint": [0.5, 0.44, 0.6],
+				"type": "obsidian_controller", "name": "Обсидиановый пастырь", "base": "controller_mutant",
+				"label": "👁 ОБСИДИАНОВЫЙ ПАСТЫРЬ", "accent": "b48cff", "tint": [0.5, 0.44, 0.6],
 				"hp": 1.25, "dmg": 1.3, "speed": 1.0,
 				"desc": "Ночной окрас, психика жёстче",
 				"rarity": "ex", "family": "psy",
@@ -187,8 +187,8 @@ const EXCLUSIVE_MUTANTS := [
 				"rarity": "common", "family": "undead",
 		},
 		{
-				"type": "brodyashiy_snork", "name": "Бродячий снорк", "base": "snork_mutant",
-				"label": "🐾 БРОДЯЧИЙ СНОРК", "accent": "d8c09a", "tint": [0.75, 0.65, 0.5],
+				"type": "brodyashiy_snork", "name": "Бродень", "base": "snork_mutant",
+				"label": "🐾 БРОДЕНЬ", "accent": "d8c09a", "tint": [0.75, 0.65, 0.5],
 				"hp": 1.1, "dmg": 1.0, "speed": 1.1,
 				"desc": "Ушёл из лагеря, бродит по Зоне",
 				"rarity": "common", "family": "predator",
@@ -209,8 +209,8 @@ const EXCLUSIVE_MUTANTS := [
 				"rarity": "uncommon", "family": "undead",
 		},
 		{
-				"type": "lutiy_pseudodog", "name": "Лютый псевдопёс", "base": "pseudodog",
-				"label": "🐺 ЛЮТЫЙ ПСЕВДОПЁС", "accent": "ff9a8a", "tint": [0.85, 0.55, 0.5],
+				"type": "lutiy_pseudodog", "name": "Лютень", "base": "pseudodog",
+				"label": "🐺 ЛЮТЕНЬ", "accent": "ff9a8a", "tint": [0.85, 0.55, 0.5],
 				"hp": 1.0, "dmg": 1.25, "speed": 1.1,
 				"desc": "Кусает наотмашь, злее вожака",
 				"rarity": "uncommon", "family": "dog",
@@ -224,29 +224,29 @@ const EXCLUSIVE_MUTANTS := [
 		},
 		# Фиолетовые (кампания + базар)
 		{
-				"type": "nochnoy_krovosos", "name": "Ночной кровосос", "base": "bloodsucker",
-				"label": "🌑 НОЧНОЙ КРОВОСОС", "accent": "aebbdd", "tint": [0.45, 0.5, 0.6],
+				"type": "nochnoy_krovosos", "name": "Ночень", "base": "bloodsucker",
+				"label": "🌑 НОЧЕНЬ", "accent": "aebbdd", "tint": [0.45, 0.5, 0.6],
 				"hp": 1.15, "dmg": 1.15, "speed": 1.15,
 				"desc": "Охотится только в темноте",
 				"rarity": "rare", "family": "predator",
 		},
 		{
-				"type": "psi_controller", "name": "Пси-контролёр", "base": "controller_mutant",
-				"label": "👁 ПСИ-КОНТРОЛЁР", "accent": "c9a8ff", "tint": [0.7, 0.55, 0.95],
+				"type": "psi_controller", "name": "Одурник", "base": "controller_mutant",
+				"label": "👁 ОДУРНИК", "accent": "c9a8ff", "tint": [0.7, 0.55, 0.95],
 				"hp": 1.1, "dmg": 1.25, "speed": 1.0,
 				"desc": "Ломает разум одним взглядом",
 				"rarity": "rare", "family": "psy",
 		},
 		{
-				"type": "krovaviy_snork", "name": "Кровавый снорк", "base": "snork_mutant",
-				"label": "🩸 КРОВАВЫЙ СНОРК", "accent": "ff8080", "tint": [0.9, 0.4, 0.4],
+				"type": "krovaviy_snork", "name": "Кровник", "base": "snork_mutant",
+				"label": "🩸 КРОВНИК", "accent": "ff8080", "tint": [0.9, 0.4, 0.4],
 				"hp": 1.05, "dmg": 1.3, "speed": 1.15,
 				"desc": "Противогаз в бурой корке",
 				"rarity": "rare", "family": "predator",
 		},
 		{
-				"type": "ten_pseudodog", "name": "Тень псевдопса", "base": "pseudodog",
-				"label": "👣 ТЕНЬ ПСЕВДОПСА", "accent": "8a8a99", "tint": [0.4, 0.4, 0.45],
+				"type": "ten_pseudodog", "name": "Мгларь", "base": "pseudodog",
+				"label": "👣 МГЛАРЬ", "accent": "8a8a99", "tint": [0.4, 0.4, 0.45],
 				"hp": 0.95, "dmg": 1.1, "speed": 1.3,
 				"desc": "Не отбрасывает тени — сама тень",
 				"rarity": "rare", "family": "dog",
@@ -367,12 +367,12 @@ static func total_collection_size() -> int:
 # МАГАЗИН: покупка НЕтоповых мутантов и артефактов за биомассу лаборатории.
 # Купленный мутант бесплатно вступит в бой в начале следующего забега,
 # артефакт - заспавнится у монолита как приманка для сталкеров.
-# Химеры, псевдогиганта и легендарных артефактов в магазине нет - только гача и вехи.
+# Химеры, Кряжа и легендарных артефактов в магазине нет - только гача и вехи.
 const SHOP_MUTANTS := [
 		["zombie", "Зомби", 30], ["dog_mutant", "Собака", 45], ["flesh", "Плоть", 45],
-		["snork_mutant", "Снорк", 75], ["pseudodog", "Псевдопёс", 75],
-		["poltergeist", "Полтергейст", 120], ["controller_mutant", "Контролёр", 120],
-		["bloodsucker", "Кровосос", 150],
+		["snork_mutant", "Болотник", 75], ["pseudodog", "Сумеречник", 75],
+		["poltergeist", "Полтергейст", 120], ["controller_mutant", "Сновод", 120],
+		["bloodsucker", "Пиявец", 150],
 ]
 const SHOP_ARTIFACTS := [
 		["battery_artifact", "Батарейка", 150],
@@ -386,22 +386,22 @@ const SHOP_ARTIFACTS := [
 # выбросы (+3). Эксклюзивы Чёрных ящиков впервые можно КУПИТЬ - СП решают всё.
 # kind: ex_mut | ex_anom | rolls_mut | rolls_art | biomass | copy
 const SEASON_SHOP := [
-		["ex_mut", "alpha_pseudodog", "Альфа-псевдопёс", 250],
-		["ex_mut", "ash_snork", "Пепельный снорк", 250],
-		["ex_mut", "obsidian_controller", "Чёрный контролёр", 250],
+		["ex_mut", "alpha_pseudodog", "Альфа-вожак", 250],
+		["ex_mut", "ash_snork", "Пепельник", 250],
+		["ex_mut", "obsidian_controller", "Обсидиановый пастырь", 250],
 		# v0.30.0 «ЗОНА МУТИРУЕТ»: вариации и легендарки в базаре
 		["ex_mut", "dvoroviy_pes", "Дворовый пёс", 60],
 		["ex_mut", "tuhlaya_plot", "Тухлая плоть", 60],
 		["ex_mut", "gniloy_zombie", "Гнилой зомби", 60],
-		["ex_mut", "brodyashiy_snork", "Бродячий снорк", 60],
+		["ex_mut", "brodyashiy_snork", "Бродень", 60],
 		["ex_mut", "besheniy_pes", "Бешеный пёс", 120],
 		["ex_mut", "tolstaya_plot", "Толстая плоть", 120],
-		["ex_mut", "lutiy_pseudodog", "Лютый псевдопёс", 120],
+		["ex_mut", "lutiy_pseudodog", "Лютень", 120],
 		["ex_mut", "mercayushiy_poltergeist", "Мерцающий полтергейст", 120],
-		["ex_mut", "nochnoy_krovosos", "Ночной кровосос", 200],
-		["ex_mut", "psi_controller", "Пси-контролёр", 200],
-		["ex_mut", "krovaviy_snork", "Кровавый снорк", 200],
-		["ex_mut", "ten_pseudodog", "Тень псевдопса", 200],
+		["ex_mut", "nochnoy_krovosos", "Ночень", 200],
+		["ex_mut", "psi_controller", "Одурник", 200],
+		["ex_mut", "krovaviy_snork", "Кровник", 200],
+		["ex_mut", "ten_pseudodog", "Мгларь", 200],
 		["ex_mut", "crimson_chimera", "Багровая химера", 500],
 		["ex_mut", "obsidian_titan", "Обсидиановый титан", 500],
 		["ex_anom", "ash_tornado", "Пепельный вихрь", 250],
@@ -411,7 +411,7 @@ const SEASON_SHOP := [
 		# артефактный пул за СП - кампания/гача больше не единственный путь.
 		# mut: новый -> коллекция, дубликат -> копия на ферму (как эксклюзивы).
 		# art: аномалия открывается, артефакт приходит в бой (как магазин за биомассу).
-		["mut", "pseudogiant", "Псевдогигант", 180],
+		["mut", "pseudogiant", "Кряж", 180],
 		["mut", "chimera", "Химера", 240],
 		["art", "common_artifact", "Обычный артефакт", 8],
 		["art", "battery_artifact", "Батарейка", 8],
@@ -434,7 +434,7 @@ const SEASON_SHOP := [
 		["rolls_mut", "", "Крутки мутантов x10", 45],
 		["rolls_art", "", "Крутки артефактов x10", 45],
 		["biomass", "", "Биомасса 100 000", 40],
-		["copy", "pseudogiant", "Копия: Псевдогигант", 120],
+		["copy", "pseudogiant", "Копия: Кряж", 120],
 		["copy", "chimera", "Копия: Химера", 120],
 ]
 
@@ -454,17 +454,17 @@ const STAR_FEED_COST := {1: 2, 2: 4, 3: 6, 4: 8}
 # Русские имена всех типов коллекции (панель звёзд, логи)
 const DISPLAY_NAMES := {
 		"zombie": "Зомби", "dog_mutant": "Собака", "flesh": "Плоть",
-		"snork_mutant": "Снорк", "pseudodog": "Псевдопёс", "poltergeist": "Полтергейст",
-		"controller_mutant": "Контролёр", "bloodsucker": "Кровосос",
-		"pseudogiant": "Псевдогигант", "chimera": "Химера",
-		"alpha_pseudodog": "Альфа-псевдопёс", "ash_snork": "Пепельный снорк",
-		"obsidian_controller": "Чёрный контролёр",
+		"snork_mutant": "Болотник", "pseudodog": "Сумеречник", "poltergeist": "Полтергейст",
+		"controller_mutant": "Сновод", "bloodsucker": "Пиявец",
+		"pseudogiant": "Кряж", "chimera": "Химера",
+		"alpha_pseudodog": "Альфа-вожак", "ash_snork": "Пепельник",
+		"obsidian_controller": "Обсидиановый пастырь",
 		"dvoroviy_pes": "Дворовый пёс", "tuhlaya_plot": "Тухлая плоть",
-		"gniloy_zombie": "Гнилой зомби", "brodyashiy_snork": "Бродячий снорк",
+		"gniloy_zombie": "Гнилой зомби", "brodyashiy_snork": "Бродень",
 		"besheniy_pes": "Бешеный пёс", "tolstaya_plot": "Толстая плоть",
-		"lutiy_pseudodog": "Лютый псевдопёс", "mercayushiy_poltergeist": "Мерцающий полтергейст",
-		"nochnoy_krovosos": "Ночной кровосос", "psi_controller": "Пси-контролёр",
-		"krovaviy_snork": "Кровавый снорк", "ten_pseudodog": "Тень псевдопса",
+		"lutiy_pseudodog": "Лютень", "mercayushiy_poltergeist": "Мерцающий полтергейст",
+		"nochnoy_krovosos": "Ночень", "psi_controller": "Одурник",
+		"krovaviy_snork": "Кровник", "ten_pseudodog": "Мгларь",
 		"crimson_chimera": "Багровая химера", "obsidian_titan": "Обсидиановый титан",
 		"ash_tornado": "Пепельный вихрь", "crimson_heat": "Багровая жара",
 		"void_loop": "Пустотная петля",
@@ -575,7 +575,7 @@ static func get_shop_artifacts() -> Array:
 
 static func rarity_weights(level: int) -> Dictionary:
 		# Легендарки: ~4% на старте, до 12% к концу кампании.
-		# Необычный тир обязателен - без него снорк/псевдопёс/полтергейст
+		# Необычный тир обязателен - без него болотник/сумеречник/полтергейст
 		# не выпадают из гачи вовсе (баг, найденный прогоном 10000 круток)
 		var legendary := minf(4.0 + float(level) * 0.06, 12.0)
 		var rare := minf(20.0 + float(level) * 0.1, 35.0)
