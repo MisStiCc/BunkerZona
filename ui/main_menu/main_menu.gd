@@ -474,6 +474,38 @@ func _apply_bunker_style():
                 ver.grow_vertical = Control.GROW_DIRECTION_BEGIN
                 add_child(ver)
 
+        # --- «?» — Кодекс Зоны (спека D15): справка о правилах без лаборатории ---
+        if get_node_or_null("CodexHelpButton") == null:
+                var help_btn := Button.new()
+                help_btn.name = "CodexHelpButton"
+                help_btn.text = "?"
+                help_btn.tooltip_text = Loc.t("codex.menu_hint")
+                help_btn.anchor_left = 1.0
+                help_btn.anchor_right = 1.0
+                help_btn.anchor_top = 1.0
+                help_btn.anchor_bottom = 1.0
+                help_btn.offset_left = -64
+                help_btn.offset_right = -24
+                help_btn.offset_top = -76
+                help_btn.offset_bottom = -36
+                help_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+                help_btn.grow_vertical = Control.GROW_DIRECTION_BEGIN
+                help_btn.focus_mode = Control.FOCUS_NONE
+                BunkerUI.style_button(help_btn, "steel", 18)
+                help_btn.pressed.connect(_on_codex_pressed)
+                add_child(help_btn)
+
+
+var _codex: CodexOverlay = null
+
+
+func _on_codex_pressed():
+        _play_click_sound()
+        if _codex == null:
+                _codex = CodexOverlay.new()
+                add_child(_codex)
+        _codex.open()
+
 
 func _refresh_plates():
         """Пластины ресурсов из активного сейва (если GameManager доступен)."""
