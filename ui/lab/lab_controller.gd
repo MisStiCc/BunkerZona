@@ -1277,6 +1277,16 @@ var _farm_cards_wrap: Control = null
 var _farm_modes_wrap: Control = null
 
 
+var _codex: CodexOverlay = null
+
+func _on_codex_pressed() -> void:
+        _play_click_sound()
+        if _codex == null:
+                _codex = CodexOverlay.new()
+                add_child(_codex)
+        _codex.open()
+
+
 func _build_farm_ui():
         """Кнопка ФЕРМА + полноэкранная ферма-инкубатор (строится кодом)"""
         var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
@@ -1290,6 +1300,16 @@ func _build_farm_ui():
                 farm_btn.pressed.connect(_on_farm_pressed)
                 farm_btn.mouse_entered.connect(_play_hover_sound)
                 bottom.add_child(farm_btn)
+                # Кодекс Зоны: справка по правилам (спека zona_codex)
+                var codex_btn := Button.new()
+                codex_btn.name = "CodexButton"
+                codex_btn.text = Loc.t("codex.title")
+                codex_btn.custom_minimum_size = Vector2(0, 62)
+                codex_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                BunkerUI.style_button(codex_btn, "steel", 18)
+                codex_btn.pressed.connect(_on_codex_pressed)
+                codex_btn.mouse_entered.connect(_play_hover_sound)
+                bottom.add_child(codex_btn)
 
         farm_panel = Control.new()
         farm_panel.name = "FarmPanel"

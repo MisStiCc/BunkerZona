@@ -23,6 +23,8 @@ const ART := {
 	"banner_keeper": "banner_keeper.png",
 	"banner_victory": "banner_victory.png",
 	"banner_defeat": "banner_defeat.png",
+	"banner_ring": "banner_ring_captured.png",
+	"banner_record": "banner_record.png",
 	"star_gold": "star_gold.png",
 	"star_silver": "star_silver.png",
 	"star_empty": "star_empty.png",
@@ -95,15 +97,15 @@ const PORTAL_SPIN_SPEED: float = 1.2    # рад/с вращения portal_ring
 # chimera - mutant_sounds). Имена файлов arта звука тут не подходят.
 const STAR_PITCH_STEP: float = 0.15     # лесенка питча звёзд: 1.0 / 1.15 / 1.30
 const SFX_MAP := {
-	"banner_slam": {"key": "upgrade", "vol": 0.9, "pitch": 0.85},
+	"banner_slam": {"key": "ceremony_win", "vol": 0.9, "pitch": 0.85},   # зад.20: стингер победы
 	"banner_slam_break": {"key": "exchange", "vol": 0.9, "pitch": 1.1},
 	"keeper_slam": {"key": "pulse_warning", "vol": 0.6, "pitch": 0.65},
 	"keeper_roar": {"key": "chimera", "vol": 0.5, "pitch": 0.7},
-	"star_pop": {"key": "upgrade", "vol": 0.75, "pitch": 1.0},        # pitch = 1.0 + STAR_PITCH_STEP * i
+	"star_pop": {"key": "ceremony_star", "vol": 0.75, "pitch": 1.0},    # зад.20: дзынь, лесенка 1.0/1.15/1.3        # pitch = 1.0 + STAR_PITCH_STEP * i
 	"star_third": {"key": "exchange", "vol": 0.4, "pitch": 1.0},
 	"star_silver": {"key": "ui_hover", "vol": 0.35, "pitch": 1.0},
 	"confetti_burst": {"key": "exchange", "vol": 0.5, "pitch": 1.1},
-	"transition_stairs": {"key": "gravity", "vol": 0.45, "pitch": 0.8},
+	"transition_stairs": {"key": "portal_woosh", "vol": 0.5, "pitch": 1.0},  # зад.20: гул перехода
 	"transition_portal": {"key": "gravity", "vol": 0.55, "pitch": 1.05},
 	"transition_portal_spark": {"key": "electric", "vol": 0.25, "pitch": 1.0},
 	"floor_title": {"key": "ui_click", "vol": 0.5, "pitch": 1.0},
