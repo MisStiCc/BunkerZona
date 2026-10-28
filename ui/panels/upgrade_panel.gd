@@ -26,11 +26,11 @@ func setup(station_type: String, data: LabData, callback: Callable):
 	
 	match station_type:
 		"anomaly":
-			title_label.text = "СТАНЦИЯ АНОМАЛИЙ"
+			title_label.text = Loc.t("upg.st_anomaly")
 		"mutant":
-			title_label.text = "СТАНЦИЯ МУТАНТОВ"
+			title_label.text = Loc.t("upg.st_mutant")
 		"monolith":
-			title_label.text = "СТАНЦИЯ МОНОЛИТА"
+			title_label.text = Loc.t("upg.st_monolith")
 	
 	_refresh_upgrades()
 	open()
@@ -52,22 +52,22 @@ func _get_upgrades_for_station() -> Array:
 	match current_station:
 		"anomaly":
 			return [
-				{"id": "anomaly_damage", "name": "Урон аномалий", "desc": "Увеличивает урон всех аномалий"},
-				{"id": "anomaly_radius", "name": "Радиус аномалий", "desc": "Увеличивает радиус действия"},
-				{"id": "anomaly_duration", "name": "Длительность", "desc": "Увеличивает время жизни"}
+				{"id": "anomaly_damage", "name_key": "upg.t_anom_damage", "desc_key": "upg.d_anom_damage"},
+				{"id": "anomaly_radius", "name_key": "upg.t_anom_radius", "desc_key": "upg.d_anom_radius"},
+				{"id": "anomaly_duration", "name_key": "upg.t_anom_duration", "desc_key": "upg.d_anom_duration"}
 			]
 		"mutant":
 			return [
-				{"id": "mutant_health", "name": "Здоровье мутантов", "desc": "Увеличивает HP мутантов"},
-				{"id": "mutant_damage", "name": "Урон мутантов", "desc": "Увеличивает урон мутантов"},
-				{"id": "mutant_speed", "name": "Скорость мутантов", "desc": "Увеличивает скорость"},
-				{"id": "mutant_cost", "name": "Скидка", "desc": "Уменьшает стоимость создания"}
+				{"id": "mutant_health", "name_key": "upg.t_mut_health", "desc_key": "upg.d_mut_health"},
+				{"id": "mutant_damage", "name_key": "upg.t_mut_damage", "desc_key": "upg.d_mut_damage"},
+				{"id": "mutant_speed", "name_key": "upg.t_mut_speed", "desc_key": "upg.d_mut_speed"},
+				{"id": "mutant_cost", "name_key": "upg.t_mut_cost", "desc_key": "upg.d_mut_cost"}
 			]
 		"monolith":
 			return [
-				{"id": "monolith_energy", "name": "Макс. энергия", "desc": "Увеличивает базовую энергию"},
-				{"id": "monolith_regen", "name": "Регенерация", "desc": "Ускоряет восстановление"},
-				{"id": "rare_chance", "name": "Редкие артефакты", "desc": "Повышает шанс Rare/Legendary"}
+				{"id": "monolith_energy", "name_key": "upg.t_mon_energy", "desc_key": "upg.d_mon_energy"},
+				{"id": "monolith_regen", "name_key": "upg.t_mon_regen", "desc_key": "upg.d_mon_regen"},
+				{"id": "rare_chance", "name_key": "upg.t_mon_rare", "desc_key": "upg.d_mon_rare"}
 			]
 	return []
 
@@ -81,12 +81,12 @@ func _create_upgrade_item(upgrade: Dictionary) -> HBoxContainer:
 	info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
 	var name_label = Label.new()
-	name_label.text = upgrade["name"]
+	name_label.text = Loc.t(str(upgrade.get("name_key", upgrade.get("name", ""))))
 	name_label.add_theme_font_size_override("font_size", 18)
 	info_vbox.add_child(name_label)
 	
 	var desc_label = Label.new()
-	desc_label.text = upgrade["desc"]
+	desc_label.text = Loc.t(str(upgrade.get("desc_key", upgrade.get("desc", ""))))
 	desc_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 	info_vbox.add_child(desc_label)
 	
@@ -127,7 +127,7 @@ func _update_upgrade_item(container: HBoxContainer, upgrade_id: String):
 		pass # print("UpgradePanel: в элементе апгрейда нет LevelLabel/UpgradeButton")
 		return
 	
-	level_label.text = "Уровень %d/%d" % [level, max_level]
+	level_label.text = Loc.t("upg.level", {"n": level, "m": max_level})
 	
 	if level >= max_level:
 		upgrade_button.text = "MAX"
@@ -141,12 +141,12 @@ func _update_upgrade_item(container: HBoxContainer, upgrade_id: String):
 	if gm and gm.has_method("get_campaign_level"):
 		campaign_level = gm.get_campaign_level()
 	if campaign_level < unlock_level:
-		upgrade_button.text = "ОТКРОЕТСЯ\nна уровне %d" % unlock_level
+		upgrade_button.text = Loc.t("upg.unlock_at", {"n": unlock_level, "nl": String.chr(10)})
 		upgrade_button.disabled = true
 		return
 	
 	var can_upgrade = lab_data.biomass >= cost
-	upgrade_button.text = "УЛУЧШИТЬ\n%d биомассы" % int(cost)
+	upgrade_button.text = Loc.t("upg.upgrade", {"n": int(cost), "nl": String.chr(10)})
 	upgrade_button.disabled = not can_upgrade
 
 
@@ -181,7 +181,7 @@ func _on_upgrade_clicked(upgrade_id: String):
 			sm.play_sound("upgrade", 0.8)
 		
 		upgrade_callback.call(upgrade_id)
-		show_message("Улучшение приобретено!", 1.0)
+		show_message(Loc.t("upg.purchased"), 1.0)
 
 
 func _on_back_pressed():

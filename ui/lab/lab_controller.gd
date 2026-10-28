@@ -1583,13 +1583,13 @@ func _make_farm_card(type: String) -> Control:
         var chip := Label.new()
         var feed_cost: int = GachaData.get_star_feed_cost(maxi(stars, 1))
         if lab_data.get_star_feed(type) >= 1:
-                chip.text = "звёздный бак ГОТОВ"
+                chip.text = Loc.t("farm.bak_ready")
                 chip.add_theme_color_override("font_color", Color("ffd94d"))
         elif stars < LabData.MAX_STARS:
-                chip.text = "бак %d/%d" % [lab_data.get_star_progress(type), feed_cost]
+                chip.text = Loc.t("farm.bak", {"a": lab_data.get_star_progress(type), "b": feed_cost})
                 chip.add_theme_color_override("font_color", Color("a8ff7a"))
         else:
-                chip.text = "копии ×%d" % copies
+                chip.text = Loc.t("farm.copies_x", {"n": copies})
                 chip.add_theme_color_override("font_color", Color("a8ff7a"))
         chip.add_theme_font_override("font", BunkerUI.font_mono())
         chip.add_theme_font_size_override("font_size", 12)
@@ -1658,9 +1658,9 @@ func _make_farm_card(type: String) -> Control:
 
         var meta := Label.new()
         if stars < LabData.MAX_STARS:
-                meta.text = "копии ×%d · бак %d/%d" % [copies, lab_data.get_star_progress(type), maxi(feed_cost, 1)]
+                meta.text = Loc.t("farm.copies_bak", {"c": copies, "a": lab_data.get_star_progress(type), "b": maxi(feed_cost, 1)})
         else:
-                meta.text = "копии ×%d" % copies
+                meta.text = Loc.t("farm.copies_x", {"n": copies})
         meta.add_theme_font_override("font", BunkerUI.font_mono())
         meta.add_theme_font_size_override("font_size", 11)
         meta.add_theme_color_override("font_color", Color("8ba06e"))
@@ -1856,7 +1856,7 @@ func _rebuild_farm_altar():
         _farm_altar_box.add_child(head)
 
         var sub := Label.new()
-        sub.text = "прокачка без выхода с фермы"
+        sub.text = Loc.t("farm.sub")
         sub.add_theme_font_override("font", BunkerUI.font_body())
         sub.add_theme_font_size_override("font_size", 13)
         sub.add_theme_color_override("font_color", Color("7d8f6a"))
@@ -1963,7 +1963,7 @@ func _rebuild_farm_altar():
                                 Color("e8f5d0") if int(req.get("simple_have", 0)) >= int(req.get("simple_need", 0)) else BunkerUI.HAZARD))
         else:
                 var maxl := Label.new()
-                maxl.text = "МАКСИМУМ ЗВЁЗД"
+                maxl.text = Loc.t("farm.max_stars")
                 maxl.add_theme_font_override("font", BunkerUI.font_title())
                 maxl.add_theme_font_size_override("font_size", 18)
                 maxl.add_theme_color_override("font_color", Color("ffd94d"))
@@ -2017,7 +2017,7 @@ func _rebuild_farm_panel():
         if not _feed_fodder.is_empty():
                 var fodder_type: String = _feed_fodder[0]
                 var fodder_stars: int = lab_data.get_mutant_stars(fodder_type)
-                farm_list.add_child(_make_farm_section("ВЫБЕРИТЕ, КОГО КОРМИТЬ (%s)" % Loc.type_name(fodder_type).to_upper()))
+                farm_list.add_child(_make_farm_section(Loc.t("farm.pick_fodder", {"n": Loc.type_name(fodder_type).to_upper()})))
                 var cancel := Button.new()
                 cancel.text = Loc.t("lab.back")
                 cancel.custom_minimum_size = Vector2(0, 40)
@@ -2064,7 +2064,7 @@ func _rebuild_farm_panel():
 
         # Режим «кормовая грелка»: выбрать копию-корм
         if _farm_mode == "feed_pick":
-                farm_list.add_child(_make_farm_section("КОРМОВАЯ ГРЕЛКА — ВЫБЕРИТЕ КОПИЮ-КОРМ"))
+                farm_list.add_child(_make_farm_section(Loc.t("farm.pick_feed")))
                 var cancel2 := Button.new()
                 cancel2.text = Loc.t("lab.back")
                 cancel2.custom_minimum_size = Vector2(0, 40)
@@ -3407,7 +3407,7 @@ func _rebuild_farm_recycle():
                 row.add_child(_make_icon_rect(type, true, 26))
                 var name_label := Label.new()
                 var value: int = GachaData.get_fodder_value(type, true)
-                name_label.text = "%s - %s (+%d)" % [Loc.type_name(type), Loc.t("farm.copies", {"n": copies}), value]
+                name_label.text = "%s - %s (+%d)" % [Loc.type_name(type), Loc.t("farm.copies_x", {"n": copies}), value]
                 name_label.tooltip_text = Loc.t("farm.value_tip", {"points": value})
                 name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
                 row.add_child(name_label)

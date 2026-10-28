@@ -27,7 +27,7 @@ func setup(data: LabData, callback: Callable):
     lab_data = data
     exchange_callback = callback
     
-    title_label.text = "ХРАНИЛИЩЕ АРТЕФАКТОВ"
+    title_label.text = Loc.t("lab.storage")
     _update_biomass()
     _refresh_all()
     
@@ -36,7 +36,7 @@ func setup(data: LabData, callback: Callable):
 
 func _update_biomass():
     if lab_data:
-        biomass_label.text = "Биомасса: %d" % int(lab_data.biomass)
+        biomass_label.text = Loc.t("stor.biomass", {"n": int(lab_data.biomass)})
 
 
 func _refresh_all():
@@ -98,7 +98,7 @@ func _create_artifact_button(rarity: String, value: int, index: int) -> Button:
     btn.add_theme_stylebox_override("hover", hover_style)
     
     btn.pressed.connect(_on_artifact_clicked.bind(rarity, value, index))
-    btn.tooltip_text = "Нажмите для обмена на %d биомассы" % value
+    btn.tooltip_text = Loc.t("stor.exchange_tip", {"n": value})
     
     return btn
 
@@ -133,7 +133,7 @@ func _on_artifact_clicked(rarity: String, value: int, index: int):
     _update_biomass()
     _refresh_all()
     exchange_callback.call()
-    show_message("Обменяно на %d биомассы" % value, 1.0)
+    show_message(Loc.t("stor.exchanged", {"n": value}), 1.0)
 
 
 func _on_tab_changed(_tab_idx):
