@@ -245,6 +245,24 @@ func _apply_static_texts():
         var shop_close: Button = get_node_or_null("ShopPanel/Panel/ShopClose")
         if shop_close:
                 shop_close.text = Loc.t("lab.back")
+        # v0.31.2: долокализация станций улучшений и хранилища
+        var up_title: Label = get_node_or_null("UpgradePanel/Panel/Margin/VBox/Title")
+        if up_title:
+                up_title.text = Loc.t("upgrade.title")
+        var up_back: Button = get_node_or_null("UpgradePanel/Panel/Margin/VBox/BackButton")
+        if up_back:
+                up_back.text = Loc.t("lab.back")
+        var st_title: Label = get_node_or_null("StoragePanel/Panel/Margin/VBox/Title")
+        if st_title:
+                st_title.text = Loc.t("lab.storage")
+        var st_back: Button = get_node_or_null("StoragePanel/Panel/Margin/VBox/BackButton")
+        if st_back:
+                st_back.text = Loc.t("lab.back")
+        var st_tabs: TabContainer = get_node_or_null("StoragePanel/Panel/Margin/VBox/Tabs")
+        if st_tabs:
+                st_tabs.set_tab_title(0, Loc.t("storage.tab_common"))
+                st_tabs.set_tab_title(1, Loc.t("storage.tab_rare"))
+                st_tabs.set_tab_title(2, Loc.t("storage.tab_legendary"))
         # Панели звёзд/фермы (строятся кодом) - перезаполнить
         if star_panel and star_panel.visible:
                 _rebuild_star_panel()
@@ -1708,6 +1726,23 @@ func _swipe_tap(scroll: ScrollContainer, gp: Vector2) -> void:
                                 _on_farm_card_selected(str(c.get_meta("type")))
                                 return
                 return
+        # Галерея: плитки карточек - не Buttons, данные в метах (v0.31.2)
+        if scroll == _gallery_scroll:
+                var stack: Array = [gallery_list]
+                var tiles: Array = []
+                while not stack.is_empty():
+                        var c: Node = stack.pop_back()
+                        for ch in c.get_children():
+                                        stack.append(ch)
+                        if c is Control and c.has_meta("gal_type"):
+                                        tiles.append(c)
+                for c in tiles:
+                        if (c as Control).get_global_rect().has_point(gp):
+                                        _show_card_detail(str(c.get_meta("gal_type")),
+                                                        bool(c.get_meta("gal_mut")),
+                                                        bool(c.get_meta("gal_unlocked")))
+                                        return
+                return
         # Общий случай: кнопка под пальцем (режимы фермы, задачи, лента сундуков)
         var btns: Array = scroll.find_children("*", "Button", true, false)
         btns.reverse()
@@ -2293,6 +2328,8 @@ var gallery_panel: Control
 var gallery_list: VBoxContainer
 var _gallery_filter: String = "all"  # all | mutants | artifacts | exclusive | owned
 var _gallery_filter_group: ButtonGroup
+# Свайп-слой галереи ест тапы: карточки - не Buttons, их ведём метами (v0.31.2)
+var _gallery_scroll: ScrollContainer = null
 
 
 func _build_profile_ui():
@@ -2387,6 +2424,7 @@ func _build_gallery_ui():
         scroll.position = Vector2(20, 74)
         scroll.size = Vector2(520, 278)
         panel.add_child(scroll)
+        _gallery_scroll = scroll
         # v0.29.3: свайп-слой поверх (attach пересёт якоря — тут слой-сиблинг)
         _add_abs_swipe_layer(panel, scroll)
 
@@ -2525,6 +2563,11 @@ func _gallery_tile(type: String, is_mutant: bool) -> Control:
         else:
                 tile.tooltip_text = Loc.t("gallery.locked_tip", {"n": unlock_level})
         tile.mouse_filter = Control.MOUSE_FILTER_STOP
+        # Тапы до плитки не доезжают (слои свайпа пересылают только кнопкам):
+        # данные карточки кладём в меты - их читает _swipe_tap
+        tile.set_meta("gal_type", type)
+        tile.set_meta("gal_mut", is_mutant)
+        tile.set_meta("gal_unlocked", unlocked)
         tile.gui_input.connect(_on_gallery_tile_input.bind(type, is_mutant, unlocked))
         return tile
 

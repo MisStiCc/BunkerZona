@@ -101,41 +101,56 @@ func _fit_panel() -> void:
 func show_result(result: Dictionary):
     run_result = result
 
-    title_label.text = "ИТОГИ ЗАБЕГА #%d" % result.get("run_number", 1)
+    title_label.text = Loc.t("result.title", {"n": int(result.get("run_number", 1))})
 
     var success = result.get("success", false)
     if success:
-        result_label.text = "ПОБЕДА"
+        result_label.text = Loc.t("result.victory")
         result_label.add_theme_color_override("font_color", Color(0, 1, 0))
     else:
-        result_label.text = "ПОРАЖЕНИЕ"
+        result_label.text = Loc.t("result.defeat")
         result_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
 
     var reward = result.get("reward", 0)
-    reward_label.text = "Получено биомассы: %d" % reward
+    reward_label.text = Loc.t("result.biomass", {"n": int(reward)})
+
+    # Разбивка награды (v0.31.2): из чего сложилась цифра
+    var br: Dictionary = result.get("reward_breakdown", {})
+    if not br.is_empty():
+        var lines: Array = [Loc.t("result.br_combat", {"n": int(float(br.get("combat", 0.0)))})]
+        if float(br.get("leftover", 0.0)) > 0.0:
+            lines.append(Loc.t("result.br_leftover", {"n": int(float(br["leftover"]))}))
+        if float(br.get("level_bonus", 0.0)) > 0.0:
+            lines.append(Loc.t("result.br_bonus", {"n": int(float(br["level_bonus"]))}))
+        if float(br.get("cycle_mult", 1.0)) > 1.0:
+            lines.append(Loc.t("result.br_cycle", {"m": "%.2f" % float(br["cycle_mult"])}))
+        reward_label.text += "\n" + " · ".join(lines)
 
     if result.has("statistics"):
         var stats = result["statistics"]
-        stats_label.text = "Сталкеров убито: %d\nАномалий создано: %d\nМутантов создано: %d\nАртефактов украдено: %d" % [
-            stats.get("stalkers_killed", 0),
-            stats.get("anomalies_created", 0),
-            stats.get("mutants_created", 0),
-            stats.get("artifacts_stolen", 0)
-        ]
+        stats_label.text = Loc.t("result.stalkers", {"n": int(stats.get("stalkers_killed", 0))}) + "\n" \
+            + Loc.t("result.anomalies", {"n": int(stats.get("anomalies_created", 0))}) + "\n" \
+            + Loc.t("result.mutants", {"n": int(stats.get("mutants_created", 0))}) + "\n" \
+            + Loc.t("result.stolen", {"n": int(stats.get("artifacts_stolen", 0))})
+        # Киллы по рангам (v0.31.2)
+        var kr: Dictionary = result.get("kills_by_rank", {})
+        if not kr.is_empty():
+            stats_label.text += "\n" + Loc.t("result.by_rank",
+                {"n": int(kr.get("novice", 0)), "v": int(kr.get("veteran", 0)), "m": int(kr.get("master", 0))})
     else:
         stats_label.text = ""
 
     if result.get("mode", "") == "survival":
-        stats_label.text += "\nВолн пройдено: %d" % int(result.get("waves_survived", 0))
+        stats_label.text += "\n" + Loc.t("result.waves", {"n": int(result.get("waves_survived", 0))})
         # Логика победы v0.21.0: причина исхода выживания
         var vreason := str(result.get("victory_reason", ""))
         var atarget := int(result.get("arena_target_wave", 0))
         if success and vreason == "arena_target":
-            stats_label.text += "\nВЫЗОВ ВЫИГРАН: волна %d превзойдена!" % atarget
+            stats_label.text += "\n" + Loc.t("result.challenge_won", {"n": atarget})
         elif success and vreason == "waves30":
-            stats_label.text += "\nЛЕГЕНДА: 30+ волн пережито - ПОБЕДА!"
+            stats_label.text += "\n" + Loc.t("result.legend30")
         elif atarget > 0:
-            stats_label.text += "\nЦель вызова: волна %d (не превзойдена)" % atarget
+            stats_label.text += "\n" + Loc.t("result.challenge_goal", {"n": atarget})
     stats_label.visible = not stats_label.text.is_empty()
 
     if result.has("artifacts_collected"):
@@ -149,7 +164,7 @@ func show_result(result: Dictionary):
                 "rare": rare += 1
                 "legendary": legendary += 1
 
-        artifacts_label.text = Loc.t("result.artifacts") + "\nCommon: %d   Rare: %d   Legendary: %d" % [common, rare, legendary]
+        artifacts_label.text = Loc.t("result.artifacts") + "\n" + Loc.t("result.rarities", {"c": common, "r": rare, "l": legendary})
         artifacts_label.visible = true
     else:
         artifacts_label.text = ""

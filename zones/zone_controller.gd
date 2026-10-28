@@ -63,6 +63,12 @@ var is_prep_phase: bool = true
 # тап по земле (Signals.ground_tapped) ставит выбранное в точку
 var _pending_placement: String = ""
 
+# Итоги забега (v0.31.2): киллы по рангам сталкеров для панели итогов
+var _kills_by_rank: Dictionary = {"novice": 0, "veteran": 0, "master": 0}
+
+# Погода Припяти (v0.31.2): радиоактивный дождь между волнами
+var _weather: PripyatWeather = null
+
 # Поп-апы забега (события Зоны / торговец) - канвас-слой над HUD
 var run_popups: RunPopups
 
@@ -128,6 +134,11 @@ func _ready():
                 # Эмбиент забега (задача 15): ветер - лесной на Припяти, степной в Зоне
                 if sm and sm.has_method("play_ambient"):
                                 sm.play_ambient("wind_forest_01" if str(run_params.get("map", "procedural")) == "pripyat" else "wind_open_01")
+                # Погода Припяти (v0.31.2): радиоактивный дождь на передышках
+                if str(run_params.get("map", "procedural")) == "pripyat" and spawn_manager:
+                                _weather = PripyatWeather.new()
+                                add_child(_weather)
+                                spawn_manager.break_started.connect(func(_w: int, _d: float): _weather.roll_break())
                 if day_night_manager:
                                 day_night_manager.phase_changed.connect(_on_day_phase_changed)
 
@@ -503,6 +514,7 @@ func _initialize_run():
                 _shop_artifacts_pending.clear()
 
                 _gacha_rewards_log.clear()
+                _kills_by_rank = {"novice": 0, "veteran": 0, "master": 0}
                 _trophy_artifacts.clear()
                 _trader_sold.clear()
                 _event_reward_mult = 1.0
@@ -1518,6 +1530,8 @@ func _on_stalker_died(stalker: Node, biomass_returned: float):
                 var stalker_type = "unknown"
                 if stalker.has_method("get_stalker_type"):
                                 stalker_type = stalker.get_stalker_type()
+                if _kills_by_rank.has(stalker_type):
+                                _kills_by_rank[stalker_type] += 1
 
                 Signals.stalker_died.emit(stalker, stalker_type, stalker.global_position, biomass_returned)
                 # (лог отключён)
@@ -2019,6 +2033,8 @@ func _collect_run_result(success: bool) -> Dictionary:
                 # Боевой доход ограничен потолком биомассы (accumulated не клампился)
                 var combat_income: float = minf(resource_manager.accumulated_biomass, resource_manager.max_biomass) if resource_manager else 0.0
                 var reward = combat_income
+                # Разбивка награды для панели итогов (v0.31.2)
+                var breakdown := {"combat": combat_income, "leftover": 0.0, "level_bonus": 0.0, "cycle_mult": 1.0}
                 # Неизрасходованный стартовый капитал (остаток лаборатории + 300 базы)
                 # возвращается в награду: иначе он сгорает и награда меньше накопленного в бою
                 if resource_manager:
@@ -2032,18 +2048,21 @@ func _collect_run_result(success: bool) -> Dictionary:
                                 var leftover2: float = resource_manager.current_biomass - resource_manager.accumulated_biomass
                                 if leftover2 > 0.0:
                                                 leftover_paid = leftover2
+                                                breakdown["leftover"] = leftover2
                 if success and run_params.has("campaign_params"):
                                 var campaign: Dictionary = run_params["campaign_params"]
                                 var bonus: float = float(campaign.get("reward_bonus", 0.0))
                                 if bool(run_params.get("campaign_replay", false)):
                                                 bonus *= CampaignData.REPLAY_REWARD_FACTOR
                                 reward += bonus
+                                breakdown["level_bonus"] = bonus
                                 # NG+ (D12): множитель цикла к боевому доходу и бонусу;
                                 # стартовый капитал (возврат своих припасов) не множится.
                                 # Реплей x0.3 поверх цикла - фарм по любви остаётся выгодным
                                 var cyc: int = int(run_params.get("campaign_cycle", 1))
                                 if cyc > 1:
                                                 reward = leftover_paid + (reward - leftover_paid) * CampaignData.cycle_reward_mult(cyc)
+                                                breakdown["cycle_mult"] = CampaignData.cycle_reward_mult(cyc)
 
                 # События Зоны: плоский бонус и множитель итоговой награды
                 if _event_biomass_flat > 0.0:
@@ -2104,6 +2123,8 @@ func _collect_run_result(success: bool) -> Dictionary:
                                 "victory_reason": victory_reason,
                                 "arena_target_wave": arena_target,
                                 "reward": reward,
+                                "reward_breakdown": breakdown,
+                                "kills_by_rank": _kills_by_rank.duplicate(),
                                 "statistics": stats,
                                 "gacha_rewards": _gacha_rewards_log.duplicate(),
                                 "artifacts_collected": _collect_artifacts() + _trophy_artifacts
