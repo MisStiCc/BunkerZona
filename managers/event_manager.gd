@@ -122,6 +122,10 @@ func _kill_all_stalkers():
     for s in get_tree().get_nodes_in_group("stalkers"):
         if is_instance_valid(s) and s.has_method("take_damage") and s.is_alive():
             s.take_damage(999999.0, self)
+    # D19: Выброс больно бьёт босса охоты (не убивает - дожимают мутанты)
+    for b in get_tree().get_nodes_in_group("bosses"):
+        if is_instance_valid(b) and b.has_method("take_damage"):
+            b.take_damage(b.max_hp * 0.10 + 200.0, self)
     pass # (лог отключён: сколько сталкеров выжжено)
 
 

@@ -526,6 +526,14 @@ func _attack(_delta):
 
 
 func _find_best_target():
+        # D19: босс охоты - приоритетная цель (группа "enemies")
+        var bosses := get_tree().get_nodes_in_group("enemies")
+        for b in bosses:
+                if is_instance_valid(b) and b.global_position.distance_to(global_position) < 200.0:
+                        target_stalker = b
+                        if current_state == State.PATROL:
+                                        current_state = State.CHASE
+                        return
         # У кромки повадка новую цель не берём: сначала возвращаемся к дому
         if _spawn_position.distance_to(global_position) > leash_radius * 0.85:
                 return

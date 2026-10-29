@@ -29,6 +29,8 @@ const AUTO_ATTACK_RANGE := 4.0
 const AUTO_ATTACK_CD := 1.2
 const EXIT_REACH := 6.0
 const ENGAGE_RADIUS := 16.0   # мутанты ближе - босс стоит и дерётся
+var _side_step_time: float = 0.0
+var _aggro: bool = false
 
 
 func setup(id: String, data: Dictionary, stat_mult: float, from: Vector3, to: Vector3) -> void:
@@ -43,6 +45,7 @@ func setup(id: String, data: Dictionary, stat_mult: float, from: Vector3, to: Ve
 	global_position = from
 	add_to_group("stalkers")
 	add_to_group("bosses")
+	add_to_group("enemies")
 
 	var col := CollisionShape3D.new()
 	var cap := CapsuleShape3D.new()
@@ -102,12 +105,30 @@ func _physics_process(delta: float) -> void:
 			escaped.emit(boss_id)
 			queue_free()
 			return
-		var engaged := not _mutants_in(ENGAGE_RADIUS).is_empty()
+		var near := _mutants_in(ENGAGE_RADIUS)
+		var far := _mutants_in(40.0)
+		var engaged := not near.is_empty()
+		# Агрессия: мутанты в 40м - босс сам подходит вплотную
+		if not engaged and not far.is_empty():
+			var tgt: Node = far[0]
+			var to_m: Vector3 = tgt.global_position - global_position
+			to_m.y = 0.0
+			if to_m.length() > 2.0:
+				velocity = to_m.normalized() * move_speed
+				move_and_slide()
+				return
 		if engaged:
 			velocity = Vector3.ZERO
 		else:
 			velocity = dir.normalized() * move_speed
 			move_and_slide()
+			# Застрял об строение - стрейф перпендикуляром (не толкание рывком)
+			if get_slide_collision_count() > 0 and velocity.length() < 0.3:
+				_side_step_time += delta
+				var perp := dir.cross(Vector3.UP) * (1.0 if fmod(_side_step_time, 4.0) < 2.0 else -1.0)
+				global_position += perp * move_speed * delta
+			else:
+				_side_step_time = 0.0
 		if get_slide_collision_count() > 0 and velocity.length() < 0.5:
 			# проталкивание мимо препятствия (прямой ход без навмеша)
 			global_position += (global_transform.basis.z * 0.5 + Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))).normalized() * 2.0
@@ -128,6 +149,9 @@ func take_damage(amount: float, _source = null) -> void:
 	if hp <= 0.0:
 		return
 	var dmg := float(amount)
+	# Выброс выжигает сталкеров 999999 - босса только ранит (10% макс HP + 200)
+	if dmg > max_hp * 0.3:
+		dmg = max_hp * 0.10 + 200.0
 	if shield > 0.0:
 		var absorbed: float = minf(shield, dmg)
 		shield -= absorbed

@@ -101,90 +101,85 @@ func _fit_panel() -> void:
 func show_result(result: Dictionary):
     run_result = result
 
-    title_label.text = Loc.t("result.title", {"n": int(result.get("run_number", 1))})
+    # ОХОТА (D19): свой заголовок и статус; остальные режимы - как раньше
+    var is_hunt := str(result.get("mode", "")) == "hunt"
+    var success: bool = bool(result.get("success", false))
 
-    var success = result.get("success", false)
-    if success:
-        result_label.text = Loc.t("result.victory")
-        result_label.add_theme_color_override("font_color", Color(0, 1, 0))
+    if is_hunt:
+        title_label.text = Loc.t("hunt.result_title")
+        if success:
+            result_label.text = Loc.t("hunt.result_win")
+            result_label.add_theme_color_override("font_color", Color(0, 1, 0))
+        else:
+            result_label.text = Loc.t("hunt.result_lose")
+            result_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
     else:
-        result_label.text = Loc.t("result.defeat")
-        result_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+        title_label.text = Loc.t("result.title", {"n": int(result.get("run_number", 1))})
+        if success:
+            result_label.text = Loc.t("result.victory")
+            result_label.add_theme_color_override("font_color", Color(0, 1, 0))
+        else:
+            result_label.text = Loc.t("result.defeat")
+            result_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
 
     var reward = result.get("reward", 0)
     reward_label.text = Loc.t("result.biomass", {"n": int(reward)})
 
-    # Разбивка награды (v0.31.2): из чего сложилась цифра
-    var br: Dictionary = result.get("reward_breakdown", {})
-    if not br.is_empty():
-        var lines: Array = [Loc.t("result.br_combat", {"n": int(float(br.get("combat", 0.0)))})]
-        if float(br.get("leftover", 0.0)) > 0.0:
-            lines.append(Loc.t("result.br_leftover", {"n": int(float(br["leftover"]))}))
-        if float(br.get("level_bonus", 0.0)) > 0.0:
-            lines.append(Loc.t("result.br_bonus", {"n": int(float(br["level_bonus"]))}))
-        if float(br.get("cycle_mult", 1.0)) > 1.0:
-            lines.append(Loc.t("result.br_cycle", {"m": "%.2f" % float(br["cycle_mult"])}))
-        reward_label.text += "\n" + " · ".join(lines)
+    if is_hunt:
+        # Итоги охоты: вклад по боссу, убийства, оценка жетонов
+        var killed: Array = result.get("hunt_killed", [])
+        var dmg_dealt: int = int(result.get("boss_dmg_dealt", 0))
+        var hunt_lines: Array = [Loc.t("hunt.line_dmg", {"n": dmg_dealt})]
+        if not killed.is_empty():
+            hunt_lines.append(Loc.t("hunt.line_killed", {"n": killed.size()}))
+        var tokens_est: int = mini(int(float(dmg_dealt) / 500.0), 60)
+        if tokens_est > 0:
+            hunt_lines.append(Loc.t("hunt.line_tokens", {"n": tokens_est}))
+        reward_label.text += "
+" + " · ".join(hunt_lines)
+    else:
+        # Разбивка награды (v0.31.2): из чего сложилась цифра
+        var br: Dictionary = result.get("reward_breakdown", {})
+        if not br.is_empty():
+            var lines: Array = [Loc.t("result.br_combat", {"n": int(float(br.get("combat", 0.0)))})]
+            if float(br.get("leftover", 0.0)) > 0.0:
+                lines.append(Loc.t("result.br_leftover", {"n": int(float(br["leftover"]))}))
+            if float(br.get("level_bonus", 0.0)) > 0.0:
+                lines.append(Loc.t("result.br_bonus", {"n": int(float(br["level_bonus"]))}))
+            if float(br.get("cycle_mult", 1.0)) > 1.0:
+                lines.append(Loc.t("result.br_cycle", {"m": "%.2f" % float(br["cycle_mult"])}))
+            reward_label.text += "
+" + " · ".join(lines)
 
     if result.has("statistics"):
         var stats = result["statistics"]
-        stats_label.text = Loc.t("result.stalkers", {"n": int(stats.get("stalkers_killed", 0))}) + "\n" \
-            + Loc.t("result.anomalies", {"n": int(stats.get("anomalies_created", 0))}) + "\n" \
-            + Loc.t("result.mutants", {"n": int(stats.get("mutants_created", 0))}) + "\n" \
-            + Loc.t("result.stolen", {"n": int(stats.get("artifacts_stolen", 0))})
-        # Киллы по рангам (v0.31.2)
+        stats_label.text = Loc.t("result.stalkers", {"n": int(stats.get("stalkers_killed", 0))}) + "
+"             + Loc.t("result.anomalies", {"n": int(stats.get("anomalies_created", 0))}) + "
+"             + Loc.t("result.mutants", {"n": int(stats.get("mutants_created", 0))}) + "
+"             + Loc.t("result.stolen", {"n": int(stats.get("artifacts_stolen", 0))})
         var kr: Dictionary = result.get("kills_by_rank", {})
         if not kr.is_empty():
-            stats_label.text += "\n" + Loc.t("result.by_rank",
+            stats_label.text += "
+" + Loc.t("result.by_rank",
                 {"n": int(kr.get("novice", 0)), "v": int(kr.get("veteran", 0)), "m": int(kr.get("master", 0))})
     else:
         stats_label.text = ""
 
     if result.get("mode", "") == "survival":
-        stats_label.text += "\n" + Loc.t("result.waves", {"n": int(result.get("waves_survived", 0))})
-        # Логика победы v0.21.0: причина исхода выживания
+        stats_label.text += "
+" + Loc.t("result.waves", {"n": int(result.get("waves_survived", 0))})
         var vreason := str(result.get("victory_reason", ""))
         var atarget := int(result.get("arena_target_wave", 0))
         if success and vreason == "arena_target":
-            stats_label.text += "\n" + Loc.t("result.challenge_won", {"n": atarget})
+            stats_label.text += "
+" + Loc.t("result.challenge_won", {"n": atarget})
         elif success and vreason == "waves30":
-            stats_label.text += "\n" + Loc.t("result.legend30")
+            stats_label.text += "
+" + Loc.t("result.legend30")
         elif atarget > 0:
-            stats_label.text += "\n" + Loc.t("result.challenge_goal", {"n": atarget})
+            stats_label.text += "
+" + Loc.t("result.challenge_goal", {"n": atarget})
     stats_label.visible = not stats_label.text.is_empty()
-
-    if result.has("artifacts_collected"):
-        var common = 0
-        var rare = 0
-        var legendary = 0
-
-        for a in result["artifacts_collected"]:
-            match a.get("type", "common"):
-                "common": common += 1
-                "rare": rare += 1
-                "legendary": legendary += 1
-
-        artifacts_label.text = Loc.t("result.artifacts") + "\n" + Loc.t("result.rarities", {"c": common, "r": rare, "l": legendary})
-        artifacts_label.visible = true
-    else:
-        artifacts_label.text = ""
-        artifacts_label.visible = false
-
-    var gacha: Array = result.get("gacha_rewards", [])
-    if not gacha.is_empty():
-        if artifacts_label.text.is_empty():
-            artifacts_label.text = Loc.t("result.gacha_header")
-        else:
-            artifacts_label.text += "\n" + Loc.t("result.gacha_header")
-        artifacts_label.text += "\n" + "\n".join(gacha)
-        artifacts_label.visible = true
-
-    # v0.29.3: свайп к началу списка у каждого нового забега
-    if _rows_scroll != null:
-        _rows_scroll.scroll_vertical = 0
-    _fit_panel()
-    open()
-
 
 func _on_continue_pressed():
     close()
