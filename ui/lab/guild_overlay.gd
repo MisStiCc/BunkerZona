@@ -147,22 +147,55 @@ func _page_overview(body: Control) -> void:
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.add_theme_constant_override("separation", 6)
 	body.add_child(v)
-	_head_line(v, "%s · ур. %d · казна %d" % [str(g.get("name", "")), GuildSys.guild_level(g), int(g.get("treasury", 0))])
+	# Шапка гильдии: эмблема + имя/уровень + казна-полоса
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 12)
+	v.add_child(head)
+	var emblem := TextureRect.new()
+	if ResourceLoader.exists("res://assets/ui/brand/logo_stack.png"):
+			emblem.texture = load("res://assets/ui/brand/logo_stack.png")
+	emblem.custom_minimum_size = Vector2(96, 78)
+	emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	emblem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	head.add_child(emblem)
+	var hv := VBoxContainer.new()
+	hv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hv.add_theme_constant_override("separation", 2)
+	head.add_child(hv)
+	var hl := Label.new()
+	hl.text = "%s  ·  ур. %d" % [str(g.get("name", "")), GuildSys.guild_level(g)]
+	hl.add_theme_font_override("font", BunkerUI.font_title())
+	hl.add_theme_font_size_override("font_size", 19)
+	hl.add_theme_color_override("font_color", COL_PURPLE)
+	hv.add_child(hl)
+	var xp_bar := ProgressBar.new()
+	xp_bar.max_value = GuildData.TREASURY_XP_PER
+	xp_bar.value = int(g.get("xp", 0)) % GuildData.TREASURY_XP_PER
+	xp_bar.show_percentage = false
+	xp_bar.custom_minimum_size = Vector2(0, 8)
+	hv.add_child(xp_bar)
+	var kl := Label.new()
+	kl.text = Loc.t("guild.treasury", {"n": int(g.get("treasury", 0))})
+	kl.add_theme_font_size_override("font_size", 12)
+	kl.add_theme_color_override("font_color", COL_DIM)
+	hv.add_child(kl)
 	_note(v, Loc.t("guild.perk", {"p": int(GuildSys.perk_hp_bonus(g) * 100)}))
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	v.add_child(SwipeHelper.attach(scroll, false))
-	var list := VBoxContainer.new()
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	list.add_theme_constant_override("separation", 4)
-	scroll.add_child(list)
+	# Состав карточками: GridContainer 5 в ряд
+	var grid := GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(grid)
+	var icon_pool: Array = ["dog_mutant", "flesh", "snork_mutant", "pseudodog", "bloodsucker", "chimera", "zombie", "controller_mutant", "poltergeist", "pseudogiant", "leden", "vikhor", "mohovik", "guden", "tsveten", "zhivitsa", "zaveden", "shorokh"]
+	var mi := 0
 	for m in GuildSys.members(g):
-		var row := Label.new()
-		row.text = "%s%s  ·  сила %d  ·  вклад %d" % [m["name"], " · " + Loc.t("guild.online") if bool(m["online"]) else "", int(m["power"]), int(m["contribution"])]
-		row.add_theme_font_size_override("font_size", 13)
-		row.add_theme_color_override("font_color", COL_TEXT if bool(m["online"]) else COL_DIM)
-		list.add_child(row)
+		grid.add_child(_member_card(m, str(icon_pool[mi % icon_pool.size()]), mi == 0))
+		mi += 1
 
 
 func _page_boss(body: Control) -> void:
@@ -329,6 +362,49 @@ func gm_run_raid() -> void:
 	var gm = get_tree().get_first_node_in_group("game_manager")
 	if gm:
 		gm.change_scene("run", {"hunt": true, "guild_boss": true})
+
+
+## Карточка члена гильдии: аватар (иконка мутанта), имя, сила/вклад
+func _member_card(m: Dictionary, icon_type: String, is_me: bool) -> Control:
+	var panel := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.07, 0.06, 0.1, 0.95)
+	sb.border_color = COL_GOLD if is_me else (COL_PURPLE if bool(m["online"]) else Color(0.3, 0.28, 0.36))
+	sb.set_border_width_all(2 if is_me else 1)
+	sb.set_corner_radius_all(8)
+	sb.set_content_margin_all(6)
+	panel.add_theme_stylebox_override("panel", sb)
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 2)
+	panel.add_child(vb)
+	var av := TextureRect.new()
+	var ap: String = GachaData.card_icon_path(icon_type, true, not bool(m["online"]))
+	if ResourceLoader.exists(ap):
+			av.texture = load(ap)
+	av.custom_minimum_size = Vector2(0, 64)
+	av.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	av.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	vb.add_child(av)
+	var nm := Label.new()
+	nm.text = str(m["name"])
+	nm.add_theme_font_size_override("font_size", 11)
+	nm.add_theme_color_override("font_color", COL_GOLD if is_me else COL_TEXT)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	vb.add_child(nm)
+	var pw := Label.new()
+	pw.text = "сила %d" % int(m["power"])
+	pw.add_theme_font_size_override("font_size", 10)
+	pw.add_theme_color_override("font_color", COL_DIM)
+	pw.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(pw)
+	var ct := Label.new()
+	ct.text = Loc.t("guild.contrib", {"n": int(m["contribution"])})
+	ct.add_theme_font_size_override("font_size", 10)
+	ct.add_theme_color_override("font_color", COL_DIM)
+	ct.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(ct)
+	return panel
 
 
 func _head_line(v: VBoxContainer, text: String) -> void:
