@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bs844483b77jv"
-path="res://.godot/imported/chemical_jelly.png-0eab63cbd020cbfa13de4294fbb52493.ctex"
+path="res://.godot/imported/chemical_jelly.png-c2e126532af2be829cedded1fd00cc69.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/anomaly/chemical_jelly.png"
-dest_files=["res://.godot/imported/chemical_jelly.png-0eab63cbd020cbfa13de4294fbb52493.ctex"]
+source_file="res://inbox/_done/ability_icons/anomaly/chemical_jelly.png"
+dest_files=["res://.godot/imported/chemical_jelly.png-c2e126532af2be829cedded1fd00cc69.ctex"]
 
 [params]
 

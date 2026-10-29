@@ -575,6 +575,9 @@ func _on_emission_pressed():
                 # (метод живёт в EventManager) - кнопка никогда не срабатывала
                 if not zone_controller or not zone_controller.can_start_pulse():
                                 _show_emission_note(Loc.t("hud.emission_running"))
+                                var sm_deny = get_tree().get_first_node_in_group("sound_manager")
+                                if sm_deny and sm_deny.has_method("play_sound"):
+                                                sm_deny.play_sound("ui_deny", 0.6)
                                 return
 
                 if zone_controller.spend_energy(1000):
@@ -1299,6 +1302,9 @@ func _loadout_tap(kind: String, type: String) -> bool:
                                 var res: String = lab.toggle_loadout(kind, type)
                                 if res == "full":
                                                 show_reward_note("В наборе максимум %d видов - снимите лишний" % lab.loadout_limit)
+                                                var sm_den = get_tree().get_first_node_in_group("sound_manager")
+                                                if sm_den and sm_den.has_method("play_sound"):
+                                                                sm_den.play_sound("ui_deny", 0.6)
                                 _refresh_loadout_ui()
                                 return true
                 if not lab.in_loadout(kind, type):

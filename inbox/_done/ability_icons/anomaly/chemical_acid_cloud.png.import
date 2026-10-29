@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://barvc0xjojbt8"
-path="res://.godot/imported/chemical_acid_cloud.png-3ec7a39b9320dd2cd539868da2d1801b.ctex"
+path="res://.godot/imported/chemical_acid_cloud.png-da234d7577da66360e1753c5953a691f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/anomaly/chemical_acid_cloud.png"
-dest_files=["res://.godot/imported/chemical_acid_cloud.png-3ec7a39b9320dd2cd539868da2d1801b.ctex"]
+source_file="res://inbox/_done/ability_icons/anomaly/chemical_acid_cloud.png"
+dest_files=["res://.godot/imported/chemical_acid_cloud.png-da234d7577da66360e1753c5953a691f.ctex"]
 
 [params]
 

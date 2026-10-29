@@ -901,6 +901,10 @@ func _on_spin(times: int) -> void:
         _refresh_all()
         # Церемония раскрытия (задача 18): whoosh + звон по редкости + лента
         _play_reveal_fx(results)
+        # Задача 23: прокрутка рулетки (короткий прогон поверх)
+        var sm_sp = get_tree().get_first_node_in_group("sound_manager")
+        if sm_sp and sm_sp.has_method("play_sound"):
+                sm_sp.play_sound("gacha_spin", 0.7)
         # Тост: заработанная супер-крутка важнее легендарки
         var lab2 = _lab()
         var super_earned: bool = lab2 != null and int(lab2.super_pulls) > super_before

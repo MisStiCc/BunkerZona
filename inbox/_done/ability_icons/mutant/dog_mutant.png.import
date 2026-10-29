@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cynkfm2dourya"
-path="res://.godot/imported/dog_mutant.png-4da52324094ab236ad6641fe0fc2f074.ctex"
+path="res://.godot/imported/dog_mutant.png-561b927bde87d113b0299ec819944301.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/mutant/dog_mutant.png"
-dest_files=["res://.godot/imported/dog_mutant.png-4da52324094ab236ad6641fe0fc2f074.ctex"]
+source_file="res://inbox/_done/ability_icons/mutant/dog_mutant.png"
+dest_files=["res://.godot/imported/dog_mutant.png-561b927bde87d113b0299ec819944301.ctex"]
 
 [params]
 

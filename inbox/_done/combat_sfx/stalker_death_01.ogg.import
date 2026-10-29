@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://df1i8qd8pdxy2"
-path="res://.godot/imported/stalker_death_01.ogg-7942b3c30d16ce75172f5a8b12ea9ecc.oggvorbisstr"
+path="res://.godot/imported/stalker_death_01.ogg-e9e72edcfe0c6d221cf7d142df25400b.oggvorbisstr"
 
 [deps]
 
-source_file="res://inbox/combat_sfx/stalker_death_01.ogg"
-dest_files=["res://.godot/imported/stalker_death_01.ogg-7942b3c30d16ce75172f5a8b12ea9ecc.oggvorbisstr"]
+source_file="res://inbox/_done/combat_sfx/stalker_death_01.ogg"
+dest_files=["res://.godot/imported/stalker_death_01.ogg-e9e72edcfe0c6d221cf7d142df25400b.oggvorbisstr"]
 
 [params]
 

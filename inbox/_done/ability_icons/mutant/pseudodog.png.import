@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxyu5wmpyo7gb"
-path="res://.godot/imported/pseudodog.png-eb51ce29bce00e21b8ea1672fc3df425.ctex"
+path="res://.godot/imported/pseudodog.png-7dda12159ca3f0011d359ee5dc9db916.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/mutant/pseudodog.png"
-dest_files=["res://.godot/imported/pseudodog.png-eb51ce29bce00e21b8ea1672fc3df425.ctex"]
+source_file="res://inbox/_done/ability_icons/mutant/pseudodog.png"
+dest_files=["res://.godot/imported/pseudodog.png-7dda12159ca3f0011d359ee5dc9db916.ctex"]
 
 [params]
 

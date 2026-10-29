@@ -89,6 +89,24 @@ func _register_real_sounds():
         if ResourceLoader.exists(extra_path):
             ambient_sounds[key] = load(extra_path)
 
+    # Задачи 22-24: боевые/UI-звуки и стингеры событий (дозарегистрировать
+    # ключи, добавленные после первого пака)
+    for key in ["stalker_death_01", "stalker_death_02", "stalker_death_03",
+            "anomaly_hit", "wave_horn", "record_new", "gates_open", "keeper_awake",
+            "ui_deny", "ui_build", "ui_research", "gacha_spin"]:
+        var p2 := "res://assets/audio/sfx/%s.ogg" % key
+        if ResourceLoader.exists(p2):
+            ambient_sounds[key] = load(p2)
+
+    # Задача 22: музыкальные лупы босс-боёв (с upkeep лупа)
+    for track_key in ["keeper_loop", "monolith_finale"]:
+        var mp := "res://assets/audio/sfx/%s.ogg" % track_key
+        if ResourceLoader.exists(mp):
+            var stream = load(mp)
+            if stream is AudioStreamOggVorbis:
+                stream.loop = true
+            music_tracks[track_key] = stream
+
 
 func _setup_players():
     # Музыка

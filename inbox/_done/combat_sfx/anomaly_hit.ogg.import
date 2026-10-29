@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://dkuxurwy62ya2"
-path="res://.godot/imported/anomaly_hit.ogg-418ffbd99e23b0bf2b1873417ea3de88.oggvorbisstr"
+path="res://.godot/imported/anomaly_hit.ogg-ed636cbdc181694ac21fdc888707c43b.oggvorbisstr"
 
 [deps]
 
-source_file="res://inbox/combat_sfx/anomaly_hit.ogg"
-dest_files=["res://.godot/imported/anomaly_hit.ogg-418ffbd99e23b0bf2b1873417ea3de88.oggvorbisstr"]
+source_file="res://inbox/_done/combat_sfx/anomaly_hit.ogg"
+dest_files=["res://.godot/imported/anomaly_hit.ogg-ed636cbdc181694ac21fdc888707c43b.oggvorbisstr"]
 
 [params]
 

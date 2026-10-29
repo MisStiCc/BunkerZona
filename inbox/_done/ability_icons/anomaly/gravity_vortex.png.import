@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c48ketvwm15nf"
-path="res://.godot/imported/gravity_vortex.png-b090ee2aeaa0dfabe75a4491381f26af.ctex"
+path="res://.godot/imported/gravity_vortex.png-3378b0dcb6615998df61f5cb60a7b16a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/anomaly/gravity_vortex.png"
-dest_files=["res://.godot/imported/gravity_vortex.png-b090ee2aeaa0dfabe75a4491381f26af.ctex"]
+source_file="res://inbox/_done/ability_icons/anomaly/gravity_vortex.png"
+dest_files=["res://.godot/imported/gravity_vortex.png-3378b0dcb6615998df61f5cb60a7b16a.ctex"]
 
 [params]
 

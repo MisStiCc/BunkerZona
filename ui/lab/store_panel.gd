@@ -169,6 +169,9 @@ func _on_buy(sku: String) -> void:
 		_fill()
 	else:
 		_note.text = Loc.t("store.unavailable")
+		var sm_dn = get_tree().get_first_node_in_group("sound_manager")
+		if sm_dn and sm_dn.has_method("play_sound"):
+			sm_dn.play_sound("ui_deny", 0.6)
 
 
 func _has_key(key: String) -> bool:

@@ -104,6 +104,15 @@ static func get_avatar_icon(av: Dictionary, unlocked: bool) -> String:
 
 ## dark - тело пояса, light - кромка/свечение/подпись (гекс вокруг аватара).
 const FRAMES := [
+        # Задача 24: арт-рамки подготовщика (рисуются текстурой, не рингами)
+        {"id": "art_novice", "rar": "common", "art": "res://assets/ui/profile/frame_novice.png",
+                "dark": Color("3a4a3a"), "light": Color("9aa89a"), "need": {"runs": 1}},
+        {"id": "art_veteran", "rar": "rare", "art": "res://assets/ui/profile/frame_veteran.png",
+                "dark": Color("3a4a3a"), "light": Color("d4b048"), "need": {"tower": 26}},
+        {"id": "art_master", "rar": "rare", "art": "res://assets/ui/profile/frame_master.png",
+                "dark": Color("8a5f10"), "light": Color("ffb840"), "need": {"tower": 51}},
+        {"id": "art_legend", "rar": "legendary", "art": "res://assets/ui/profile/frame_legend.png",
+                "dark": Color("6a1a1a"), "light": Color("ff5a4a"), "need": {"tower": 76}, "fx": "shine"},
         {"id": "steel", "rar": "common",
                 "dark": Color("3a4a3a"), "light": Color("9aa89a"), "need": {}},
         {"id": "bronze", "rar": "common",

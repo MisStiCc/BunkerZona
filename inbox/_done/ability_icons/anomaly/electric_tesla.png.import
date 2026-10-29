@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bt8o5l4llwdgn"
-path="res://.godot/imported/electric_tesla.png-d811e02aa1026dffe661694001270703.ctex"
+path="res://.godot/imported/electric_tesla.png-cf9f7f36436a76637f5fd80aac70c67a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/anomaly/electric_tesla.png"
-dest_files=["res://.godot/imported/electric_tesla.png-d811e02aa1026dffe661694001270703.ctex"]
+source_file="res://inbox/_done/ability_icons/anomaly/electric_tesla.png"
+dest_files=["res://.godot/imported/electric_tesla.png-cf9f7f36436a76637f5fd80aac70c67a.ctex"]
 
 [params]
 

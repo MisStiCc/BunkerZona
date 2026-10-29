@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cfhfj0fa5wmsv"
-path="res://.godot/imported/poltergeist.png-6db057fb104939b7d625ac475aa04c27.ctex"
+path="res://.godot/imported/poltergeist.png-51d31cd0d6c037e6e2215b0a43c6bd3f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/mutant/poltergeist.png"
-dest_files=["res://.godot/imported/poltergeist.png-6db057fb104939b7d625ac475aa04c27.ctex"]
+source_file="res://inbox/_done/ability_icons/mutant/poltergeist.png"
+dest_files=["res://.godot/imported/poltergeist.png-51d31cd0d6c037e6e2215b0a43c6bd3f.ctex"]
 
 [params]
 

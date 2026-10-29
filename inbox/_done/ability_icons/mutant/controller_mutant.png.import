@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bss1vj3e4svk3"
-path="res://.godot/imported/controller_mutant.png-2490eb311871778445a51025d95e75df.ctex"
+path="res://.godot/imported/controller_mutant.png-a7becba198bceb428e3ee1027cec8bf3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/mutant/controller_mutant.png"
-dest_files=["res://.godot/imported/controller_mutant.png-2490eb311871778445a51025d95e75df.ctex"]
+source_file="res://inbox/_done/ability_icons/mutant/controller_mutant.png"
+dest_files=["res://.godot/imported/controller_mutant.png-a7becba198bceb428e3ee1027cec8bf3.ctex"]
 
 [params]
 

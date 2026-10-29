@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://f23hs61kp7nd"
-path="res://.godot/imported/bio_burning_fluff.png-105cab7c80a53d136fe525bca26de8c0.ctex"
+path="res://.godot/imported/bio_burning_fluff.png-fe625a510642eae1a5c4f4441cebd3e6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/anomaly/bio_burning_fluff.png"
-dest_files=["res://.godot/imported/bio_burning_fluff.png-105cab7c80a53d136fe525bca26de8c0.ctex"]
+source_file="res://inbox/_done/ability_icons/anomaly/bio_burning_fluff.png"
+dest_files=["res://.godot/imported/bio_burning_fluff.png-fe625a510642eae1a5c4f4441cebd3e6.ctex"]
 
 [params]
 

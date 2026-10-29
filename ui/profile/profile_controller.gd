@@ -1500,6 +1500,7 @@ func _refresh_scanner() -> void:
         var f := ProfileData.get_frame(fr_id)
         _scanner.set_avatar(ProfileData.get_avatar_icon(av, unlocked), unlocked)
         _scanner.set_frame_colors(f.dark, f.light)
+        _scanner.set_frame_art(str(f.get("art", "")))
         var fx := ProfileData.frame_fx(fr_id)
         _scanner.set_frame_fx(fx)
         _cap_av.text = Loc.t("profile.avatar_prefix") + GachaData.display_name(av_id) + (" · " + Loc.t("profile.rar_" + str(av.rar)) if unlocked else "")
@@ -1515,6 +1516,7 @@ func _refresh_scanner_custom(fr_id: String) -> void:
         var f := ProfileData.get_frame(fr_id)
         var fx := ProfileData.frame_fx(fr_id)
         _scanner.set_frame_colors(f.dark, f.light)
+        _scanner.set_frame_art(str(f.get("art", "")))
         _scanner.set_frame_fx(fx)
         var tex := _load_custom_tex()
         if tex:
@@ -1663,6 +1665,7 @@ class ScannerView:
         var fx := "none"
         var frame_dark: Color = Color("3a4a3a")
         var frame_light: Color = Color("9aa89a")
+        var frame_art: Texture2D = null   # Задача 24: PNG-рамка (арт подготовщика)
         var avatar_tex: Texture2D = null
         var avatar_locked := false
 
@@ -1683,6 +1686,13 @@ class ScannerView:
                 frame_light = light
                 queue_redraw()
 
+        func set_frame_art(path: String) -> void:
+                var tex: Texture2D = load(path) if path != "" and ResourceLoader.exists(path) else null
+                var changed := tex != frame_art
+                frame_art = tex
+                if changed:
+                        queue_redraw()
+
         func set_frame_fx(fx_id: String) -> void:
                 var changed := fx_id != fx
                 fx = fx_id
@@ -1699,6 +1709,10 @@ class ScannerView:
 
         func _draw() -> void:
                 _draw_grid()
+                # Задача 24: арт-рамка рисует текстуру вместо колец/гексов
+                if frame_art:
+                        draw_texture_rect(frame_art, Rect2(Vector2.ZERO, size), false)
+                        return
                 var c := size * 0.5
                 var ring_r := minf(size.x, size.y) * 0.49
                 if ring_r < 40.0:

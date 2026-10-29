@@ -79,6 +79,8 @@ var day_night_manager: DayNightManager
 # кривую интенсивности ведёт _play_emission_fx() по сигналам пульса
 var _emission_fx: Node3D = null
 var _emission_tween: Tween = null
+# Задача 22: играет ли сейчас босс-луп (Хранитель/финал) - для возврата на run
+var _boss_music_active: bool = false
 
 # Радиационный фон Припяти (RadiationData): зона по расстоянию
 # Монолит -> Саркофаг; "" = процедурная карта, фона нет
@@ -1200,6 +1202,15 @@ func _on_wave_started(wave_number: int, count: int):
                 var sm_wave = get_tree().get_first_node_in_group("sound_manager")
                 if sm_wave and sm_wave.has_method("play_sound"):
                                 sm_wave.play_sound("wave_horn", 0.7)
+                # Задача 22: обычный этаж после босс-лупа - вернуть боевую музыку
+                if _boss_music_active:
+                                var intro_type := ""
+                                if run_params.get("run_mode", "") == "tower":
+                                                intro_type = TowerData.get_floor_type(int(run_params.get("tower_floor", 1)))
+                                if intro_type != "keeper" and int(run_params.get("tower_floor", 1)) < 91:
+                                                _boss_music_active = false
+                                                if sm_wave and sm_wave.has_method("play_music"):
+                                                                sm_wave.play_music("run", 1.0)
 
                 pass # print("Волна " + str(wave_number) + " началась, сталкеров: " + str(count))
 
@@ -1303,6 +1314,14 @@ func _show_floor_intro_banner(floor_type: String):
                                                 sm.play_sound("gates_open", 0.8)
                                 else:
                                                 sm.play_sound("exchange", 0.9, 1.1)
+                # Задача 22: музыка босс-боёв (лупы на Хранителе и финальном ярусе)
+                if sm and sm.has_method("play_music"):
+                                if floor_type == "keeper":
+                                                sm.play_music("keeper_loop", 1.0)
+                                                _boss_music_active = true
+                                elif floor_num >= 91:
+                                                sm.play_music("monolith_finale", 1.0)
+                                                _boss_music_active = true
 
                 # Слэм сверху + панч масштаба; держим 1.6 с, уходим, слой сгорает
                 banner.scale = Vector2(1.15, 1.15)

@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://c8b042ww2xj48"
-path="res://.godot/imported/wave_horn.ogg-483f5ceb860deeb7542da3513a1607d4.oggvorbisstr"
+path="res://.godot/imported/wave_horn.ogg-7db0b0df6f99563b9ab7e3c40aca8749.oggvorbisstr"
 
 [deps]
 
-source_file="res://inbox/combat_sfx/wave_horn.ogg"
-dest_files=["res://.godot/imported/wave_horn.ogg-483f5ceb860deeb7542da3513a1607d4.oggvorbisstr"]
+source_file="res://inbox/_done/combat_sfx/wave_horn.ogg"
+dest_files=["res://.godot/imported/wave_horn.ogg-7db0b0df6f99563b9ab7e3c40aca8749.oggvorbisstr"]
 
 [params]
 

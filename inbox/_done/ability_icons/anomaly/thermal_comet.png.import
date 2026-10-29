@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bae7g2yl8ygyx"
-path="res://.godot/imported/thermal_comet.png-81b3fb1986b9dfb9226ab2fe660f5309.ctex"
+path="res://.godot/imported/thermal_comet.png-b882c8082c93ed7411239e501aae4e3a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/anomaly/thermal_comet.png"
-dest_files=["res://.godot/imported/thermal_comet.png-81b3fb1986b9dfb9226ab2fe660f5309.ctex"]
+source_file="res://inbox/_done/ability_icons/anomaly/thermal_comet.png"
+dest_files=["res://.godot/imported/thermal_comet.png-b882c8082c93ed7411239e501aae4e3a.ctex"]
 
 [params]
 

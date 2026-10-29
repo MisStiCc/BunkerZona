@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cw5lcvlxggg4l"
-path="res://.godot/imported/time_dilation.png-bb4973e5339f408513e7b9fafb79520b.ctex"
+path="res://.godot/imported/time_dilation.png-e723597ce86651235dc10a394696247a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/anomaly/time_dilation.png"
-dest_files=["res://.godot/imported/time_dilation.png-bb4973e5339f408513e7b9fafb79520b.ctex"]
+source_file="res://inbox/_done/ability_icons/anomaly/time_dilation.png"
+dest_files=["res://.godot/imported/time_dilation.png-e723597ce86651235dc10a394696247a.ctex"]
 
 [params]
 

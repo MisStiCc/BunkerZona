@@ -181,7 +181,10 @@ func _on_upgrade_clicked(upgrade_id: String):
 			sm.play_sound("upgrade", 0.8)
 		
 		upgrade_callback.call(upgrade_id)
-		show_message(Loc.t("upg.purchased"), 1.0)
+	var sm_up = get_tree().get_first_node_in_group("sound_manager")
+	if sm_up and sm_up.has_method("play_sound"):
+		sm_up.play_sound("ui_build", 0.7)
+	show_message(Loc.t("upg.purchased"), 1.0)
 
 
 func _on_back_pressed():

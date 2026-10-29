@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bjwtffjgu82ab"
-path="res://.godot/imported/electric_anomaly.png-e7cbd24821a6abca2de4d228d6a7f2e7.ctex"
+path="res://.godot/imported/electric_anomaly.png-e60200359c7435acc8b5aa34ece1d379.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/ability_icons/anomaly/electric_anomaly.png"
-dest_files=["res://.godot/imported/electric_anomaly.png-e7cbd24821a6abca2de4d228d6a7f2e7.ctex"]
+source_file="res://inbox/_done/ability_icons/anomaly/electric_anomaly.png"
+dest_files=["res://.godot/imported/electric_anomaly.png-e60200359c7435acc8b5aa34ece1d379.ctex"]
 
 [params]
 
