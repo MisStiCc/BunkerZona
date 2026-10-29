@@ -27,6 +27,7 @@ const AUTO_ATTACK_DMG := 26.0
 const AUTO_ATTACK_RANGE := 4.0
 const AUTO_ATTACK_CD := 1.2
 const EXIT_REACH := 6.0
+const ENGAGE_RADIUS := 16.0   # мутанты ближе - босс стоит и дерётся
 
 
 func setup(id: String, data: Dictionary, stat_mult: float, from: Vector3, to: Vector3) -> void:
@@ -89,7 +90,9 @@ func _physics_process(delta: float) -> void:
 			if nearest.has_method("take_damage"):
 				nearest.take_damage(AUTO_ATTACK_DAMAGE(), self)
 			_attack_cd = AUTO_ATTACK_CD
-	# Ход к краю (стоячие боссы speed 0 - не двигаются)
+	# Ход к краю (стоячие боссы speed 0 - не двигаются).
+	# Втягивание в бой: мутанты рядом (ENGAGE_RADIUS) - босс останавливается
+	# воевать, иначе доходит до выхода слишком быстро.
 	if move_speed > 0.01:
 		var dir := (_exit_point - global_position)
 		dir.y = 0.0
@@ -98,8 +101,12 @@ func _physics_process(delta: float) -> void:
 			escaped.emit(boss_id)
 			queue_free()
 			return
-		velocity = dir.normalized() * move_speed
-		move_and_slide()
+		var engaged := not _mutants_in(ENGAGE_RADIUS).is_empty()
+		if engaged:
+			velocity = Vector3.ZERO
+		else:
+			velocity = dir.normalized() * move_speed
+			move_and_slide()
 		if get_slide_collision_count() > 0 and velocity.length() < 0.5:
 			# проталкивание мимо препятствия (прямой ход без навмеша)
 			global_position += (global_transform.basis.z * 0.5 + Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))).normalized() * 2.0

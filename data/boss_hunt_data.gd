@@ -14,24 +14,24 @@ const VICTORY_BIO_PER_BOSS: float = 400.0 # боевой доход за бос�
 ## Боссы: hp_x - кратер базового HP; skills - id из SKILLS (generic-исполнитель
 ## в boss_base.gd); model - визуал из существующих анимированных моделей
 const BOSSES := {
-	"kostolom": {"name_ru": "Костолом", "name_en": "Bonemaker", "hp_x": 40.0, "speed": 1.8,
+	"kostolom": {"name_ru": "Костолом", "name_en": "Bonemaker", "hp_x": 40.0, "speed": 1.1,
 		"sparks": 3, "model": "pseudogiant", "scale": 2.2,
 		"skills": [{"id": "quake", "cd": 9.0, "dmg": 30.0, "r": 8.0}]},
 	"tumannitsa": {"name_ru": "Туманница", "name_en": "Mistress", "hp_x": 22.0, "speed": 0.0,
 		"sparks": 3, "model": "poltergeist", "scale": 1.6,
 		"skills": [{"id": "blink", "cd": 12.0}, {"id": "dot_zone", "cd": 8.0, "dmg": 8.0, "r": 4.0, "t": 6.0},
 			{"id": "summon", "cd": 20.0, "n": 2, "hp_frac": 0.25}]},
-	"pozhiratel": {"name_ru": "Пожиратель", "name_en": "Devourer", "hp_x": 34.0, "speed": 2.4,
+	"pozhiratel": {"name_ru": "Пожиратель", "name_en": "Devourer", "hp_x": 34.0, "speed": 1.3,
 		"sparks": 4, "model": "chimera", "scale": 1.9,
 		"skills": [{"id": "stun_nearest", "cd": 14.0, "t": 3.0}, {"id": "vampiric", "cd": 0.0},
 			{"id": "dash", "cd": 10.0}]},
 	"stolp": {"name_ru": "Столп Грозы", "name_en": "Storm Pillar", "hp_x": 28.0, "speed": 0.0,
 		"sparks": 4, "model": "controller", "scale": 1.7,
 		"skills": [{"id": "quake", "cd": 10.0, "dmg": 24.0, "r": 12.0}, {"id": "shield", "cd": 16.0, "amount": 800.0, "t": 5.0}]},
-	"hromets": {"name_ru": "Хромец", "name_en": "Limper", "hp_x": 18.0, "speed": 5.2,
+	"hromets": {"name_ru": "Хромец", "name_en": "Limper", "hp_x": 18.0, "speed": 2.4,
 		"sparks": 4, "model": "pseudodog", "scale": 1.5,
 		"skills": [{"id": "dash", "cd": 8.0}, {"id": "regen", "cd": 12.0, "frac": 0.05, "t": 3.0}]},
-	"mat_bolota": {"name_ru": "Мать-в-болоте", "name_en": "Marsh Mother", "hp_x": 30.0, "speed": 1.2,
+	"mat_bolota": {"name_ru": "Мать-в-болоте", "name_en": "Marsh Mother", "hp_x": 30.0, "speed": 0.8,
 		"sparks": 5, "model": "flesh", "scale": 2.0,
 		"skills": [{"id": "summon", "cd": 16.0, "n": 3, "hp_frac": 0.2}, {"id": "quake", "cd": 12.0, "dmg": 20.0, "r": 10.0}]},
 }
