@@ -217,6 +217,13 @@ func _start_wave():
         _spawn_reward_mutants()
 
         var stalkers_to_spawn = _calculate_stalker_count()
+        # D20 ЭХО: волновой пул растёт с числом доп. рубежей
+        var fronts: Array[Vector3] = []
+        var zc_echo = get_tree().get_first_node_in_group("zone_controller")
+        if zc_echo and "echo_fronts" in zc_echo:
+                fronts = zc_echo.echo_fronts
+        if not fronts.is_empty():
+                stalkers_to_spawn = int(ceil(stalkers_to_spawn * (1.0 + 0.5 * fronts.size())))
         wave_started.emit(current_wave, stalkers_to_spawn)
         # print("Волна " + str(current_wave) + " начата, сталкеров: " + str(stalkers_to_spawn))
 
@@ -300,6 +307,27 @@ func _active_gates() -> Array:
         return gates
 
 
+var _spawn_counter: int = 0
+
+
+## Спавн сталкера в конкретной точке (Эхо-рубежи) - та же логика рангов/бафов
+func _spawn_stalker_at(pos: Vector3) -> bool:
+        var scene = _get_stalker_scene_by_difficulty()
+        if not scene:
+                return false
+        var stalker = scene.instantiate()
+        stalker.position = pos
+        get_tree().current_scene.add_child(stalker)
+        if campaign_hp_mult != 1.0 or campaign_damage_mult != 1.0 or campaign_speed_mult != 1.0:
+                if stalker.has_method("apply_campaign_scaling"):
+                        stalker.apply_campaign_scaling(campaign_hp_mult, campaign_damage_mult, campaign_speed_mult)
+        if elite_share > 0.0 and randf() < elite_share and stalker.has_method("promote_elite"):
+                stalker.promote_elite()
+        active_stalkers.append(stalker)
+        stalker_spawned.emit(stalker)
+        return true
+
+
 func _spawn_stalker() -> bool:
         var scene = _get_stalker_scene_by_difficulty()
         if not scene:
@@ -307,6 +335,18 @@ func _spawn_stalker() -> bool:
                 return false
         
         var pos = _get_spawn_position()
+        # D20 ЭХО: сталкеры распределяются по рубежам (поровну, с джиттером)
+        var zc_echo2 = get_tree().get_first_node_in_group("zone_controller")
+        if zc_echo2 and "echo_fronts" in zc_echo2 and not zc_echo2.echo_fronts.is_empty():
+                var front: Vector3 = zc_echo2.echo_fronts[_spawn_counter % zc_echo2.echo_fronts.size()]
+                var ang := randf() * TAU
+                var dd := randf_range(14.0, 30.0)
+                pos = Vector3(front.x + cos(ang) * dd, 0, front.z + sin(ang) * dd)
+                var pm3 = get_tree().get_first_node_in_group("terrain_generator")
+                if pm3 and pm3.has_method("get_terrain_height"):
+                        pos.y = pm3.get_terrain_height(pos.x, pos.z) + 1.8
+                _spawn_counter += 1
+                return _spawn_stalker_at(pos)
         if pos == Vector3.ZERO:
                 pos = _get_fallback_spawn_position()
                 if pos == Vector3.ZERO:

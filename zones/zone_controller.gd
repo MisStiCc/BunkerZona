@@ -84,6 +84,9 @@ var _boss_music_active: bool = false
 
 # D19 ОХОТА: активна ли, очередь боссов, таймер, убитые
 var _hunt_active: bool = false
+
+# D20 ЭХО МНОЛИТА: рубежи обороны (позиции живых Эхо)
+var echo_fronts: Array[Vector3] = []
 var _hunt_time_left: float = 0.0
 var _hunt_queue: Array = []
 var _hunt_killed: Array = []
@@ -1205,6 +1208,9 @@ func _hide_ghost() -> void:
 
 ## Тап по земле из мобильной камеры
 func _on_ground_tapped(world_position: Vector3):
+                if _pending_placement == "echo":
+                                _try_place_echo(world_position)
+                                return
                 if _pending_placement.is_empty():
                                 return
                 if DisplayServer.is_touchscreen_available():
@@ -1277,6 +1283,68 @@ func _ghost_flash_fail() -> void:
                 var tw := create_tween()
                 tw.tween_property(_ghost, "scale", Vector3(1.12, 1.12, 1.12), 0.07)
                 tw.tween_property(_ghost, "scale", Vector3.ONE, 0.09)
+
+
+## D20 ЭХО: валидный рубеж? >=60м от Монолита и других Эхо, лимит = пачки-1
+func _try_place_echo(world_position: Vector3) -> void:
+                var gm = get_tree().get_first_node_in_group("game_manager")
+                var cycle: int = 1
+                if gm and gm.current_save_data and "campaign_cycle" in gm.current_save_data:
+                                cycle = int(gm.current_save_data.campaign_cycle)
+                var limit: int = max(MutantRoles.packs_open(cycle) - 1, 0)
+                if echo_fronts.size() >= limit:
+                                _hunt_note("Рубежей больше не поставить (открыто пачек: %d)" % (limit + 1))
+                                return
+                var mono := get_tree().get_first_node_in_group("monolith")
+                if mono and mono.global_position.distance_to(world_position) < 60.0:
+                                _hunt_note("Слишком близко к Монолиту (нужно 60 м+)")
+                                return
+                for f in echo_fronts:
+                                if f.distance_to(world_position) < 60.0:
+                                                _hunt_note("Слишком близко к другому Эху (нужно 60 м+)")
+                                                return
+                var cycle2: int = cycle
+                var echo := EchoMonolith.new()
+                add_child(echo)
+                echo.setup(cycle2)
+                echo.global_position = Vector3(world_position.x, world_position.y, world_position.z)
+                echo.fallen.connect(_on_echo_fallen)
+                echo_fronts.append(echo.global_position)
+                _hunt_note("Эхо поставлено: рубеж %d готов" % echo_fronts.size())
+
+
+func _hunt_note(text: String) -> void:
+                var hud = get_tree().get_first_node_in_group("hud")
+                if hud and hud.has_method("show_reward_note"):
+                                hud.show_reward_note(text)
+
+
+func _on_echo_fallen(echo) -> void:
+                # Рубеж пал: пачка отступает (спавн у соседних рубежей продолжается)
+                var hud = get_tree().get_first_node_in_group("hud")
+                if hud and hud.has_method("show_event_note"):
+                                hud.show_event_note({
+                                                "title_ru": "ЭХО ПАЛО",
+                                                "title_en": "ECHO HAS FALLEN",
+                                                "desc_ru": "Рубеж потерян - сталкеры идут к следующему.",
+                                                "desc_en": "A front has fallen - stalkers move to the next one.",
+                                })
+
+
+func _echo_fronts_extra() -> int:
+                return echo_fronts.size()
+
+
+## Ближайший живой рубеж к точке (Vector3.ZERO = Монолит в центре арены)
+func nearest_front_to(pos: Vector3) -> Vector3:
+                var best: Vector3 = Vector3.ZERO
+                var best_d: float = INF
+                for f in echo_fronts:
+                                var dd: float = f.distance_to(pos)
+                                if dd < best_d:
+                                                best_d = dd
+                                                best = f
+                return best
 
 
 func _get_spawn_position_from_camera() -> Vector3:
@@ -2280,6 +2348,9 @@ func _collect_run_result(success: bool) -> Dictionary:
                 # ОХОТА (D19): биомасса за убитых боссов, волн нет
                 if str(run_params.get("run_mode", "")) == "hunt":
                                 reward = _hunt_killed.size() * BossHuntData.VICTORY_BIO_PER_BOSS
+                # ЭХО (D20): награда x (1 + 0.25 за каждый доп. рубеж)
+                if not echo_fronts.is_empty():
+                                reward *= (1.0 + 0.25 * float(echo_fronts.size()))
 
                 # Выживание: награда за пройденные волны платится при любом исходе -
                 # смерть здесь ожидаемый конец забега, а не провал

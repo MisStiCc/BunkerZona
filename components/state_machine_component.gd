@@ -31,6 +31,8 @@ var memory: MemoryComponent
 var carry: CarryComponent
 var health: HealthComponent
 var monolith: Node
+var _echo_attack_cd: float = 0.0
+var _retarget_cd: float = 0.0
 
 # Таймеры состояний
 var current_state_time: float = 0.0
@@ -150,8 +152,39 @@ func _process_seek_artifact(_delta):
 func _process_seek_monolith(delta):
 	if _monolith_reached:
 		return
+	# D20 ЭХО: каждые 1.2с переприцел на БЛИЖАЙШИЙ живой рубеж (Монолит/Эхо)
+	_echo_attack_cd -= delta
+	_retarget_cd -= delta
+	if _retarget_cd <= 0.0:
+		_retarget_cd = 1.2
+		var best: Node = monolith
+		var best_d: float = INF
+		if best and is_instance_valid(best):
+			best_d = stalker.global_position.distance_to(best.global_position)
+		for m in stalker.get_tree().get_nodes_in_group("monolith"):
+			if not is_instance_valid(m) or m == monolith:
+				continue
+			var dd: float = stalker.global_position.distance_to(m.global_position)
+			if dd < best_d:
+				best_d = dd
+				best = m
+		if best and best != monolith:
+			monolith = best
+			_monolith_reached = false
+			if navigation:
+				navigation.move_to(monolith.global_position)
 	if monolith and is_instance_valid(monolith):
 		var dist = stalker.global_position.distance_to(monolith.global_position)
+		if dist < 5.0 and monolith.has_meta("is_echo"):
+			# D20: Эхо бьют, а не проигрывают; пало - идём дальше
+			if _echo_attack_cd <= 0.0:
+				_echo_attack_cd = 1.0
+				if monolith.has_method("take_damage"):
+					monolith.take_damage(stalker.damage, self)
+			if not is_instance_valid(monolith) or monolith.is_fallen():
+				_monolith_reached = false
+				_retarget_cd = 0.0
+			return
 		if dist < 5.0:
 			_monolith_reached = true
 			# "StateMachine: SEEK_MONOLITH - достиг монолита!"  # (лог отключён)

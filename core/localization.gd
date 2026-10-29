@@ -633,6 +633,8 @@ const STRINGS := {
         "desc.guden": {"ru": "Гудящий труп: страх отгоняет сталкеров (отталкивает).", "en": "A droning corpse: fear repels stalkers (pushes them back)."},
         "packs.tab1": {"ru": "ПАЧКА 1", "en": "PACK 1"},
         "role.line": {"ru": "{n} - {r} Зоны", "en": "{n} - a {r} of the Zone"},
+        "echo.button": {"ru": "ЭХО", "en": "ECHO"},
+        "echo.hint": {"ru": "Кисть ЭХО: тап по земле ставит доп. рубеж (60 м+ от Монолита и Эхо)", "en": "ECHO brush: tap the ground to place a front (60 m+ from Monolith and other Echoes)"},
         "role.line_short": {"ru": "роль: {r}", "en": "role: {r}"},
         "packs.tab2": {"ru": "ПАЧКА 2", "en": "PACK 2"},
         "packs.tab3": {"ru": "ПАЧКА 3", "en": "PACK 3"},

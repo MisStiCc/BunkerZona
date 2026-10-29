@@ -97,6 +97,8 @@ var _mut_header_btn: Button = null
 # D8 (мобильный UX): аккордеон категорий, автосворачивание в док,
 # панель подтверждения постановки, safe-area. Только _touch_mode.
 var _pack_btns: Array = []
+var _echo_btn_built: bool = false
+var _echo_btn: Button = null
 var _active_pack: int = 0
 var _pack_tabs_built: bool = false
 var _touch_anom_cat: String = "heat"
@@ -173,12 +175,56 @@ func _ready():
                 _rescale_battle_panels.call_deferred()
                 # Полевой набор: автосбор из открытых + визуал (после deferred ценников)
                 _loadout_init.call_deferred()
+                # D20 ЭХО: кисть рубежа (строится отложенно, видна при 2+ пачках)
+                _build_echo_btn.call_deferred()
                 # Торговец забега: кнопка в свободном окне верха
                 _build_trader_button.call_deferred()
                 # D8: тач-аккордеон панелей, подтверждение постановки, safe-area
                 _setup_touch_ui.call_deferred()
 
                 # print("HUD инициализирован")
+
+
+## D20 ЭХО: кисть рубежа - видна в подготовке при 2+ открытых пачках
+func _build_echo_btn() -> void:
+                if _echo_btn_built:
+                                return
+                _echo_btn_built = true
+                var gm_echo = get_tree().get_first_node_in_group("game_manager")
+                var cycle_echo: int = 0
+                if gm_echo and gm_echo.current_save_data and "campaign_cycle" in gm_echo.current_save_data:
+                                cycle_echo = int(gm_echo.current_save_data.campaign_cycle)
+                if MutantRoles.packs_open(cycle_echo) < 2:
+                                return
+                _echo_btn = Button.new()
+                _echo_btn.name = "EchoButton"
+                _echo_btn.text = Loc.t("echo.button")
+                _echo_btn.custom_minimum_size = Vector2(0, 62)
+                _echo_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                _echo_btn.focus_mode = Control.FOCUS_NONE
+                BunkerUI.style_button(_echo_btn, "steel", 18)
+                _echo_btn.pressed.connect(_on_echo_btn_pressed)
+                add_child(_echo_btn)
+                # Вниз по центру, над панелью выброса
+                _echo_btn.position = Vector2(660, 900)
+                _echo_btn.size = Vector2(600, 62)
+
+
+## Кисть ЭХО: тап по земле ставит доп. рубеж обороны
+func _on_echo_btn_pressed() -> void:
+                _play_click_sound()
+                var zc = get_tree().get_first_node_in_group("zone_controller")
+                if zc == null:
+                                return
+                if zc.get("_pending_placement") == "echo":
+                                zc.set_pending_placement("")
+                                if _echo_btn:
+                                                _echo_btn.modulate = Color.WHITE
+                                return
+                zc.set_pending_placement("echo")
+                if _echo_btn:
+                                _echo_btn.modulate = Color(1.4, 1.25, 0.7)
+                show_reward_note(Loc.t("echo.hint"))
 
 
 ## Локализация кнопок/подписей + ценники поверх них. При смене языка
