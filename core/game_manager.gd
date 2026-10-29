@@ -962,10 +962,20 @@ func change_scene(scene_name: String, params: Dictionary = {}):
                         _transition_to_scene("res://scenes/ui/profile.tscn")
                 "run":
                         is_in_lab = false
+                        # Дверь бункера: уходя из комплекса - открывается
+                        _play_door_sound(false)
                         _setup_run_params(params)
                         _transition_to_scene("res://scenes/main/main.tscn")
                 _:
                         pass # print("Неизвестная сцена: " + scene_name)
+
+
+## Дверь бункера (задание 27): open - старт забега (выход из комплекса),
+## close - возврат в лабу. Нет ключа - тихо (SoundManager сам молчит).
+func _play_door_sound(opening: bool):
+        var sm = get_tree().get_first_node_in_group("sound_manager")
+        if sm and sm.has_method("play_sound"):
+                sm.play_sound("bunker_door_open" if opening else "bunker_door_close", 0.8)
 
 
 func _transition_to_scene(scene_path: String):

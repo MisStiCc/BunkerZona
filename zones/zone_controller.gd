@@ -2277,6 +2277,10 @@ func finish_run(success: bool):
                 ceremony.queue_free()
                 if not played:
                                 await get_tree().create_timer(3.0).timeout
+                # Возврат в комплекс: дверь закрывается
+                var gm_door = get_tree().get_first_node_in_group("game_manager")
+                if gm_door and gm_door.has_method("_play_door_sound"):
+                                gm_door._play_door_sound(true)
                 get_tree().change_scene_to_file("res://scenes/lab/lab.tscn")
 
 

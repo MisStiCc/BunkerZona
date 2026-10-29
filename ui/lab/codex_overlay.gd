@@ -161,6 +161,15 @@ func close() -> void:
 		_root.visible = false
 
 
+func _input(event: InputEvent) -> void:
+	# ESC закрывает кодекс, но только пока он открыт - меню/лабе не мешаем
+	if _root == null or not _root.visible:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		close()
+		get_viewport().set_input_as_handled()
+
+
 func _play_click() -> void:
 	var sm = get_tree().get_first_node_in_group("sound_manager")
 	if sm and sm.has_method("play_sound"):
