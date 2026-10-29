@@ -3984,7 +3984,7 @@ func _build_arena_ui():
         var tabs := HBoxContainer.new()
         tabs.add_theme_constant_override("separation", 8)
         root.add_child(tabs)
-        var tab_names := ["НАГРАДЫ", "ЗАЛ СЛАВЫ", "ОТЧЁТЫ БОЁВ", "ЗАЩИТНЫЙ ОТРЯД", "ЗАДАЧИ СЕЗОНА"]
+        var tab_names := [Loc.t("arena.tab_rewards"), Loc.t("arena.tab_hall"), Loc.t("arena.tab_reports"), Loc.t("arena.tab_defense"), Loc.t("arena.tab_tasks")]
         for i in range(tab_names.size()):
                 var tb := Button.new()
                 tb.text = tab_names[i]
@@ -4482,7 +4482,8 @@ func _arena_medals(my_place: int) -> Array:
         var wins_total: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
         var mutants: int = lab_data.unlocked_mutants.size()
         var power := _arena_player_power()
-        return [
+        # D20-локаль: имена медалей по ключам medal.m0..m8 (RU-строки - фолбэк)
+        var medals: Array = [
                 ["Топ-1 лиги", "Химера ★ + 30 круток", "место %d из 11" % my_place, my_place == 1],
                 ["10 побед сезона", "+10 круток · медаль «Выброс»", "%d / 10 побед" % mini(wins_total, 10), wins_total >= 10],
                 ["Рекорд волны 30", "+25 круток", "%d / 30 волн" % mini(rec, 30), rec >= 30],
@@ -4493,6 +4494,12 @@ func _arena_medals(my_place: int) -> Array:
                 ["Отряд из 10 мутантов", "+10 круток", "%d / 10 видов" % mini(mutants, 10), mutants >= 10],
                 ["Сила отряда 5000", "+15 круток · медаль «Монолит»", "%s / 5000 силы" % _format_number(float(mini(power, 5000))), power >= 5000],
         ]
+        for mi in range(medals.size()):
+                var mk := "medal.m%d" % mi
+                var mnm: String = Loc.t(mk)
+                if mnm != mk:
+                        medals[mi][0] = mnm
+        return medals
 
 
 ## Сила защитного отряда: только назначенные в оборону мутанты
@@ -5178,13 +5185,13 @@ func _tasks_track_bar_max(m: int, v: int) -> void:
 func _rebuild_tasks_lists():
         for child in _tasks_lists_box.get_children():
                 child.queue_free()
-        _tasks_section("ЕЖЕДНЕВНЫЕ · обновятся в 00:00")
+        _tasks_section(Loc.t("tasks.daily_head"))
         for t in Prog.daily_tasks():
                 _tasks_lists_box.add_child(_make_task_row("d", t))
-        _tasks_section("НЕДЕЛЬНЫЕ · обновятся в понедельник")
+        _tasks_section(Loc.t("tasks.weekly_head"))
         for t in Prog.weekly_tasks():
                 _tasks_lists_box.add_child(_make_task_row("w", t))
-        var note := BunkerUI.make_mono_label("Любой бой даёт опыт и очки трека. Сезон: 30 ступеней, ЧЁРНЫЙ ЯЩИК на 10/20/30 — несёт эксклюзивного мутанта.", 12, BunkerUI.TEXT_FAINT)
+        var note := BunkerUI.make_mono_label(Loc.t("tasks.note"), 12, BunkerUI.TEXT_FAINT)
         _tasks_lists_box.add_child(note)
 
 
@@ -5219,7 +5226,9 @@ func _make_task_row(kind: String, t: Dictionary) -> Control:
         v.add_theme_constant_override("separation", 4)
         h.add_child(v)
         var title := Label.new()
-        title.text = str(def["title"])
+        var title_key := "task." + str(def.get("id", ""))
+        var title_txt: String = Loc.t(title_key)
+        title.text = title_txt if title_txt != title_key else str(def["title"])
         title.add_theme_font_override("font", BunkerUI.font_body())
         title.add_theme_font_size_override("font_size", 16)
         title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
@@ -5233,7 +5242,8 @@ func _make_task_row(kind: String, t: Dictionary) -> Control:
         var fill_col := BunkerUI.GREEN if bool(t["done"]) else BunkerUI.HAZARD
         bar.add_theme_stylebox_override("fill", _tasks_bar_fill(fill_col))
         v.add_child(bar)
-        var sub := BunkerUI.make_mono_label("%d / %d · +%d опыта, +%d очков" % [int(t["prog"]), int(def["need"]), int(def["xp"]), int(def["pts"])], 12, BunkerUI.TEXT_DIM)
+        var sub := BunkerUI.make_mono_label(Loc.t("tasks.reward_line",
+                        {"a": int(t["prog"]), "b": int(def["need"]), "x": int(def["xp"]), "p": int(def["pts"])}), 12, BunkerUI.TEXT_DIM)
         v.add_child(sub)
         var btn := Button.new()
         btn.custom_minimum_size = Vector2(170, 52)
