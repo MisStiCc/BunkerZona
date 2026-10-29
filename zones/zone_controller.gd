@@ -295,6 +295,7 @@ func _hunt_spawn_next():
                 else:
                                 boss.setup(id, data, BossHuntData.boss_stat_mult(cycle), from, to)
                 boss.died.connect(_on_hunt_boss_died)
+                boss.tree_exiting.connect(func(): _hunt_boss_node = null)
                 boss.escaped.connect(_on_hunt_boss_escaped)
                 _hunt_boss_node = boss
 
@@ -303,8 +304,10 @@ func _hunt_process(delta: float) -> void:
                 if not _hunt_active:
                                 return
                 _hunt_time_left -= delta
-                if is_instance_valid(_hunt_boss_node):
+                if _hunt_boss_node != null and is_instance_valid(_hunt_boss_node):
                                 _hunt_dmg_total = _hunt_boss_node.damage_total
+                else:
+                                _hunt_boss_node = null
                 var hud = get_tree().get_first_node_in_group("hud")
                 if hud and hud.has_method("show_hunt_time"):
                                 hud.show_hunt_time(maxi(int(ceil(_hunt_time_left)), 0))

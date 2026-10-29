@@ -29,7 +29,10 @@ const AUTO_ATTACK_RANGE := 4.0
 const AUTO_ATTACK_CD := 1.2
 const EXIT_REACH := 6.0
 const ENGAGE_RADIUS := 16.0   # мутанты ближе - босс стоит и дерётся
+const AGGRO_RADIUS := 40.0    # мутанты дальше - босс идёт к ним сам
 var _side_step_time: float = 0.0
+var dash_dir: Vector3 = Vector3.ZERO
+var dash_time: float = 0.0
 var _aggro: bool = false
 
 
@@ -94,46 +97,48 @@ func _physics_process(delta: float) -> void:
 			if nearest.has_method("take_damage"):
 				nearest.take_damage(AUTO_ATTACK_DAMAGE(), self)
 			_attack_cd = AUTO_ATTACK_CD
-	# Ход к краю (стоячие боссы speed 0 - не двигаются).
-	# Втягивание в бой: мутанты рядом (ENGAGE_RADIUS) - босс останавливается
-	# воевать, иначе доходит до выхода слишком быстро.
+	# Ход к краю (стоячие боссы speed 0 не двигаются). Без телепорт-рывков:
+	# только velocity + move_and_slide, стрейф при столкновении.
+	if dash_time > 0.0:
+		dash_time -= delta
+		velocity = dash_dir * 48.0
+		move_and_slide()
+		return
 	if move_speed > 0.01:
-		var dir := (_exit_point - global_position)
-		dir.y = 0.0
-		var dist := dir.length()
-		if dist < EXIT_REACH:
-			escaped.emit(boss_id)
-			queue_free()
-			return
+		var walk_target := Vector3.ZERO
 		var near := _mutants_in(ENGAGE_RADIUS)
-		var far := _mutants_in(40.0)
-		var engaged := not near.is_empty()
-		# Агрессия: мутанты в 40м - босс сам подходит вплотную
-		if not engaged and not far.is_empty():
-			var tgt: Node = far[0]
-			var to_m: Vector3 = tgt.global_position - global_position
-			to_m.y = 0.0
-			if to_m.length() > 2.0:
-				velocity = to_m.normalized() * move_speed
-				move_and_slide()
-				return
-		if engaged:
+		var far := _mutants_in(AGGRO_RADIUS)
+		if not near.is_empty():
+			# Втягивание: дерётся с теми, кто рядом
 			velocity = Vector3.ZERO
+		elif not far.is_empty():
+			# Агрессия: идёт К ближайшему мутанту в радиусе агро
+			var tgt: Node = far[0]
+			for m in far:
+				if m.global_position.distance_to(global_position) < tgt.global_position.distance_to(global_position):
+					tgt = m
+			walk_target = tgt.global_position
 		else:
-			velocity = dir.normalized() * move_speed
+			# Патруль к краю Зоны
+			walk_target = _exit_point
+		var dir := walk_target - global_position
+		dir.y = 0.0
+		if dir.length() > 2.0:
+			dir = dir.normalized()
+			velocity = dir * move_speed
 			move_and_slide()
-			# Застрял об строение - стрейф перпендикуляром (не толкание рывком)
-			if get_slide_collision_count() > 0 and velocity.length() < 0.3:
+			# Стрейф при столкновении: перпендикуляр, сторона меняется раз в 2с
+			if get_slide_collision_count() > 0:
 				_side_step_time += delta
-				var perp := dir.cross(Vector3.UP) * (1.0 if fmod(_side_step_time, 4.0) < 2.0 else -1.0)
-				global_position += perp * move_speed * delta
+				var side: float = 1.0 if fmod(_side_step_time, 4.0) < 2.0 else -1.0
+				var perp: Vector3 = dir.cross(Vector3.UP) * side
+				velocity = perp * move_speed
+				move_and_slide()
 			else:
 				_side_step_time = 0.0
-		if get_slide_collision_count() > 0 and velocity.length() < 0.5:
-			# проталкивание мимо препятствия (прямой ход без навмеша)
-			global_position += (global_transform.basis.z * 0.5 + Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))).normalized() * 2.0
+		else:
+			velocity = Vector3.ZERO
 	_update_label()
-
 
 func _update_label() -> void:
 	if _hp_label:
@@ -225,8 +230,8 @@ func _cast(s: Dictionary) -> void:
 				if m.has_method("take_damage"):
 					m.take_damage(15.0, self)
 		"dash":
-			var dir := (_exit_point - global_position).normalized()
-			global_position += dir * 12.0
+			dash_dir = (_exit_point - global_position).normalized()
+			dash_time = 0.25   # рывок растянут на 0.25с - без телепорта
 		"shield":
 			shield = float(s.get("amount", 800.0))
 		"regen":
