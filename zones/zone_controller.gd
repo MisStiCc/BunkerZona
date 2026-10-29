@@ -91,6 +91,7 @@ var _hunt_time_left: float = 0.0
 var _hunt_queue: Array = []
 var _hunt_killed: Array = []
 var _hunt_boss_node: Node = null
+var _hunt_dmg_total: float = 0.0
 
 # Радиационный фон Припяти (RadiationData): зона по расстоянию
 # Монолит -> Саркофаг; "" = процедурная карта, фона нет
@@ -241,6 +242,7 @@ func _hunt_begin():
                 _hunt_time_left = float(run_params.get("hunt_time", BossHuntData.HUNT_TIME))
                 _hunt_queue = (run_params.get("hunt_bosses", []) as Array).duplicate()
                 _hunt_killed = []
+                _hunt_dmg_total = 0.0
                 _hunt_spawn_next()
                 var hud0 = get_tree().get_first_node_in_group("hud")
                 if hud0 and hud0.has_method("show_hunt_time"):
@@ -270,13 +272,28 @@ func _hunt_spawn_next():
                 var ang := randf() * TAU
                 var from := Vector3(cos(ang), 0.0, sin(ang)) * 140.0
                 var to := Vector3(-cos(ang), 0.0, -sin(ang)) * 30.0
+                if str(run_params.get("run_mode", "")) == "hunt" and bool(run_params.get("guild_boss", false)):
+                                # Гильд-босс стоит на арене в 60 м от центра
+                                from = Vector3(cos(ang), 0.0, sin(ang)) * 60.0
                 var pm := get_tree().get_first_node_in_group("terrain_generator")
                 if pm and pm.has_method("get_terrain_height"):
                                 from.y = pm.get_terrain_height(from.x, from.z)
                                 to.y = pm.get_terrain_height(to.x, to.z)
                 var boss := BossBase.new()
                 add_child(boss)
-                boss.setup(id, data, BossHuntData.boss_stat_mult(cycle), from, to)
+                var is_guild: bool = str(run_params.get("run_mode", "")) == "hunt" and bool(run_params.get("guild_boss", false))
+                if is_guild:
+                                # Гильд-босс: стоит и дерётся, HP = остаток недельного пула
+                                data = data.duplicate()
+                                data["speed"] = BossHuntData.BOSS_SPEED
+                                data["hp_x"] = 1.0
+                                boss.setup(id, data, 1.0, from, to)
+                                var g_save = gm_ref().current_save_data if gm_ref() else null
+                                var pool_left: float = GuildSys.boss_hp_left(GuildSys.ensure(g_save)) if g_save else 80000.0
+                                boss.max_hp = maxf(pool_left, 10000.0)
+                                boss.hp = boss.max_hp
+                else:
+                                boss.setup(id, data, BossHuntData.boss_stat_mult(cycle), from, to)
                 boss.died.connect(_on_hunt_boss_died)
                 boss.escaped.connect(_on_hunt_boss_escaped)
                 _hunt_boss_node = boss
@@ -286,6 +303,8 @@ func _hunt_process(delta: float) -> void:
                 if not _hunt_active:
                                 return
                 _hunt_time_left -= delta
+                if is_instance_valid(_hunt_boss_node):
+                                _hunt_dmg_total = _hunt_boss_node.damage_total
                 var hud = get_tree().get_first_node_in_group("hud")
                 if hud and hud.has_method("show_hunt_time"):
                                 hud.show_hunt_time(maxi(int(ceil(_hunt_time_left)), 0))
@@ -336,6 +355,10 @@ func _hunt_finish(victory: bool, reason: String) -> void:
                                 hud.wave_label.text = ("ОХОТА: ПОБЕДА" if victory else "ОХОТА: БОСС УШЁЛ") + "  ·  " + reason
                                 hud.wave_label.visible = true
                 finish_run(victory)
+
+
+func gm_ref():
+                return get_tree().get_first_node_in_group("game_manager")
 
 
 func _hunt_active_check() -> bool:
@@ -2349,19 +2372,23 @@ func _collect_run_result(success: bool) -> Dictionary:
                 if radiation_zone != "" and radiation_zone != "clean":
                                 reward *= RadiationData.get_effects(radiation_zone)["reward_mult"]
 
+                var waves_survived := 0
+                var final_success := success
+                var victory_reason := ""
+                var arena_target := 0
                 # ОХОТА (D19): биомасса за убитых боссов, волн нет
                 if str(run_params.get("run_mode", "")) == "hunt":
                                 reward = _hunt_killed.size() * BossHuntData.VICTORY_BIO_PER_BOSS
+                                if bool(run_params.get("guild_boss", false)):
+                                                # Гильд-рейд: всегда успешен (вклад = урон), награда - биомасса за урон
+                                                final_success = true
+                                                reward += _hunt_dmg_total * 0.5
                 # ЭХО (D20): награда x (1 + 0.25 за каждый доп. рубеж)
                 if not echo_fronts.is_empty():
                                 reward *= (1.0 + 0.25 * float(echo_fronts.size()))
 
                 # Выживание: награда за пройденные волны платится при любом исходе -
                 # смерть здесь ожидаемый конец забега, а не провал
-                var waves_survived := 0
-                var final_success := success
-                var victory_reason := ""
-                var arena_target := 0
                 if run_params.get("run_mode", "") == "survival":
                                 waves_survived = maxi(0, (spawn_manager.current_wave if spawn_manager else 1) - 1)
                                 reward += SurvivalData.wave_bonus(waves_survived)
@@ -2405,6 +2432,7 @@ func _collect_run_result(success: bool) -> Dictionary:
                                 "arena_target_wave": arena_target,
                                 "reward": reward,
                                 "hunt_killed": _hunt_killed.duplicate(),
+                                "boss_dmg_dealt": int(_hunt_dmg_total),
                                 "reward_breakdown": breakdown,
                                 "kills_by_rank": _kills_by_rank.duplicate(),
                                 "statistics": stats,

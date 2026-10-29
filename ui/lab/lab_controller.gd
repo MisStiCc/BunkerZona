@@ -1302,6 +1302,18 @@ func _on_hunt_pressed() -> void:
         game_manager.change_scene("run", {"hunt": true})
 
 
+var _guild_overlay: GuildOverlay = null
+
+func _on_guild_pressed() -> void:
+        _play_click_sound()
+        if game_manager == null:
+                game_manager = get_tree().get_first_node_in_group("game_manager")
+        if _guild_overlay == null:
+                _guild_overlay = GuildOverlay.new()
+                add_child(_guild_overlay)
+        _guild_overlay.open(game_manager.current_save_data if game_manager else null)
+
+
 func _on_codex_pressed() -> void:
         _play_click_sound()
         if _codex == null:
@@ -1335,6 +1347,16 @@ func _build_farm_ui():
                                 store_btn.pressed.connect(_on_store_pressed)
                                 store_btn.mouse_entered.connect(_play_hover_sound)
                                 bottom.add_child(store_btn)
+                # D21 ГИЛЬДИЯ
+                var guild_btn := Button.new()
+                guild_btn.name = "GuildButton"
+                guild_btn.text = Loc.t("guild.btn")
+                guild_btn.custom_minimum_size = Vector2(0, 62)
+                guild_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                BunkerUI.style_button(guild_btn, "steel", 18)
+                guild_btn.pressed.connect(_on_guild_pressed)
+                guild_btn.mouse_entered.connect(_play_hover_sound)
+                bottom.add_child(guild_btn)
                 # D19 ОХОТА: ежедневный босс (кнопка всегда - покажет расписание)
                 var hunt_btn := Button.new()
                 hunt_btn.name = "HuntButton"

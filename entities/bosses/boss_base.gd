@@ -16,6 +16,7 @@ var max_hp: float = 1000.0
 var hp: float = 1000.0
 var move_speed: float = 2.0
 var shield: float = 0.0
+var damage_total: float = 0.0   # весь полученный урон (вклад рейда)
 var _exit_point: Vector3 = Vector3.ZERO
 var _skills: Array = []                 # [{id, cd, dmg, r, ...}]
 var _skill_cd: Dictionary = {}          # id -> готовность (msec)
@@ -132,6 +133,7 @@ func take_damage(amount: float, _source = null) -> void:
 		shield -= absorbed
 		dmg -= absorbed
 	hp -= dmg
+	damage_total += dmg
 	if hp <= 0.0:
 		hp = 0.0
 		died.emit(boss_id, sparks)

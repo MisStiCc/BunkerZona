@@ -1016,6 +1016,11 @@ func _setup_run_params(params: Dictionary):
                 # D19 ОХОТА: боссы дня, таймер, без Монолита/волн/выбросов
                 params["hunt_bosses"] = BossHuntData.get_today_bosses()
                 params["hunt_time"] = BossHuntData.HUNT_TIME
+                # D21 Гильд-босс: рейд по боссу недели, урон = вклад
+                if bool(params.get("guild_boss", false)):
+                        params["hunt_bosses"] = [GuildSys.boss_id()]
+                        params["guild_boss"] = true
+                        params["hunt_time"] = GuildData.RAID_TIME
         else:
                 # Кампания: уровень выбран в лаборатории (или текущий рубеж)
                 var campaign_level := get_selected_or_frontier_level()
@@ -1325,6 +1330,17 @@ func process_run_result(result: Dictionary):
         pass # print("Добавлено биомассы: " + str(reward))
 
         _apply_campaign_result(result)
+
+        # D21 Гильд-рейд: урон по боссу недели -> вклад/жетоны/чат
+        if str(result.get("mode", "")) == "hunt" and bool(result.get("guild_boss", false)):
+                var gd: int = int(result.get("boss_dmg_dealt", 0))
+                if gd > 0 and current_save_data != null:
+                        var gsyn: Dictionary = GuildSys.ensure(current_save_data)
+                        var res_g: Dictionary = GuildSys.raid_damage(current_save_data, gsyn, gd)
+                        GuildSys.after_raid(gsyn, gd)
+                        var hud_gr = get_tree().get_first_node_in_group("hud")
+                        if hud_gr and hud_gr.has_method("show_reward_note"):
+                                        hud_gr.show_reward_note("Гильд-рейд: +%d жетонов" % int(res_g.get("tokens", 0)))
 
         # Выживание: рекорд пройденных волн
         if result.get("mode", "") == "survival":

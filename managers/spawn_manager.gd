@@ -557,6 +557,10 @@ func spawn_mutant(mutant_type: String, position: Vector3, _biomass_cost: float, 
         
         var hp_mult := health_multiplier * star_mult
         var dmg_mult := damage_multiplier * star_mult * synergy_mut_dmg_mult
+        # D21 перк гильдии: +1% HP мутантов за уровень гильдии (кап +10%)
+        var zc_g = get_tree().get_first_node_in_group("zone_controller")
+        if zc_g and zc_g.get("current_save_data") != null and zc_g.current_save_data != null:
+                hp_mult *= (1.0 + GuildSys.perk_hp_bonus(GuildSys.ensure(zc_g.current_save_data)))
         var ex: Dictionary = GachaData.get_exclusive(mutant_type)
         if not ex.is_empty():
                 hp_mult *= float(ex.get("hp", 1.0))

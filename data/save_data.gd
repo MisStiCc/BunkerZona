@@ -24,6 +24,8 @@ class_name SaveData
 @export var pass_cycle: int = 0
 # D19 Охота: отметки награждённых боссов за день {дата: [id]}
 @export var hunt_claimed: Dictionary = {}
+# D21 Гильдия (офлайн-эмуляция): имя/казна/жетоны/чат/рейд
+@export var guild_state: Dictionary = {}
 # Режим сложности кампании: easy / normal / hard (CampaignData)
 @export var campaign_mode: String = "normal"
 
