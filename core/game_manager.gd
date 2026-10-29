@@ -1040,6 +1040,8 @@ func _setup_run_params(params: Dictionary):
                 params["bonuses"]["rare_chance_bonus"] = current_save_data.lab_data.get_rare_chance_bonus()
                 # Звёздность коллекции: спавнящиеся мутанты получают свои звёзды
                 params["mutant_stars"] = current_save_data.lab_data.mutant_stars.duplicate()
+                # D18: шаги Прорыва едут в бой вместе со звёздами
+                params["mutant_awakens"] = current_save_data.lab_data.awaken_stars.duplicate()
                 params["artifact_stars"] = current_save_data.lab_data.artifact_stars.duplicate()
         
         get_tree().root.set_meta("run_params", params)

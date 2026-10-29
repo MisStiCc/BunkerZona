@@ -123,6 +123,10 @@ func _play_footstep():
 
 
 func _physics_process(delta):
+	# D20 (Ледень): заморозка - стоим, ничего не делаем
+	if Time.get_ticks_msec() < int(get_meta("frozen_until", 0)):
+		velocity = Vector3.ZERO
+		return
 	if not is_alive():
 		return
 	

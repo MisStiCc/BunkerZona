@@ -22,6 +22,8 @@ class_name SaveData
 # на котором куплен последний пропуск (0 = не покупал). Старые сейвы - пусто.
 @export var owned: Dictionary = {}
 @export var pass_cycle: int = 0
+# D19 Охота: отметки награждённых боссов за день {дата: [id]}
+@export var hunt_claimed: Dictionary = {}
 # Режим сложности кампании: easy / normal / hard (CampaignData)
 @export var campaign_mode: String = "normal"
 

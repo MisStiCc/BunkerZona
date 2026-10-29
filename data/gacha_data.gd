@@ -115,8 +115,8 @@ const UNLOCK_TABLE := {
 # Химера - джекпот: исключена из пула до 30 уровня кампании, дальше её вес растёт
 const MUTANT_POOL := {
 		"common": [["zombie", 30.0], ["dog_mutant", 25.0], ["flesh", 25.0]],
-		"uncommon": [["snork_mutant", 12.0], ["pseudodog", 10.0], ["poltergeist", 8.0]],
-		"rare": [["controller_mutant", 6.0], ["bloodsucker", 5.0]],
+		"uncommon": [["leden", 6.0], ["vikhor", 5.0], ["mohovik", 5.0], ["zaveden", 4.0], ["shorokh", 3.0], ["snork_mutant", 12.0], ["pseudodog", 10.0], ["poltergeist", 8.0]],
+		"rare": [["tsveten", 4.0], ["guden", 3.5], ["zhivitsa", 3.0], ["controller_mutant", 6.0], ["bloodsucker", 5.0]],
 		"legendary": [["pseudogiant", 4.0], ["chimera", 0.0]],
 }
 
@@ -466,7 +466,7 @@ const DISPLAY_NAMES := {
 		"besheniy_pes": "Бешеный пёс", "tolstaya_plot": "Толстая плоть",
 		"lutiy_pseudodog": "Лютень", "mercayushiy_poltergeist": "Мерцающий полтергейст",
 		"nochnoy_krovosos": "Ночень", "psi_controller": "Одурник",
-		"krovaviy_snork": "Кровник", "ten_pseudodog": "Мгларь",
+		"krovaviy_snork": "Кровник", "ten_pseudodog": "Мгларь", "mohovik": "Моховик", "tsveten": "Цветень", "zhivitsa": "Живица", "zaveden": "Заведень", "vikhor": "Вихорь", "shorokh": "Шорох", "leden": "Ледень", "guden": "Гудень",
 		"crimson_chimera": "Багровая химера", "obsidian_titan": "Обсидиановый титан",
 		"ash_tornado": "Пепельный вихрь", "crimson_heat": "Багровая жара",
 		"void_loop": "Пустотная петля",
@@ -505,6 +505,9 @@ static func rarity_color(rarity: String) -> Color:
 ## PNG проверяется по факту наличия файла: битые/отсутствующие бинарники
 ## не ломают иконку - молча берётся SVG-версия.
 static func card_icon_path(type: String, is_mutant: bool, gray: bool = false) -> String:
+		# D20: у новых видов поддержки - арт базовой модели
+		if is_mutant and MutantRoles.is_new_species(type):
+			type = MutantRoles.card_base_of(type)
 		var dir := "gray/" if gray else ""
 		var base := "%s%s_%s" % [dir, "mut" if is_mutant else "art", type]
 		var png := "res://ui/cards/%s.png" % base

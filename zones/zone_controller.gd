@@ -606,6 +606,9 @@ func _initialize_run():
                 # Звёздность коллекции: спавнящиеся мутанты получают свои звёзды
                 if spawn_manager and run_params.has("mutant_stars"):
                                 spawn_manager.set_mutant_stars(run_params["mutant_stars"])
+                # D18: шаги Прорыва тоже едут в бой
+                if spawn_manager and run_params.has("mutant_awakens"):
+                                spawn_manager.mutant_awakens = run_params["mutant_awakens"]
 
                 # Стартовая биомасса забега (остаток лаборатории + 300)
                 resource_manager.current_biomass = clamp(

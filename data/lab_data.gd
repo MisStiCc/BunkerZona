@@ -417,9 +417,71 @@ func get_star_upgrade_cost(current_stars: int) -> float:
 
 
 ## Множитель статов для звёзд: 1 звезда = x1.0, 5 звёзд = x2.0
+## D18: шаги Прорыва по виду (0..5 сверх 5★)
+func get_awaken(type: String) -> int:
+    return int(awaken_stars.get(type, 0))
+
+
+func add_awaken(type: String) -> void:
+    awaken_stars[type] = get_awaken(type) + 1
+
+
+## D19: Искры Пробуждения (тратятся на Прорыв)
+func add_sparks(n: int) -> void:
+    awaken_sparks = maxi(awaken_sparks + n, 0)
+
+
 static func get_star_stat_mult(stars: int, awaken: int = 0) -> float:
     var base: float = 1.0 + float(mini(maxi(stars, 1), MAX_STARS) - 1) * STAR_STAT_BONUS
     return base * pow(AWAKEN_STEP, float(maxi(awaken, 0)))
+
+
+# D18/D19: Прорыв (вид -> шаги 0..5), Искры Пробуждения, пачки мутантов D20
+@export var awaken_stars: Dictionary = {}
+@export var awaken_sparks: int = 0
+@export var loadout_mutants_p2: Array = []
+@export var loadout_mutants_p3: Array = []
+@export var active_pack: int = 0
+
+## Мутанты активной пачки
+func pack_mutants(pack: int) -> Array:
+    match int(pack):
+        1: return loadout_mutants_p2
+        2: return loadout_mutants_p3
+        _: return loadout_mutants
+
+
+func set_pack_mutants(pack: int, arr: Array) -> void:
+    match int(pack):
+        1: loadout_mutants_p2 = arr
+        2: loadout_mutants_p3 = arr
+        0: loadout_mutants = arr
+
+
+## Все взятые мутанты (все пачки) - для боя
+func all_pack_mutants() -> Array:
+    var out: Array = []
+    for t in loadout_mutants:
+        if not out.has(t):
+            out.append(t)
+    for t in loadout_mutants_p2:
+        if not out.has(t):
+            out.append(t)
+    for t in loadout_mutants_p3:
+        if not out.has(t):
+            out.append(t)
+    return out
+
+
+## Пачка, где сидит вид (0/1/2); -1 - нигде
+func pack_of_mutant(type: String) -> int:
+    if type in loadout_mutants:
+        return 0
+    if type in loadout_mutants_p2:
+        return 1
+    if type in loadout_mutants_p3:
+        return 2
+    return -1
 
 
 func get_star_progress(type: String) -> int:

@@ -96,6 +96,9 @@ var _mut_header_btn: Button = null
 
 # D8 (мобильный UX): аккордеон категорий, автосворачивание в док,
 # панель подтверждения постановки, safe-area. Только _touch_mode.
+var _pack_btns: Array = []
+var _active_pack: int = 0
+var _pack_tabs_built: bool = false
 var _touch_anom_cat: String = "heat"
 var _touch_mut_cat: String = "squad"
 var _anom_collapsed: bool = false
@@ -1259,6 +1262,25 @@ const MUTANT_ORDER := ["zombie", "dog_mutant", "flesh", "snork_mutant", "pseudod
 const EXCLUSIVE_SHORT := {"alpha_pseudodog": "Альфа-вожак", "ash_snork": "Пепельник", "obsidian_controller": "Обсидиан.пастырь"}
 
 
+## D20: переключение активной пачки в фазе набора
+func _on_pack_tab(idx: int) -> void:
+                _play_click_sound()
+                _active_pack = idx
+                # Показываем состав выбранной пачки: тусклые = не в этой пачке
+                var gm_p = get_tree().get_first_node_in_group("game_manager")
+                var lab_p = gm_p.get_lab_data() if gm_p else null
+                if lab_p == null:
+                                return
+                var arr: Array = lab_p.pack_mutants(idx)
+                for btn in _mutant_buttons:
+                                var t: String = str(_mutant_buttons[btn])
+                                var in_pack: bool = t in arr
+                                btn.modulate = Color(1, 1, 1, 1) if in_pack else Color(0.6, 0.64, 0.58, 0.72)
+                for i in range(_pack_btns.size()):
+                                _pack_btns[i].modulate = Color(1.4, 1.25, 0.7) if i == idx else Color(1, 1, 1, 0.8)
+
+
+
 func _loadout_init():
                 var gm = get_tree().get_first_node_in_group("game_manager")
                 if gm and gm.has_method("ensure_loadout"):
@@ -1306,9 +1328,18 @@ func _loadout_tap(kind: String, type: String) -> bool:
                                 var gm_lim = get_tree().get_first_node_in_group("game_manager")
                                 lab.loadout_limit = StoreData.slots_allowed(
                                                 gm_lim.current_save_data.owned if gm_lim and gm_lim.current_save_data else {})
-                                var res: String = lab.toggle_loadout(kind, type)
+                                # D20 пачки: мутанты пишутся в активную пачку;
+                                # вид не может сидеть в двух пачках - перенос
+                                var pack_use: int = _active_pack
+                                if kind == "mutant" and pack_use > 0:
+                                                var prev: int = lab.pack_of_mutant(type)
+                                                if prev >= 0 and prev != pack_use:
+                                                                var old_arr: Array = lab.pack_mutants(prev)
+                                                                old_arr.erase(type)
+                                                                lab.set_pack_mutants(prev, old_arr)
+                                var res: String = lab.toggle_loadout(kind, type, pack_use)
                                 if res == "full":
-                                                show_reward_note("В наборе максимум %d видов - снимите лишний" % lab.loadout_limit)
+                                                show_reward_note("В пачке максимум %d видов - снимите лишний" % lab.loadout_limit)
                                                 var sm_den = get_tree().get_first_node_in_group("sound_manager")
                                                 if sm_den and sm_den.has_method("play_sound"):
                                                                 sm_den.play_sound("ui_deny", 0.6)
@@ -1344,7 +1375,32 @@ func _refresh_loadout_ui():
                                                 if not ex_t.is_empty() and not btn.text.begins_with("✦"):
                                                                 btn.text = "✦ " + btn.text
                                                                 btn.tooltip_text = "Эксклюзив Чёрного ящика: %s - ставит усиленную версию" % GachaData.display_name(ex_t)
-                # Аномалии: в бою только взятые, до боя - всё открытое коллекцией (v0.21.0)
+                        # D20 пачки: вкладки над панелью мутантов (подготовка; открыто = циклы NG+)
+                if start_panel.visible:
+                        var gm_pk = get_tree().get_first_node_in_group("game_manager")
+                        var cycle_pk: int = 0
+                        if gm_pk and gm_pk.current_save_data and "campaign_cycle" in gm_pk.current_save_data:
+                                cycle_pk = int(gm_pk.current_save_data.campaign_cycle)
+                        var open_pk: int = MutantRoles.packs_open(cycle_pk)
+                        if open_pk >= 2 and not _pack_tabs_built:
+                                _pack_tabs_built = true
+                                for i in range(open_pk):
+                                        var pb := Button.new()
+                                        pb.text = Loc.t("packs.tab" + str(i + 1))
+                                        pb.custom_minimum_size = Vector2(0, 30)
+                                        pb.add_theme_font_size_override("font_size", 12)
+                                        pb.focus_mode = Control.FOCUS_NONE
+                                        pb.pressed.connect(_on_pack_tab.bind(i))
+                                        mutant_panel.add_child(pb)
+                                        _pack_btns.append(pb)
+                        if _pack_tabs_built:
+                                for i in range(_pack_btns.size()):
+                                        var locked: bool = i + 1 >= open_pk
+                                        _pack_btns[i].visible = start_panel.visible and not locked
+                                        _pack_btns[i].text = Loc.t("packs.tab" + str(i + 1)) if not locked else Loc.t("packs.locked", {"n": [3, 5, 7][i]})
+                                        _pack_btns[i].modulate = Color(1.4, 1.25, 0.7) if i == _active_pack else Color(1, 1, 1, 0.8)
+
+        # Аномалии: в бою только взятые, до боя - всё открытое коллекцией (v0.21.0)
                 var taken_anomalies: Array = []
                 for btn in _anomaly_buttons:
                                 var atype: String = _anomaly_buttons[btn]

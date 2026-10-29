@@ -602,7 +602,8 @@ func _try_attack():
                 return
         
         if target_stalker.has_method("take_damage"):
-                target_stalker.take_damage(damage, self)
+                var _aura_dmg: float = float(get_meta("aura_dmg", 0.0))
+                target_stalker.take_damage(damage * (1.0 + _aura_dmg), self)
                 attacked_stalker.emit(target_stalker)
                 attack_timer.start()
                 # Удар: одиночный клип, после завершения обновление вернёт стойку/бег
@@ -614,6 +615,11 @@ func _try_attack():
 func _on_attack_cooldown_ended():
         # Можно атаковать снова
         pass
+
+
+## D20: лечение от аур поддержки (Моховик/Цветень/Живица)
+func heal_hp(amount: float) -> void:
+        health = minf(health + amount, max_health)
 
 
 func take_damage(dmg: float, _source = null):

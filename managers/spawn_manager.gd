@@ -50,7 +50,10 @@ var mutant_costs: Dictionary = {
         # Эксклюзивы Чёрного ящика (цены для прямых спавнов; HUD списывает цену базы)
         "alpha_pseudodog": 32.0, "ash_snork": 30.0, "obsidian_controller": 55.0,
         # v0.30.0 «ЗОНА МУТИРУЕТ»: варианты (HUD списывает цену базы, тут — прямые спавны)
-        "dvoroviy_pes": 18.0, "tuhlaya_plot": 18.0,
+        "dvoroviy_pes": 18.0, "tuhlaya_plot": 18.0, # D20: пачки
+        "mohovik": 120.0, "tsveten": 150.0, "zhivitsa": 180.0,
+        "zaveden": 140.0, "vikhor": 120.0, "shorokh": 130.0,
+        "leden": 100.0, "guden": 160.0,
         "gniloy_zombie": 12.0, "brodyashiy_snork": 30.0,
         "besheniy_pes": 22.0, "tolstaya_plot": 22.0,
         "lutiy_pseudodog": 32.0, "mercayushiy_poltergeist": 50.0,
@@ -73,6 +76,8 @@ var cost_multiplier: float = 1.0
 
 # Звёздность мутантов (тип -> звёзды 1-5): статы и подпись спавнящихся
 var mutant_stars: Dictionary = {}
+# D18: шаги Прорыва (вид -> 0..5) - множитель статов сверх 5★
+var mutant_awakens: Dictionary = {}
 
 # Активные объекты
 var active_stalkers: Array[Node] = []
@@ -140,6 +145,12 @@ func _ready():
                 "pseudogiant": preload("res://entities/mutants/pseudogiant.tscn"),
                 "zombie": preload("res://entities/mutants/zombie.tscn")
         }
+
+        # D20 «ПАЧКИ»: новые виды поддержки - сцена базовой модели
+        for ns_id in MutantRoles.NEW_SPECIES:
+                var ns_base: String = str(MutantRoles.NEW_SPECIES[ns_id]["base"])
+                if mutant_scenes.has(ns_base) and not mutant_scenes.has(ns_id):
+                        mutant_scenes[ns_id] = mutant_scenes[ns_base]
 
         # Эксклюзивы Чёрного ящика: тип -> сцена-основа (вариант окраса/статов).
         # Отдельные модели художника позже заменят сцену по ключу base.
@@ -494,9 +505,10 @@ func spawn_mutant(mutant_type: String, position: Vector3, _biomass_cost: float, 
         # Звёздность типа: множитель статов + уровень для подписи
         var star_key: String = stars_for if not stars_for.is_empty() else mutant_type
         var stars := maxi(int(mutant_stars.get(star_key, 1)), 1)
-        var star_mult := LabData.get_star_stat_mult(stars)
-        if stars > 1 and mutant.has_method("set_star_level"):
-                mutant.set_star_level(stars)
+        var awaken := int(mutant_awakens.get(star_key, 0))
+        var star_mult := LabData.get_star_stat_mult(stars, awaken)
+        if stars + awaken > 1 and mutant.has_method("set_star_level"):
+                mutant.set_star_level(mini(stars + awaken, LabData.AWAKEN_MAX))
         
         var hp_mult := health_multiplier * star_mult
         var dmg_mult := damage_multiplier * star_mult
@@ -509,6 +521,23 @@ func spawn_mutant(mutant_type: String, position: Vector3, _biomass_cost: float, 
         if dmg_mult != 1.0 and mutant.has_method("set_damage_multiplier"):
                 mutant.set_damage_multiplier(dmg_mult)
         
+        # D20: новые виды поддержки - тинт/имя/статы/аура
+        var ns: Dictionary = MutantRoles.species_of(mutant_type)
+        if not ns.is_empty():
+                if mutant.has_method("set_health_multiplier"):
+                        mutant.set_health_multiplier(hp_mult * float(ns.get("hp", 1.0)))
+                if mutant.has_method("set_damage_multiplier"):
+                        mutant.set_damage_multiplier(float(ns.get("dmg", 1.0)))
+                var t_ns: Array = ns.get("tint", [1.0, 1.0, 1.0])
+                if mutant.has_method("apply_exclusive_variant"):
+                        mutant.apply_exclusive_variant(
+                                mutant_type, str(ns.get("name_ru", mutant_type)),
+                                Color(float(t_ns[0]), float(t_ns[1]), float(t_ns[2])),
+                                float(ns.get("speed", 1.0)))
+                var aura_node := AuraComponent.new()
+                mutant.add_child(aura_node)
+                aura_node.setup(mutant, MutantRoles.AURAS.get(mutant_type, {}))
+
         if not ex.is_empty() and mutant.has_method("apply_exclusive_variant"):
                 var t: Array = ex.get("tint", [1.0, 1.0, 1.0])
                 var tint := Color(float(t[0]), float(t[1]), float(t[2]))
