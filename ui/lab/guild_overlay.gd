@@ -31,6 +31,9 @@ func open(save) -> void:
 	GuildSys.ensure(_save)
 	_refresh()
 	_root.visible = true
+	var sm = get_tree().get_first_node_in_group("sound_manager")
+	if sm and sm.has_method("play_sound"):
+		sm.play_sound("guild_banner", 0.7)
 
 
 func close() -> void:
@@ -310,6 +313,9 @@ func _buy(sku: String) -> void:
 		if int(info.get("star_feed", 0)) > 0 and gm.get_lab_data():
 			gm.get_lab_data().awaken_sparks += int(info["star_feed"])
 	gm.save_to_active_slot()
+	var sm_b = get_tree().get_first_node_in_group("sound_manager")
+	if sm_b and sm_b.has_method("play_sound"):
+		sm_b.play_sound("guild_buy", 0.7)
 	_toast(Loc.t("guild.bought"))
 	_refresh()
 

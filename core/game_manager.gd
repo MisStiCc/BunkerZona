@@ -1341,6 +1341,9 @@ func process_run_result(result: Dictionary):
                         var hud_gr = get_tree().get_first_node_in_group("hud")
                         if hud_gr and hud_gr.has_method("show_reward_note"):
                                         hud_gr.show_reward_note("Гильд-рейд: +%d жетонов" % int(res_g.get("tokens", 0)))
+                        var sm_gr = get_tree().get_first_node_in_group("sound_manager")
+                        if sm_gr and sm_gr.has_method("play_sound"):
+                                        sm_gr.play_sound("guild_coin", 0.7)
 
         # Выживание: рекорд пройденных волн
         if result.get("mode", "") == "survival":

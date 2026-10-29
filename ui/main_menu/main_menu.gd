@@ -56,6 +56,22 @@ func _load_cover_art():
         if ResourceLoader.exists(PACK_PATH):
                 cover_art.texture = load(PACK_PATH)
                 title_label.visible = false
+                # Задача 30: фирменное лого поверх фона (нет файла - заголовок-текст)
+                if ResourceLoader.exists("res://assets/ui/brand/logo_wide.png"):
+                        var logo := TextureRect.new()
+                        logo.texture = load("res://assets/ui/brand/logo_wide.png")
+                        logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                        logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                        logo.anchor_left = 0.5
+                        logo.anchor_right = 0.5
+                        logo.anchor_top = 0.06
+                        logo.anchor_bottom = 0.06
+                        logo.offset_left = -300.0
+                        logo.offset_right = 300.0
+                        logo.offset_top = 0.0
+                        logo.offset_bottom = 134.0
+                        logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                        cover_art.add_child(logo)
                 return
         if ResourceLoader.exists(COVER_PATH):
                 cover_art.texture = load(COVER_PATH)
