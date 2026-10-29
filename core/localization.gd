@@ -588,6 +588,13 @@ const STRINGS := {
         "store.autofill_done": {"ru": "Автосбор: +{n} СП", "en": "Autofill: +{n} SP"},
         "store.claim_all": {"ru": "ЗАБРАТЬ ПРЕМИУМ ({n})", "en": "CLAIM PREMIUM ({n})"},
         "store.claimed_all": {"ru": "Премиум забран: {n} наград", "en": "Premium claimed: {n} rewards"},
+        # ==== ОХОТА D19 / ПРОРЫВ D18 ====
+        "hunt.button": {"ru": "ОХОТА", "en": "THE HUNT"},
+        "hunt.today": {"ru": "Сегодня в Зоне: {n}. Начинаем охоту!", "en": "Today in the Zone: {n}. The hunt begins!"},
+        "farm.sparks": {"ru": "ИСКРЫ", "en": "SPARKS"},
+        "farm.awaken_btn": {"ru": "ПРОРЫВ", "en": "BREAKTHROUGH"},
+        "farm.awaken_ok": {"ru": "ПРОРЫВ! Звёзды +1 (фиолет)", "en": "BREAKTHROUGH! +1 star (purple)"},
+        "farm.awaken_fail": {"ru": "Прорыв невозможен", "en": "Breakthrough unavailable"},
 "store.title": {"ru": "МАГАЗИН", "en": "STORE"},
         "store.note_power": {"ru": "Покупки влияют на прогресс. Арена: сезонный сброс - догоняемы. Никогда не продаём: энергию, победы, уровни.", "en": "Purchases affect progress. Arena: seasonal reset keeps it fair. Never sold: energy, victories, levels."},
         "store.buy": {"ru": "КУПИТЬ", "en": "BUY"},

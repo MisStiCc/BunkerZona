@@ -984,6 +984,9 @@ func _setup_run_params(params: Dictionary):
 
         # Режим забега: кампания (уровень из лаборатории) или выживание
         var run_mode := get_selected_run_mode()
+        # D19: ОХОТА запускается отдельной кнопкой (params.hunt), селектор не трогаем
+        if bool(params.get("hunt", false)):
+                run_mode = "hunt"
         params["run_mode"] = run_mode
         params["campaign_mode"] = get_campaign_mode()
 
@@ -999,6 +1002,10 @@ func _setup_run_params(params: Dictionary):
                 # Выживание: параметры первой волны; следующие считает ZoneController
                 # после каждой волны (эскалация - в SurvivalData)
                 params["survival_params"] = SurvivalData.get_wave_params(1, get_campaign_mode())
+        elif run_mode == "hunt":
+                # D19 ОХОТА: боссы дня, таймер, без Монолита/волн/выбросов
+                params["hunt_bosses"] = BossHuntData.get_today_bosses()
+                params["hunt_time"] = BossHuntData.HUNT_TIME
         else:
                 # Кампания: уровень выбран в лаборатории (или текущий рубеж)
                 var campaign_level := get_selected_or_frontier_level()
@@ -1013,6 +1020,8 @@ func _setup_run_params(params: Dictionary):
         # Стартовая биомасса в бою: остаток лаборатории + 300 базы.
         # Остаток СПИСЫВАЕТСЯ из лаборатории (перенос припасов на фронт)
         params["start_biomass"] = 300.0
+        if run_mode == "hunt":
+                params["start_biomass"] = BossHuntData.HUNT_BUDGET
         if current_save_data and current_save_data.lab_data:
                 params["start_biomass"] += current_save_data.lab_data.biomass
                 current_save_data.lab_data.biomass = 0.0
@@ -1225,10 +1234,32 @@ func get_campaign_cycle() -> int:
         return current_save_data.campaign_cycle if current_save_data else 1
 
 
+## D18 Прорыв (5★→6★): Искры Пробуждения + биомасса x цикл NG+
+func apply_awaken(target: String) -> String:
+        if current_save_data == null or current_save_data.lab_data == null:
+                return "нет сейва"
+        var lab = current_save_data.lab_data
+        if lab.get_mutant_stars(target) < lab.MAX_STARS:
+                return "нужны ровно 5 звёзд"
+        if lab.get_awaken(target) >= 5:
+                return "Прорыв уже на максимуме"
+        var cycle: int = current_save_data.campaign_cycle if "campaign_cycle" in current_save_data else 1
+        var bio_cost: float = lab.AWAKEN_COST_BIO * float(cycle)
+        if lab.awaken_sparks < lab.AWAKEN_COST_SPARKS:
+                return "Нужно Искр Пробуждения: %d" % lab.AWAKEN_COST_SPARKS
+        if lab.biomass < bio_cost:
+                return "Нужно биомассы: %d" % int(bio_cost)
+        lab.awaken_sparks -= lab.AWAKEN_COST_SPARKS
+        lab.biomass -= bio_cost
+        lab.add_awaken(target)
+        save_to_active_slot()
+        return ""
+
+
 ## Победа в забеге: сдвигаем рубеж кампании, если пройден frontier-уровень
 func _apply_campaign_result(result: Dictionary):
         # Башня: этажи Башни Монолита не двигают рубеж кампании
-        if str(result.get("mode", "")) == "tower":
+        if str(result.get("mode", "")) in ["tower", "hunt"]:
                 return
         var success: bool = result.get("success", false)
         var level: int = result.get("campaign_level", 0)

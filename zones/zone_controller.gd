@@ -82,6 +82,13 @@ var _emission_tween: Tween = null
 # Задача 22: играет ли сейчас босс-луп (Хранитель/финал) - для возврата на run
 var _boss_music_active: bool = false
 
+# D19 ОХОТА: активна ли, очередь боссов, таймер, убитые
+var _hunt_active: bool = false
+var _hunt_time_left: float = 0.0
+var _hunt_queue: Array = []
+var _hunt_killed: Array = []
+var _hunt_boss_node: Node = null
+
 # Радиационный фон Припяти (RadiationData): зона по расстоянию
 # Монолит -> Саркофаг; "" = процедурная карта, фона нет
 var radiation_zone: String = ""
@@ -216,8 +223,120 @@ func start_run():
                 if not is_prep_phase:
                                 return
                 is_prep_phase = false
+                if str(run_params.get("run_mode", "")) == "hunt":
+                                _hunt_begin()
+                                return
                 pass # print("ZoneController: СТАРТ - сталкеры пошли!")
                 spawn_manager.start_spawning()
+
+
+# ==================== ОХОТА (D19) ====================
+
+func _hunt_begin():
+                """Старт охоты: спавн боссов дня у края, таймер, объявление"""
+                _hunt_active = true
+                _hunt_time_left = float(run_params.get("hunt_time", BossHuntData.HUNT_TIME))
+                _hunt_queue = (run_params.get("hunt_bosses", []) as Array).duplicate()
+                _hunt_killed = []
+                _hunt_spawn_next()
+                var hud0 = get_tree().get_first_node_in_group("hud")
+                if hud0 and hud0.has_method("show_hunt_time"):
+                                hud0.show_hunt_time(int(_hunt_time_left))
+                if hud0 and hud0.has_method("show_event_note"):
+                                hud0.show_event_note({
+                                                "title_ru": "ОХОТА",
+                                                "title_en": "THE HUNT",
+                                                "desc_ru": "Босс уйдёт из Зоны - не дай. %d сек." % int(_hunt_time_left),
+                                                "desc_en": "The boss will leave the Zone - stop it. %d sec." % int(_hunt_time_left),
+                                })
+
+
+func _hunt_spawn_next():
+                """Спавн следующего босса очереди (с противоположной стороны карты)"""
+                if _hunt_queue.is_empty():
+                                return
+                var id: String = str(_hunt_queue.pop_front())
+                var data: Dictionary = BossHuntData.BOSSES.get(id, {})
+                if data.is_empty():
+                                _hunt_spawn_next()
+                                return
+                var cycle: int = 1
+                var gm = get_tree().get_first_node_in_group("game_manager")
+                if gm and gm.current_save_data and "campaign_cycle" in gm.current_save_data:
+                                cycle = int(gm.current_save_data.campaign_cycle)
+                var ang := randf() * TAU
+                var from := Vector3(cos(ang), 0.0, sin(ang)) * 140.0
+                var to := Vector3(-cos(ang), 0.0, -sin(ang)) * 30.0
+                var pm := get_tree().get_first_node_in_group("terrain_generator")
+                if pm and pm.has_method("get_terrain_height"):
+                                from.y = pm.get_terrain_height(from.x, from.z)
+                                to.y = pm.get_terrain_height(to.x, to.z)
+                var boss := BossBase.new()
+                add_child(boss)
+                boss.setup(id, data, BossHuntData.boss_stat_mult(cycle), from, to)
+                boss.died.connect(_on_hunt_boss_died)
+                boss.escaped.connect(_on_hunt_boss_escaped)
+                _hunt_boss_node = boss
+
+
+func _hunt_process(delta: float) -> void:
+                if not _hunt_active:
+                                return
+                _hunt_time_left -= delta
+                var hud = get_tree().get_first_node_in_group("hud")
+                if hud and hud.has_method("show_hunt_time"):
+                                hud.show_hunt_time(maxi(int(ceil(_hunt_time_left)), 0))
+                if _hunt_time_left <= 0.0:
+                                _hunt_active = false
+                                _hunt_finish(false, "таймер вышел - босс ушёл")
+
+
+func _on_hunt_boss_died(boss_id: String, sparks: int) -> void:
+                _hunt_killed.append(boss_id)
+                # Награда: Искры - первый килл босса за день; повтор - биомасса
+                var gm = get_tree().get_first_node_in_group("game_manager")
+                var today: String = Time.get_date_string_from_system()
+                var first_time: bool = true
+                if gm and gm.current_save_data:
+                                var claimed: Dictionary = gm.current_save_data.hunt_claimed
+                                var todays: Array = claimed.get(today, [])
+                                if boss_id in todays:
+                                                first_time = false
+                                if first_time:
+                                                var bonus: int = BossHuntData.SUNDAY_BONUS_SPARK if Time.get_date_dict_from_system().get("weekday", 1) == 0 else 0
+                                                if gm.current_save_data.lab_data:
+                                                                gm.current_save_data.lab_data.add_sparks(sparks + bonus)
+                                                todays.append(boss_id)
+                                                claimed[today] = todays
+                                                gm.save_to_active_slot()
+                                                var hud = get_tree().get_first_node_in_group("hud")
+                                                if hud and hud.has_method("show_reward_note"):
+                                                                hud.show_reward_note("+%d Искры Пробуждения" % (sparks + bonus))
+                                elif gm.current_save_data.lab_data:
+                                                gm.current_save_data.lab_data.biomass += BossHuntData.REPEAT_REWARD_BIO
+                # Следующий босс очереди или победа
+                if _hunt_queue.is_empty():
+                                _hunt_active = false
+                                _hunt_finish(true, "")
+
+
+func _on_hunt_boss_escaped(boss_id: String) -> void:
+                _hunt_active = false
+                _hunt_finish(false, "босс ушёл из Зоны")
+
+
+func _hunt_finish(victory: bool, reason: String) -> void:
+                if is_run_finished:
+                                return
+                var hud = get_tree().get_first_node_in_group("hud")
+                if hud:
+                                hud.wave_label.text = ("ОХОТА: ПОБЕДА" if victory else "ОХОТА: БОСС УШЁЛ") + "  ·  " + reason
+                                hud.wave_label.visible = true
+                finish_run(victory)
+
+
+func _hunt_active_check() -> bool:
+                return _hunt_active
 
 
 func _on_wave_break_started(wave_number: int, break_duration: float):
@@ -467,6 +586,15 @@ func _initialize_run():
 
                                 event_manager.endless_mode = true
                                 pulses = 0
+
+                # D19 ОХОТА: Монолит не участвует - прячем и выключаем
+                if str(run_params.get("run_mode", "")) == "hunt":
+                                var mono_h := get_tree().get_first_node_in_group("monolith")
+                                if mono_h:
+                                                mono_h.visible = false
+                                                mono_h.process_mode = Node.PROCESS_MODE_DISABLED
+                                                if mono_h is CollisionObject3D:
+                                                                mono_h.collision_layer = 0
 
                 event_manager.set_pulses_to_win(pulses)
                 event_manager.set_run_number(run_number)
@@ -718,6 +846,9 @@ func _setup_radiation_zone():
 ## зоны; мутанты и артефакты-приманки иммунны. Смерть от фона не платит
 ## биомассу (метка rad_death до смертельного тика, см. on_stalker_died).
 func _process(delta: float):
+                # D19: тик таймера охоты
+                if _hunt_active:
+                                _hunt_process(delta)
                 if radiation_zone == "" or radiation_zone == "clean" or is_run_finished:
                                 return
                 if spawn_manager == null:
@@ -2105,6 +2236,10 @@ func _collect_run_result(success: bool) -> Dictionary:
                 if radiation_zone != "" and radiation_zone != "clean":
                                 reward *= RadiationData.get_effects(radiation_zone)["reward_mult"]
 
+                # ОХОТА (D19): биомасса за убитых боссов, волн нет
+                if str(run_params.get("run_mode", "")) == "hunt":
+                                reward = _hunt_killed.size() * BossHuntData.VICTORY_BIO_PER_BOSS
+
                 # Выживание: награда за пройденные волны платится при любом исходе -
                 # смерть здесь ожидаемый конец забега, а не провал
                 var waves_survived := 0
@@ -2153,6 +2288,7 @@ func _collect_run_result(success: bool) -> Dictionary:
                                 "victory_reason": victory_reason,
                                 "arena_target_wave": arena_target,
                                 "reward": reward,
+                                "hunt_killed": _hunt_killed.duplicate(),
                                 "reward_breakdown": breakdown,
                                 "kills_by_rank": _kills_by_rank.duplicate(),
                                 "statistics": stats,

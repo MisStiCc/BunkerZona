@@ -921,6 +921,13 @@ func show_gate_warning(wave: int, dirs: Array) -> void:
                 var desc: String = ("Сталкеры придут с: " + ", ".join(names)) if Loc.lang == "ru" else ("Stalkers incoming from: " + ", ".join(names))
                 _announce(title, desc, Color(1.0, 0.85, 0.25), 2.4)
 
+## D19 ОХОТА: таймер в строке волны
+func show_hunt_time(sec: int) -> void:
+                wave_label.visible = true
+                wave_label.modulate = Color(1.0, 0.6, 0.2)
+                wave_label.text = "ОХОТА · %02d:%02d" % [sec / 60, sec % 60]
+
+
 ## Часы суток (v0.29.0): строка в панели ресурсов, цвет и иконка по фазе
 func update_daynight(text: String, icon: String, color: Color) -> void:
                 if time_label:

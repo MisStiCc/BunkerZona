@@ -417,8 +417,9 @@ func get_star_upgrade_cost(current_stars: int) -> float:
 
 
 ## Множитель статов для звёзд: 1 звезда = x1.0, 5 звёзд = x2.0
-static func get_star_stat_mult(stars: int) -> float:
-    return 1.0 + float(maxi(stars, 1) - 1) * STAR_STAT_BONUS
+static func get_star_stat_mult(stars: int, awaken: int = 0) -> float:
+    var base: float = 1.0 + float(mini(maxi(stars, 1), MAX_STARS) - 1) * STAR_STAT_BONUS
+    return base * pow(AWAKEN_STEP, float(maxi(awaken, 0)))
 
 
 func get_star_progress(type: String) -> int:
@@ -462,16 +463,26 @@ func consume_farm_copy(type: String) -> bool:
 
 
 ## "★★★☆☆" для UI
-static func stars_text(stars: int) -> String:
+static func stars_text(stars: int, awaken: int = 0) -> String:
     var text := ""
     for i in range(MAX_STARS):
         text += "★" if i < stars else "☆"
+    if awaken > 0:
+        text += "+" + str(mini(awaken, 5))
     return text
 
 
 # ==================== ПОЛЕВОЙ НАБОР ====================
 
 const MAX_LOADOUT: int = 9
+
+# ==================== ПРОРЫВ (D18): 5★ -> 10★ ====================
+const AWAKEN_MAX: int = 10
+const AWAKEN_COLOR := Color(0.70, 0.40, 1.00)   # неон-фиолет
+const AWAKEN_STEP: float = 1.20                  # множитель за шаг сверх 5★
+const AWAKEN_COST_SPARKS: int = 3                # Искры за сам Прорыв (5→6)
+const AWAKEN_COST_BIO: float = 5000.0            # x цикл NG+
+# Расширенная стоимость корма шагов 6-10 (копии цели: N+1 как раньше)
 
 ## D16: действующий лимит слотов набора (9; 12 с conv_slots12).
 ## Инстанс-переменная - game_manager проставляет из StoreData.slots_allowed.

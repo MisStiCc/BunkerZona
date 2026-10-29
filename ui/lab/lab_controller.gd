@@ -1289,6 +1289,19 @@ func _on_store_pressed() -> void:
         _store_panel.open()
 
 
+## D19 ОХОТА: показать боссов дня и запустить охоту
+func _on_hunt_pressed() -> void:
+        _play_click_sound()
+        var names: Array = BossHuntData.today_names()
+        _show_message(Loc.t("hunt.today", {"n": ", ".join(names)}))
+        if game_manager:
+                game_manager.selected_campaign_level = _campaign_level
+        await get_tree().create_timer(1.6).timeout
+        if not game_manager:
+                return
+        game_manager.change_scene("run", {"hunt": true})
+
+
 func _on_codex_pressed() -> void:
         _play_click_sound()
         if _codex == null:
@@ -1322,6 +1335,16 @@ func _build_farm_ui():
                                 store_btn.pressed.connect(_on_store_pressed)
                                 store_btn.mouse_entered.connect(_play_hover_sound)
                                 bottom.add_child(store_btn)
+                # D19 ОХОТА: ежедневный босс (кнопка всегда - покажет расписание)
+                var hunt_btn := Button.new()
+                hunt_btn.name = "HuntButton"
+                hunt_btn.text = Loc.t("hunt.button")
+                hunt_btn.custom_minimum_size = Vector2(0, 62)
+                hunt_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                BunkerUI.style_button(hunt_btn, "steel", 18)
+                hunt_btn.pressed.connect(_on_hunt_pressed)
+                hunt_btn.mouse_entered.connect(_play_hover_sound)
+                bottom.add_child(hunt_btn)
                 # Кодекс Зоны: справка по правилам (спека zona_codex)
                 var codex_btn := Button.new()
                 codex_btn.name = "CodexButton"
@@ -1388,6 +1411,9 @@ func _build_farm_ui():
         spacer0.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         head.add_child(spacer0)
 
+        var sparks_plate := BunkerUI.make_plate("0", Loc.t("farm.sparks"), 130.0)
+        sparks_plate.name = "SparksPlate"
+        head.add_child(sparks_plate)
         var bio_plate := BunkerUI.make_plate("0", "БИО", 150.0, "res://assets/ui/currency/icon_biomass.png")
         head.add_child(bio_plate)
         _farm_biomass_chip = bio_plate.get_child(0).get_child(0)
@@ -1640,6 +1666,16 @@ func _make_farm_card(type: String) -> Control:
         st.add_theme_color_override("font_color", Color("ffd94d"))
         st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         v.add_child(st)
+
+        # D18: ПРОРЫВ у мутанта ровно 5★ (Искры Пробуждения + биомасса x цикл)
+        var awaken: int = lab_data.get_awaken(type)
+        if stars >= LabData.MAX_STARS and awaken == 0:
+            var brk := Button.new()
+            brk.text = Loc.t("farm.awaken_btn")
+            brk.custom_minimum_size = Vector2(0, 40)
+            BunkerUI.style_button(brk, "hazard", 14)
+            brk.pressed.connect(_on_awaken_pressed.bind(type))
+            v.add_child(brk)
 
         # Бак-полоса (прогресс к следующему корму)
         if stars < LabData.MAX_STARS:
@@ -2603,10 +2639,14 @@ func _gallery_tile(type: String, is_mutant: bool) -> Control:
 
         var stars_label := Label.new()
         var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
-        stars_label.text = LabData.stars_text(stars) if unlocked else "🔒"
+        var awaken: int = lab_data.get_awaken(type) if is_mutant else 0
+        stars_label.text = LabData.stars_text(stars, awaken) if unlocked else "🔒"
         stars_label.add_theme_font_size_override("font_size", 9)
         stars_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        stars_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25) if unlocked else Color(0.5, 0.5, 0.55))
+        if awaken > 0:
+                stars_label.add_theme_color_override("font_color", LabData.AWAKEN_COLOR)
+        else:
+                stars_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25) if unlocked else Color(0.5, 0.5, 0.55))
         tile.add_child(stars_label)
 
         var unlock_level: int = GachaData.get_unlock_campaign_level(type)
@@ -3351,6 +3391,21 @@ func _on_prem_claim_all() -> void:
         if granted > 0:
                 _show_message(Loc.t("store.claimed_all", {"n": granted}))
         _tw_refresh()
+
+
+## D18 Прорыв: 5★ -> 6★ за Искры Пробуждения
+func _on_awaken_pressed(type: String) -> void:
+        _play_click_sound()
+        if game_manager == null:
+                return
+        var res: String = game_manager.apply_awaken(type)
+        if res.is_empty():
+                _show_message(Loc.t("farm.awaken_ok"))
+        else:
+                _show_message(Loc.t("farm.awaken_fail") + ": " + res)
+        _refresh_ui()
+
+
 
 func _on_farm_autofill_pressed() -> void:
         _play_click_sound()

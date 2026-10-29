@@ -450,6 +450,8 @@ const EXCHANGE_COPY_SP := 2
 # Ценность корма по редкости и очковая цена следующей звезды (текущие звёзды -> очков).
 const FODDER_VALUE := {"common": 1, "uncommon": 2, "rare": 3, "legendary": 5}
 const STAR_FEED_COST := {1: 2, 2: 4, 3: 6, 4: 8}
+# D18: расширенная стоимость корма шагов Прорыва 6-10
+const STAR_FEED_COST_EXT := {6: 10, 7: 12, 8: 14, 9: 16}
 
 # Русские имена всех типов коллекции (панель звёзд, логи)
 const DISPLAY_NAMES := {
@@ -562,6 +564,8 @@ static func get_fodder_value(type: String, is_mutant: bool) -> int:
 
 ## Очков корма до следующей звезды при текущих звёздах
 static func get_star_feed_cost(current_stars: int) -> int:
+		if STAR_FEED_COST_EXT.has(current_stars):
+				return STAR_FEED_COST_EXT[current_stars]
 		return int(STAR_FEED_COST.get(maxi(current_stars, 1), 8))
 
 
