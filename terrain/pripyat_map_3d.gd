@@ -14,14 +14,17 @@ const ROAD_WIDTH_DEFAULT := 6.0
 const MAX_ROADS := 120             # дороги в район: ленты на земле
 const NAV_BAKE_DELAY := 0.5
 
-# Район игры (bbox): покрывает центр Припяти -> промзону -> Янов -> ЧАЭС
-@export var lat_min: float = 51.387
+# Район игры (bbox): покрывает центр Припяти -> промзону -> Янов -> ЧАЭС.
+# Расширен на юго-восток (51.383/30.11), чтобы вся промзона ЧАЭС вошла:
+# арка «Укрытие-2», Прометей, мост Гранита (ориентиры по спутнику).
+@export var lat_min: float = 51.383
 @export var lat_max: float = 51.410
 @export var lon_min: float = 30.051
-@export var lon_max: float = 30.105
+@export var lon_max: float = 30.110
 
 # Маршрут Монолита по ярусам кампании (lat, lon): чем ближе к Саркофагу,
 # тем выше ярус и сложнее волны (сложность уже растёт по уровням кампании).
+# Точка 10 — центроид контура арки «Укриття-2» из данных OSM (машзал рядом).
 const MONOLITH_ROUTE := [
 	[51.4050, 30.0560],  # ярус 1: центр Припяти (площадь у ДК)
 	[51.4047, 30.0615],  # ярус 2: стадион
@@ -32,7 +35,7 @@ const MONOLITH_ROUTE := [
 	[51.4070, 30.0960],  # ярус 7: станция Янов
 	[51.3965, 30.0930],  # ярус 8: подъезд к ЧАЭС
 	[51.3905, 30.0985],  # ярус 9: машзал ЧАЭС
-	[51.3890, 30.0996],  # ярус 10: Саркофаг
+	[51.3893, 30.0988],  # ярус 10: арка «Укриття-2»
 ]
 
 # Высоты зданий по типам OSM (метры), остальное - джиттер вокруг дефолта
@@ -72,6 +75,8 @@ func _ready():
 	_build_buildings()
 	_build_roads()
 	_build_props()
+	_build_pois()
+	_build_landmarks()
 	_setup_navigation()
 	# Небо Припяти: грозовое (polyhaven CC0), чуть глуше обычного
 	_apply_sky("res://assets/sky/sky_storm_gloomy_4k.hdr", 0.85)
@@ -542,6 +547,114 @@ func _build_props():
 	var bounds := Rect2(_w_min(), _d_min(), _w_max() - _w_min(), _d_max() - _d_min())
 	var props_root := PripyatProps.build(self, layers, bounds, get_terrain_height)
 	add_child(props_root)
+
+
+## Подписи ориентиров (слой pois ОСМ: «Укриття-2», «Прометей», машзал, ДК
+## «Енергетик»...). Label3D над точкой; вне bbox и безымянные — мимо.
+func _build_pois():
+	for poi in _data.get("layers", {}).get("pois", {}).get("points", []):
+		var name: String = str(poi.get("name", ""))
+		if name.is_empty():
+			continue
+		var pos: Array = poi.get("pos", [])
+		if pos.size() < 2:
+			continue
+		var wx := float(pos[0])
+		var wz := float(pos[1])
+		if wx < _w_min() or wx > _w_max() or wz < _d_min() or wz > _d_max():
+			continue
+		var label := Label3D.new()
+		label.text = name
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.font_size = 26
+		label.pixel_size = 0.30
+		label.outline_size = 10
+		label.modulate = Color(0.96, 0.92, 0.72, 0.9)
+		label.outline_modulate = Color(0.02, 0.03, 0.02, 0.9)
+		add_child(label)
+		label.position = Vector3(wx, get_terrain_height(wx, wz) + 14.0, wz)
+
+
+## Ориентиры ЧАЭС (задание 29 подготовщика): арка «Укрытие-2» над своим
+## контуром OSM (длина по Z, разворот по азимуту контура), Прометей на
+## своём POI, градирня на свободной площадке у канала. Ставится ДО
+## запечки навмеша: create_trimesh_collision резервирует стены.
+func _build_landmarks():
+	var scenes := {
+		"nbc_arch": "res://models/chaes/nbc_arch.glb",
+		"prometheus": "res://models/chaes/prometheus.glb",
+		"cooling_tower": "res://models/chaes/cooling_tower.glb",
+	}
+	# Прометей — по своему POI, градирня — площадка у канала (lat/lon)
+	var placed := {}
+
+	# Арка: контур «Укриття-2» — центроид + азимут длиннейшей грани
+	for poly in _data.get("layers", {}).get("buildings", {}).get("polygons", []):
+		var props: Dictionary = poly.get("props", {})
+		if str(props.get("name", "")) != "Укриття-2":
+			continue
+		var outer: Array = poly.get("outer", [])
+		if outer.size() < 3:
+			break
+		var cx := 0.0
+		var cy := 0.0
+		for p in outer:
+			cx += float(p[0])
+			cy += float(p[1])
+		cx /= outer.size()
+		cy /= outer.size()
+		# длиннейшая грань = направление оси свода
+		var best_len := 0.0
+		var best_dir := Vector2(0, 1)
+		for i in outer.size():
+			var a: Vector2 = Vector2(float(outer[i][0]), float(outer[i][1]))
+			var b: Vector2 = Vector2(float(outer[(i + 1) % outer.size()][0]),
+				float(outer[(i + 1) % outer.size()][1]))
+			var d := b - a
+			if d.length() > best_len:
+				best_len = d.length()
+				best_dir = d.normalized()
+		var yaw := atan2(best_dir.x, best_dir.y)
+		_place_landmark(scenes["nbc_arch"], Vector2(cx, cy), yaw, "nbc_arch")
+		placed["nbc_arch"] = true
+		break
+
+	# Прометей: POI «Прометей» (площадка у ДК «Енергетик»)
+	for poi in _data.get("layers", {}).get("pois", {}).get("points", []):
+		if str(poi.get("name", "")) == "Прометей" and poi.get("pos", []).size() >= 2:
+			_place_landmark(scenes["prometheus"],
+				Vector2(float(poi["pos"][0]), float(poi["pos"][1])), 0.0, "prometheus")
+			placed["prometheus"] = true
+			break
+
+	# Градирня: свободная площадка юго-западнее арки (недостроенная башня)
+	var tower_pos := latlon_to_world(51.3850, 30.0870)
+	_place_landmark(scenes["cooling_tower"], tower_pos, 0.0, "cooling_tower")
+	placed["cooling_tower"] = true
+
+	var parts: Array = []
+	for key in placed:
+		parts.append(key)
+	print("PripyatMap3D: ориентиры ЧАЭС (", ", ".join(parts), ")")
+
+
+func _place_landmark(path: String, world_pos: Vector2, yaw: float, name: String):
+	if not ResourceLoader.exists(path):
+		return
+	var ps := load(path) as PackedScene
+	if ps == null:
+		return
+	var node := ps.instantiate() as Node3D
+	if node == null:
+		return
+	node.name = "Landmark_" + name
+	node.position = Vector3(world_pos.x, get_terrain_height(world_pos.x, world_pos.y) - 0.3, world_pos.y)
+	node.rotation.y = yaw
+	add_child(node)
+	# Коллизия стен (оболочка арки непроходима, статуя/башня — тоже);
+	# вызывается до запечки навмеша — вырезы получит бесплатно
+	for mi in node.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).create_trimesh_collision()
 
 
 # ==================== НАВМЕШ И СОВМЕСТИМОСТЬ ====================

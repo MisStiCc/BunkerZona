@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://8tyvsb6mj36j"
-path="res://.godot/imported/monolith_finale.ogg-62111846ba4ac35b3fe591a2e06ba478.oggvorbisstr"
+path="res://.godot/imported/monolith_finale.ogg-cc0aadb3ad751fe582b32dbc4f94729e.oggvorbisstr"
 
 [deps]
 
-source_file="res://inbox/boss_music/monolith_finale.ogg"
-dest_files=["res://.godot/imported/monolith_finale.ogg-62111846ba4ac35b3fe591a2e06ba478.oggvorbisstr"]
+source_file="res://inbox/_done/boss_music/monolith_finale.ogg"
+dest_files=["res://.godot/imported/monolith_finale.ogg-cc0aadb3ad751fe582b32dbc4f94729e.oggvorbisstr"]
 
 [params]
 

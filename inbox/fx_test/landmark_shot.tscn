@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://inbox/fx_test/landmark_shot.gd" id="ext_s"]
+
+[sub_resource type="Environment" id="sub_env"]
+background_mode = 1
+background_color = Color(0.16, 0.18, 0.15, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.75, 0.73, 0.68, 1)
+ambient_light_energy = 1.0
+
+
+[node name="LS" type="Node3D"]
+script = ExtResource("ext_s")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("sub_env")

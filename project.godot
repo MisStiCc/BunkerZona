@@ -11,11 +11,15 @@ config_version=5
 [application]
 
 config/name="Бункер: Зона"
-config/version="0.31.1"
+config/version="0.32.0"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
-config/version_stamp="v0.31.1 · «Бункер: Зона» · 25.10.26"
+config/icon="res://assets/ui/icon_256.png"
+config/version_stamp="v0.32.0 · «Бункер: Зона» · 28.10.26"
+boot_splash/image="res://assets/ui/boot_splash/boot_splash_1920x1080.png"
+boot_splash/fullsize=true
+boot_splash/use_filter=true
+boot_splash/bg_color=Color(0.043, 0.055, 0.043, 1)
 
 [autoload]
 

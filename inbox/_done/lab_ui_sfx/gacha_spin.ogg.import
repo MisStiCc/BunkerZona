@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://5jm0k3uumlpw"
-path="res://.godot/imported/gacha_spin.ogg-6d76d73d05f835e08d25dde0210d3bb5.oggvorbisstr"
+path="res://.godot/imported/gacha_spin.ogg-54e4bfa0f56741d46557cbdc1a006571.oggvorbisstr"
 
 [deps]
 
-source_file="res://inbox/lab_ui_sfx/gacha_spin.ogg"
-dest_files=["res://.godot/imported/gacha_spin.ogg-6d76d73d05f835e08d25dde0210d3bb5.oggvorbisstr"]
+source_file="res://inbox/_done/lab_ui_sfx/gacha_spin.ogg"
+dest_files=["res://.godot/imported/gacha_spin.ogg-54e4bfa0f56741d46557cbdc1a006571.oggvorbisstr"]
 
 [params]
 
