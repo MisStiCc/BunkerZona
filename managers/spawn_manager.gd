@@ -79,6 +79,11 @@ var mutant_stars: Dictionary = {}
 # D18: шаги Прорыва (вид -> 0..5) - множитель статов сверх 5★
 var mutant_awakens: Dictionary = {}
 
+# D20 синергии пачек: хил/радиус аур/урон мутантов (считает ZoneController)
+var synergy_heal_mult: float = 1.0
+var synergy_radius_mult: float = 1.0
+var synergy_mut_dmg_mult: float = 1.0
+
 # Активные объекты
 var active_stalkers: Array[Node] = []
 var active_mutants: Array[Node] = []
@@ -511,7 +516,7 @@ func spawn_mutant(mutant_type: String, position: Vector3, _biomass_cost: float, 
                 mutant.set_star_level(mini(stars + awaken, LabData.AWAKEN_MAX))
         
         var hp_mult := health_multiplier * star_mult
-        var dmg_mult := damage_multiplier * star_mult
+        var dmg_mult := damage_multiplier * star_mult * synergy_mut_dmg_mult
         var ex: Dictionary = GachaData.get_exclusive(mutant_type)
         if not ex.is_empty():
                 hp_mult *= float(ex.get("hp", 1.0))
@@ -537,6 +542,8 @@ func spawn_mutant(mutant_type: String, position: Vector3, _biomass_cost: float, 
                 var aura_node := AuraComponent.new()
                 mutant.add_child(aura_node)
                 aura_node.setup(mutant, MutantRoles.AURAS.get(mutant_type, {}))
+                mutant.set_meta("aura_heal_mult", synergy_heal_mult)
+                mutant.set_meta("aura_radius_mult", synergy_radius_mult)
 
         if not ex.is_empty() and mutant.has_method("apply_exclusive_variant"):
                 var t: Array = ex.get("tint", [1.0, 1.0, 1.0])

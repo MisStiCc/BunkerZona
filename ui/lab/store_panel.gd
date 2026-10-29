@@ -35,12 +35,13 @@ func build() -> void:
 	panel.anchor_top = 0.5
 	panel.anchor_right = 0.5
 	panel.anchor_bottom = 0.5
-	var vp := get_viewport().get_visible_rect().size
-	var w: float = clampf(vp.x * 0.7, 480.0, 900.0)
-	panel.offset_left = -w * 0.5
-	panel.offset_right = w * 0.5
-	panel.offset_top = -vp.y * 0.4
-	panel.offset_bottom = vp.y * 0.4
+	# Якоря-доли: панель центрируется при любом разрешении
+	panel.anchor_top = 0.10
+	panel.anchor_bottom = 0.92
+	panel.offset_left = -330.0
+	panel.offset_right = 330.0
+	panel.offset_top = 0.0
+	panel.offset_bottom = 0.0
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.031, 0.045, 0.026, 0.99)
 	sb.border_color = COL_GOLD

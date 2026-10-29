@@ -600,6 +600,44 @@ func _initialize_run():
                 event_manager.set_run_number(run_number)
                 event_manager.set_difficulty(run_difficulty)
 
+
+                # D20 синергии пачек: состав взятых мутантов -> бафы аур/урона
+                var gm_syn = get_tree().get_first_node_in_group("game_manager")
+                if gm_syn and gm_syn.has_method("get_lab_data"):
+                                var lab_syn = gm_syn.get_lab_data()
+                                if lab_syn:
+                                                var team: Array = lab_syn.all_pack_mutants()
+                                                var heals: int = 0
+                                                var buffs: int = 0
+                                                var dd: int = 0
+                                                for t in team:
+                                                                match MutantRoles.role_of(str(t)):
+                                                                                MutantRoles.Role.HEAL: heals += 1
+                                                                                MutantRoles.Role.BUFF: buffs += 1
+                                                                                MutantRoles.Role.DMG: dd += 1
+                                                if heals >= 2:
+                                                                spawn_manager.synergy_heal_mult = 1.25
+                                                if buffs >= 2:
+                                                                spawn_manager.synergy_radius_mult = 1.35
+                                                if dd >= 3:
+                                                                spawn_manager.synergy_mut_dmg_mult = 1.10
+                                                var syn_note := ""
+                                                if heals >= 2:
+                                                                syn_note += "ЕДИНСТВО: лечение +25%. "
+                                                if buffs >= 2:
+                                                                syn_note += "ПОЛЕ: радиусы аур +35%. "
+                                                if dd >= 3:
+                                                                syn_note += "СТАЯ: урон мутантов +10%."
+                                                var packs_total: int = lab_syn.loadout_mutants.size() + lab_syn.loadout_mutants_p2.size() + lab_syn.loadout_mutants_p3.size()
+                                                if syn_note != "" and packs_total >= 3:
+                                                                var hud_s = get_tree().get_first_node_in_group("hud")
+                                                                if hud_s and hud_s.has_method("show_event_note"):
+                                                                                hud_s.show_event_note({
+                                                                                                "title_ru": "СИНЕРГИЯ ПАЧКИ",
+                                                                                                "title_en": "PACK SYNERGY",
+                                                                                                "desc_ru": syn_note,
+                                                                                                "desc_en": syn_note,
+                                                                                })
                 # Применяем бонусы из лаборатории
                 _apply_lab_bonuses()
 

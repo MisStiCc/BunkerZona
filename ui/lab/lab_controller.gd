@@ -2796,7 +2796,21 @@ func _show_card_detail(type: String, is_mutant: bool, unlocked: bool):
         detail_meta.text = "   ".join(meta_parts)
         detail_meta.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
 
-        detail_desc.text = Loc.t("desc." + type)
+        # Описание: у вариантов/новых видов фолбэк на базу; роль - всегда
+        var desc_txt: String = Loc.t("desc." + type)
+        if desc_txt == "desc." + type:
+                var base_t: String = type
+                var ex_d: Dictionary = GachaData.get_exclusive(type) if is_mutant else {}
+                if not ex_d.is_empty() and ex_d.has("base"):
+                        base_t = str(ex_d["base"])
+                var fb: String = Loc.t("desc." + base_t)
+                if fb != "desc." + base_t:
+                        desc_txt = fb
+                else:
+                        desc_txt = Loc.t("role.line", {"n": Loc.type_name(type), "r": MutantRoles.role_tag(type)})
+        detail_desc.text = desc_txt
+        if is_mutant:
+                detail_meta.text += "  ·  " + Loc.t("role.line_short", {"r": MutantRoles.role_tag(type)})
         detail_panel.visible = true
 
 

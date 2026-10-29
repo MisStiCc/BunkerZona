@@ -632,6 +632,8 @@ const STRINGS := {
         "desc.leden": {"ru": "Ледяной пёс: замораживает ближайшего сталкера раз в 8 с.", "en": "An icy dog: freezes the nearest stalker every 8 s."},
         "desc.guden": {"ru": "Гудящий труп: страх отгоняет сталкеров (отталкивает).", "en": "A droning corpse: fear repels stalkers (pushes them back)."},
         "packs.tab1": {"ru": "ПАЧКА 1", "en": "PACK 1"},
+        "role.line": {"ru": "{n} - {r} Зоны", "en": "{n} - a {r} of the Zone"},
+        "role.line_short": {"ru": "роль: {r}", "en": "role: {r}"},
         "packs.tab2": {"ru": "ПАЧКА 2", "en": "PACK 2"},
         "packs.tab3": {"ru": "ПАЧКА 3", "en": "PACK 3"},
         "packs.locked": {"ru": "ПАЧКА (цикл %d)", "en": "PACK (cycle %d)"},

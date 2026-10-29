@@ -48,13 +48,15 @@ func _physics_process(delta: float) -> void:
 		return
 	_tick = 0.0
 
-	var r := float(aura.get("radius", 0.0))
+	var rad_m: float = float(owner_mutant.get_meta("aura_radius_mult", 1.0)) if owner_mutant else 1.0
+	var r := float(aura.get("radius", 0.0)) * rad_m
 	var allies := _allies_in(r) if r > 0.0 else []
 
-	# Реген-аура
+	# Реген-аура (x синергия пачки)
+	var heal_m: float = float(owner_mutant.get_meta("aura_heal_mult", 1.0)) if owner_mutant else 1.0
 	if aura.has("heal_pct") and not allies.is_empty():
 		for m in allies:
-			_heal(m, float(aura["heal_pct"]))
+			_heal(m, float(aura["heal_pct"]) * heal_m)
 
 	# Бафы (кап стаков по meta)
 	_apply_buff(allies, "aura_dmg", float(aura.get("dmg_pct", 0.0)))
@@ -70,7 +72,7 @@ func _physics_process(delta: float) -> void:
 				wounded.append(m)
 		wounded.sort_custom(func(a, b): return _hp_frac(a) < _hp_frac(b))
 		for i in range(mini(int(p.get("targets", 1)), wounded.size())):
-			_heal(wounded[i], float(p.get("heal_pct", 0.1)))
+			_heal(wounded[i], float(p.get("heal_pct", 0.1)) * heal_m)
 		_pulse_cd = float(p.get("cd", 6.0))
 
 	# Луч: самый раненый, большой хил
@@ -82,7 +84,7 @@ func _physics_process(delta: float) -> void:
 			if worst == null or _hp_frac(m) < _hp_frac(worst):
 				worst = m
 		if worst and _hp_frac(worst) < 0.9:
-			_heal(worst, float(b.get("heal_pct", 0.2)))
+			_heal(worst, float(b.get("heal_pct", 0.2)) * heal_m)
 			_beam_cd = float(b.get("cd", 10.0))
 
 	# Контроль: заморозка ближайшего сталкера (Ледень)
