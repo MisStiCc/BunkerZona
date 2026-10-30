@@ -283,11 +283,24 @@ func _hunt_spawn_next():
                 add_child(boss)
                 var is_guild: bool = str(run_params.get("run_mode", "")) == "hunt" and bool(run_params.get("guild_boss", false))
                 if is_guild:
-                                # Гильд-босс: стоит и дерётся, HP = остаток недельного пула
+                                # Гильд-босс: ГИБРИД двух боссов (скиллы обоих), пробуждённый
+                                # фиолетовый окрас, ×2.2 крупнее обычного. Стоит и дерётся,
+                                # HP = остаток недельного пула
                                 data = data.duplicate()
+                                var hybrid_ids: Array = BossHuntData.BOSSES.keys()
+                                hybrid_ids.erase(id)
+                                if not hybrid_ids.is_empty():
+                                                var second: Dictionary = BossHuntData.BOSSES.get(str(hybrid_ids[randi() % hybrid_ids.size()]), {})
+                                                var merged: Array = (data.get("skills", []) as Array).duplicate()
+                                                for sk in second.get("skills", []):
+                                                                merged.append(sk)
+                                                data["skills"] = merged
                                 data["speed"] = BossHuntData.BOSS_SPEED
                                 data["hp_x"] = 1.0
-                                boss.setup(id, data, 1.0, from, to)
+                                data["scale"] = 4.0
+                                boss.setup(id, data, 1.0, from, to,
+                                                Loc.t("hunt.guild_boss_name", {"name": str(data.get("name_ru", id))}),
+                                                Color(0.65, 0.3, 1.0))
                                 var g_save = gm_ref().current_save_data if gm_ref() else null
                                 var pool_left: float = GuildSys.boss_hp_left(GuildSys.ensure(g_save)) if g_save else 80000.0
                                 boss.max_hp = maxf(pool_left, 10000.0)
@@ -2158,6 +2171,10 @@ func _apply_run_effect(effect: Dictionary) -> void:
                                                 spawn_manager.campaign_speed_mult)
                 if effect.has("cost_mult") and spawn_manager:
                                 spawn_manager.set_cost_multiplier(spawn_manager.cost_multiplier * float(effect["cost_mult"]))
+                                # Цены на кнопках HUD должны обновиться сразу
+                                var hud_p = get_tree().get_first_node_in_group("hud")
+                                if hud_p and hud_p.has_method("_apply_prices"):
+                                                hud_p._apply_prices.call_deferred()
                 if effect.has("reward_mutant") and spawn_manager:
                                 spawn_manager.queue_reward_mutant(str(effect["reward_mutant"]))
                 if effect.has("artifact"):

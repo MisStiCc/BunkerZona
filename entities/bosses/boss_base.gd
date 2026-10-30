@@ -37,7 +37,8 @@ var dash_time: float = 0.0
 var _aggro: bool = false
 
 
-func setup(id: String, data: Dictionary, stat_mult: float, from: Vector3, to: Vector3) -> void:
+func setup(id: String, data: Dictionary, stat_mult: float, from: Vector3, to: Vector3,
+		display_name: String = "", tint: Color = Color(0, 0, 0, 0)) -> void:
 	boss_id = id
 	boss_name = str(data.get("name_ru", id))
 	sparks = int(data.get("sparks", 3))
@@ -61,12 +62,13 @@ func setup(id: String, data: Dictionary, stat_mult: float, from: Vector3, to: Ve
 
 	var model_id := str(data.get("model", "flesh"))
 	var model_path := "res://models/animals/%s_anim.glb" % model_id
+	var model_scale := float(data.get("scale", 1.8))
 	if ResourceLoader.exists(model_path):
 		var model: Node3D = load(model_path).instantiate()
-		var s := float(data.get("scale", 1.8))
-		model.scale = Vector3(s, s, s)
+		model.scale = Vector3(model_scale, model_scale, model_scale)
 		add_child(model)
 
+	boss_name = display_name if display_name != "" else boss_name
 	_hp_label = Label3D.new()
 	_hp_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_hp_label.no_depth_test = true
@@ -74,9 +76,15 @@ func setup(id: String, data: Dictionary, stat_mult: float, from: Vector3, to: Ve
 	_hp_label.pixel_size = 0.01
 	_hp_label.modulate = Color(1.0, 0.35, 0.3)
 	_hp_label.outline_size = 10
-	_hp_label.position.y = 6.0
+	_hp_label.position.y = 2.0 + model_scale * 2.2
 	_hp_label.text = boss_name
 	add_child(_hp_label)
+	# Пробуждённый окрас (гильд-босс): аддитивное свечение поверх текстур
+	if tint.a > 0.0:
+		var overlays: Array = []
+		_collect_meshes(self, overlays)
+		for mesh in overlays:
+			mesh.material_overlay = _make_glow(tint)
 
 	for s in _skills:
 		_skill_cd[str(s.get("id", "")) + str(s.get("cd", 0.0))] = 0
@@ -273,6 +281,22 @@ func _passive(_s: Dictionary) -> void:
 
 func _hp_of(m) -> float:
 	return float(m.get("hp")) if "hp" in m else 100.0
+
+
+func _collect_meshes(node: Node, out: Array) -> void:
+	for ch in node.get_children():
+		_collect_meshes(ch, out)
+	if node is MeshInstance3D:
+		out.append(node)
+
+
+func _make_glow(tint: Color) -> StandardMaterial3D:
+	var glow := StandardMaterial3D.new()
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glow.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	glow.albedo_color = Color(tint.r, tint.g, tint.b, 0.35)
+	return glow
 
 
 func _spawn_dot(pos: Vector3, r: float, dps: float, t: float) -> void:

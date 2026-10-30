@@ -126,15 +126,21 @@ func show_result(result: Dictionary):
     reward_label.text = Loc.t("result.biomass", {"n": int(reward)})
 
     if is_hunt:
-        # Итоги охоты: вклад по боссу, убийства, оценка жетонов
+        # Итоги охоты: урон и убийства; жетоны - только для гильд-рейда,
+        # обычная охота даёт Искры (оценка) либо биомассу
         var killed: Array = result.get("hunt_killed", [])
         var dmg_dealt: int = int(result.get("boss_dmg_dealt", 0))
         var hunt_lines: Array = [Loc.t("hunt.line_dmg", {"n": dmg_dealt})]
         if not killed.is_empty():
             hunt_lines.append(Loc.t("hunt.line_killed", {"n": killed.size()}))
-        var tokens_est: int = mini(int(float(dmg_dealt) / 500.0), 60)
-        if tokens_est > 0:
-            hunt_lines.append(Loc.t("hunt.line_tokens", {"n": tokens_est}))
+        if bool(result.get("guild_boss", false)):
+            var tokens_est: int = mini(int(float(dmg_dealt) / 500.0), 60)
+            if tokens_est > 0:
+                hunt_lines.append(Loc.t("hunt.line_tokens", {"n": tokens_est}))
+        else:
+            var sparks_est: int = killed.size() * 3
+            if sparks_est > 0:
+                hunt_lines.append(Loc.t("hunt.line_sparks", {"n": sparks_est}))
         reward_label.text += "
 " + " · ".join(hunt_lines)
     else:

@@ -212,7 +212,7 @@ func _page_boss(body: Control) -> void:
 	var dmg: int = int(g.get("boss_dmg", 0))
 	var left: float = GuildSys.boss_hp_left(g)
 
-	_head_line(v, "%s - %s" % [Loc.t("guild.boss"), str(bdata.get("name_ru", boss_id))])
+	_head_line(v, Loc.t("hunt.guild_boss_name", {"name": str(bdata.get("name_ru", boss_id))}))
 	var bar := ProgressBar.new()
 	bar.max_value = pool
 	bar.value = dmg
