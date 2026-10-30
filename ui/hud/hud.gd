@@ -1135,8 +1135,9 @@ func _announce(title: String, desc: String = "", title_color: Color = Color("ffd
 ## Нет файла - кнопка без иконки, как раньше. Иконка слева от текста
 ## (имя + цена), 30 px - читаемость сохраняется.
 func _apply_ability_icon(btn: Button, kind: String, type: String) -> void:
-                var path := "res://assets/ui/abilities/%s/%s.png" % [kind, type]
-                if not FileAccess.file_exists(path):
+                # Апгрейд: мутанты - живописный арт карточек (ui/cards), аномалии - иконки способностей
+                var path: String = GachaData.card_icon_path(type, true) if kind == "mutant" else "res://assets/ui/abilities/%s/%s.png" % [kind, type]
+                if not ResourceLoader.exists(path):
                                 return
                 btn.icon = load(path)
                 btn.expand_icon = true

@@ -318,6 +318,9 @@ func _hunt_process(delta: float) -> void:
 
 func _on_hunt_boss_died(boss_id: String, sparks: int) -> void:
                 _hunt_killed.append(boss_id)
+                # последний удар не должен потеряться: дочитываем счётчик босса
+                if _hunt_boss_node != null and is_instance_valid(_hunt_boss_node):
+                                _hunt_dmg_total = maxf(_hunt_dmg_total, float(_hunt_boss_node.damage_total))
                 # Награда: Искры - первый килл босса за день; повтор - биомасса
                 var gm = get_tree().get_first_node_in_group("game_manager")
                 var today: String = Time.get_date_string_from_system()
@@ -2436,6 +2439,7 @@ func _collect_run_result(success: bool) -> Dictionary:
                                 "reward": reward,
                                 "hunt_killed": _hunt_killed.duplicate(),
                                 "boss_dmg_dealt": int(_hunt_dmg_total),
+                                "guild_boss": bool(run_params.get("guild_boss", false)),
                                 "reward_breakdown": breakdown,
                                 "kills_by_rank": _kills_by_rank.duplicate(),
                                 "statistics": stats,
