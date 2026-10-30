@@ -21,13 +21,14 @@ func build() -> void:
 	layer = 20
 	if _root == null:
 		_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(_root)   # иначе Control-сирота не имеет размеров
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_root.visible = false
 
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.72)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	dim.gui_input.connect(func(ev: InputEvent):
 		if ev is InputEventMouseButton and ev.pressed:
@@ -55,7 +56,7 @@ func build() -> void:
 	_root.add_child(panel)
 
 	var v := VBoxContainer.new()
-	v.set_anchors_preset(Control.PRESET_FULL_RECT)
+	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	v.offset_left = 16
 	v.offset_right = -16
 	v.offset_top = 12
