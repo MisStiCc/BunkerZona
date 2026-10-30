@@ -127,11 +127,13 @@ func _ensure_rain() -> void:
 	mat.spread = 2.0
 	_rain.process_material = mat
 	var quad := QuadMesh.new()
-	quad.size = Vector2(0.04, 0.55)
+	quad.size = Vector2(0.03, 0.7)
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(0.65, 0.8, 0.75, 0.35)
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD   # светлая струя, а не тёмный квадрат
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED   # всегда лицом к камере
+	m.albedo_color = Color(0.75, 0.85, 0.9, 0.18)
 	quad.material = m
 	_rain.draw_pass_1 = quad
 	add_child(_rain)
@@ -143,4 +145,4 @@ func _process(_delta: float) -> void:
 		return
 	var cam := get_viewport().get_camera_3d()
 	if cam:
-		_rain.global_position = cam.global_position + Vector3(0, 26, 0)
+		_rain.global_position = cam.global_position + Vector3(0, 14, 0)
