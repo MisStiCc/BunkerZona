@@ -22,6 +22,11 @@ var _skills: Array = []                 # [{id, cd, dmg, r, ...}]
 var _skill_cd: Dictionary = {}          # id -> готовность (msec)
 var _attack_cd: float = 0.0
 var _hp_label: Label3D = null
+var _hp_bar_fg: MeshInstance3D = null   # заливка полосы HP (шейдер-дискайрд по ratio)
+var _hp_bar_mat: ShaderMaterial = null  # её материал - сюда пишется ratio/цвет
+var _bar_w: float = 3.0
+var _bar_h: float = 0.35
+static var _bar_shader: Shader = null   # общий шейдер полос всех боссов
 var _vampiric := false
 
 const AUTO_ATTACK_DMG := 26.0
@@ -79,6 +84,26 @@ func setup(id: String, data: Dictionary, stat_mult: float, from: Vector3, to: Ve
 	_hp_label.position.y = 2.0 + model_scale * 2.2
 	_hp_label.text = boss_name
 	add_child(_hp_label)
+	# Полоса HP: фон + заливка (шейдер отбрасывает UV.x > ratio), билборд
+	# вручную в vertex - позиционных офсетов нет, depletion всегда слева
+	_bar_w = 1.6 * model_scale + 1.2
+	_bar_h = clampf(0.18 * model_scale, 0.3, 0.6)
+	var bar_y := 2.0 + model_scale * 1.55
+	var bg := MeshInstance3D.new()
+	var bg_mesh := QuadMesh.new()
+	bg_mesh.size = Vector2(_bar_w, _bar_h)
+	bg.mesh = bg_mesh
+	bg.material_override = _make_bar_material(Color(0.05, 0.03, 0.03, 0.85), 1.0, 0)
+	bg.position.y = bar_y
+	add_child(bg)
+	_hp_bar_fg = MeshInstance3D.new()
+	var fg_mesh := QuadMesh.new()
+	fg_mesh.size = Vector2(_bar_w, _bar_h)
+	_hp_bar_fg.mesh = fg_mesh
+	_hp_bar_mat = _make_bar_material(Color(0.9, 0.25, 0.15, 0.95), 1.0, 1)
+	_hp_bar_fg.material_override = _hp_bar_mat
+	_hp_bar_fg.position.y = bar_y
+	add_child(_hp_bar_fg)
 	# Пробуждённый окрас (гильд-босс): аддитивное свечение поверх текстур
 	if tint.a > 0.0:
 		var overlays: Array = []
@@ -96,6 +121,8 @@ func _physics_process(delta: float) -> void:
 	_attack_cd -= delta
 	_blink_cd = maxf(_blink_cd - delta, 0.0)
 	_tick_skills()
+	# Полоса/% обновляются каждый кадр: ветки ниже выходят ранними return
+	_update_label()
 	var mutants := _mutants_in(10000.0)
 	# Автоатака по ближайшему
 	if _attack_cd <= 0.0 and not mutants.is_empty():
@@ -163,12 +190,55 @@ func _physics_process(delta: float) -> void:
 				_side_step_time = 0.0
 		else:
 			velocity = Vector3.ZERO
-	_update_label()
+
+
+func _make_bar_material(col: Color, ratio: float, priority: int) -> ShaderMaterial:
+	if _bar_shader == null:
+		_bar_shader = Shader.new()
+		# Билборд вручную (матрица из осей камеры) - работает с любого угла
+		_bar_shader.code = """
+shader_type spatial;
+render_mode unshaded, depth_test_disabled;
+
+uniform float ratio : hint_range(0.0, 1.0) = 1.0;
+uniform vec4 fill_color : source_color = vec4(0.9, 0.25, 0.15, 0.95);
+
+void vertex() {
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(
+		INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
+}
+
+void fragment() {
+	if (UV.x > ratio) {
+		discard;
+	}
+	ALBEDO = fill_color.rgb;
+	ALPHA = fill_color.a;
+}
+"""
+	var m := ShaderMaterial.new()
+	m.shader = _bar_shader
+	m.render_priority = priority
+	m.set_shader_parameter("ratio", ratio)
+	m.set_shader_parameter("fill_color", col)
+	return m
+
 
 func _update_label() -> void:
 	if _hp_label:
 		var pct := int(100.0 * hp / maxf(max_hp, 1.0))
 		_hp_label.text = "%s %d%%" % [boss_name, pct]
+	if _hp_bar_mat:
+		var ratio := clampf(hp / maxf(max_hp, 1.0), 0.0, 1.0)
+		_hp_bar_mat.set_shader_parameter("ratio", ratio)
+		# зелёный -> жёлтый -> красный по остатку
+		var col: Color
+		if ratio > 0.5:
+			col = Color(0.95, 0.75, 0.15).lerp(Color(0.35, 0.85, 0.25), (ratio - 0.5) * 2.0)
+		else:
+			col = Color(0.9, 0.2, 0.12).lerp(Color(0.95, 0.75, 0.15), ratio * 2.0)
+		col.a = 0.95
+		_hp_bar_mat.set_shader_parameter("fill_color", col)
 
 
 func AUTO_ATTACK_DAMAGE() -> float:

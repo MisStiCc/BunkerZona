@@ -99,6 +99,15 @@ func build() -> void:
 		emu.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(emu)
 
+		# DEV-тест: максимум всех валют, чтобы крутить гачу и проверять всё
+		var cheat := Button.new()
+		cheat.text = Loc.t("store.cheat_currency")
+		cheat.custom_minimum_size = Vector2(320, 46)
+		cheat.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		BunkerUI.style_button(cheat, "steel", 15)
+		cheat.pressed.connect(_grant_infinite_currency)
+		v.add_child(cheat)
+
 	var close := Button.new()
 	close.text = Loc.t("lab.back")
 	close.custom_minimum_size = Vector2(220, 50)
@@ -156,7 +165,11 @@ func _make_card(sku: String) -> Control:
 	buy.pressed.connect(_on_buy.bind(sku))
 	v.add_child(buy)
 
-	if not is_instance_valid(_billing) or not _billing.store_available():
+	if StoreData.EMULATE_PURCHASES:
+		# Эмуляция: биллинг на ПК не поднимется - кнопки НЕ гасим,
+		# покупка бесплатна и начисляет по-настоящему
+		buy.text = Loc.t("store.buy_emu")
+	elif not is_instance_valid(_billing) or not _billing.store_available():
 		buy.disabled = true
 		buy.text = Loc.t("store.unavailable")
 		buy.modulate = Color(1, 1, 1, 0.7)
@@ -166,23 +179,47 @@ func _make_card(sku: String) -> Control:
 
 
 func _on_buy(sku: String) -> void:
-	if is_instance_valid(_billing) and _billing.store_available():
-		_billing.purchase(sku)
-		return
-	# Эмуляция (dev): мгновенная "оплата", начисление настоящее
+	# Эмуляция (dev) ПРИОРИТЕТНЕЕ биллинга: мгновенная "оплата", начисление
+	# настоящее - дев-сборки ничего не покупают по-настоящему
 	if StoreData.EMULATE_PURCHASES:
 		_grant_sku(sku)
 		_fill()
-	else:
-		_note.text = Loc.t("store.unavailable")
-		var sm_dn = get_tree().get_first_node_in_group("sound_manager")
-		if sm_dn and sm_dn.has_method("play_sound"):
-			sm_dn.play_sound("ui_deny", 0.6)
+		return
+	if is_instance_valid(_billing) and _billing.store_available():
+		_billing.purchase(sku)
+		return
+	_note.text = Loc.t("store.unavailable")
+	var sm_dn = get_tree().get_first_node_in_group("sound_manager")
+	if sm_dn and sm_dn.has_method("play_sound"):
+		sm_dn.play_sound("ui_deny", 0.6)
 
 
 func _has_key(key: String) -> bool:
 	# Loc.t вернёт сам ключ при отсутствии - различаем по совпадению
 	return Loc.t(key) != key
+
+
+## DEV (только EMULATE_PURCHASES): максимум всех валют для тестов
+func _grant_infinite_currency() -> void:
+	var gm = get_tree().get_first_node_in_group("game_manager")
+	if gm == null or gm.current_save_data == null:
+		return
+	var lab = gm.get_lab_data()
+	if lab:
+		lab.biomass = 9999999.0
+		lab.gacha_rolls_mutants += 999
+		lab.gacha_rolls_artifacts += 999
+		lab.awaken_sparks += 999
+	var g: Dictionary = GuildSys.ensure(gm.current_save_data)
+	g["tokens"] = int(g.get("tokens", 0)) + 99999
+	gm.save_to_active_slot()
+	if _note:
+		_note.text = Loc.t("store.cheat_done")
+		_note.add_theme_color_override("font_color", Color("a8ff7a"))
+	var sm = get_tree().get_first_node_in_group("sound_manager")
+	if sm and sm.has_method("play_sound"):
+		sm.play_sound("guild_coin", 0.8)
+	_fill()
 
 
 func open() -> void:
