@@ -101,6 +101,8 @@ var _echo_btn_built: bool = false
 var _echo_btn: Button = null
 var _active_pack: int = 0
 var _pack_tabs_built: bool = false
+var _pack_help_btn: Button = null   # «?» - справка по пачкам
+var _pack_info_root: Control = null # попап-справка (строится лениво)
 var _touch_anom_cat: String = "heat"
 var _touch_mut_cat: String = "squad"
 var _anom_collapsed: bool = false
@@ -1266,7 +1268,7 @@ func _rescale_battle_panels() -> void:
                                 var col := 0
                                 var row := 0
                                 for c in p.get_children():
-                                                if c is Button and c != _mut_header_btn:
+                                                if c is Button and c != _mut_header_btn and not _pack_btns.has(c) and c != _pack_help_btn:
                                                                 c.position = Vector2(4.0 + col * (bw + gx), top + row * (bh + gy))
                                                                 c.size = Vector2(bw, bh)
                                                                 c.add_theme_font_size_override("font_size", 14)
@@ -1289,6 +1291,22 @@ func _rescale_battle_panels() -> void:
                                 mut_hdr.position = Vector2(4, 2)
                                 mut_hdr.size = Vector2(mutant_panel.offset_right - mutant_panel.offset_left - 8, 20)
                                 mut_hdr.add_theme_font_size_override("font_size", 13)
+                # Вкладки пачек: своя строка НАД панелью мутантов (не в сетке кнопок),
+                # «?» - справка справа. Видны только в подготовке
+                var packs_row: bool = start_panel.visible and not _pack_btns.is_empty()
+                if not _pack_btns.is_empty():
+                                var mp_w: float = mutant_panel.offset_right - mutant_panel.offset_left
+                                var row_tw: float = (mp_w - 46.0) / float(_pack_btns.size())
+                                for i in range(_pack_btns.size()):
+                                                var pb2: Button = _pack_btns[i]
+                                                pb2.position = Vector2(4.0 + float(i) * row_tw, -28.0)
+                                                pb2.size = Vector2(row_tw - 4.0, 24)
+                                                pb2.add_theme_font_size_override("font_size", 12)
+                                if _pack_help_btn:
+                                                _pack_help_btn.position = Vector2(mp_w - 42.0, -28.0)
+                                                _pack_help_btn.size = Vector2(38, 24)
+                                                _pack_help_btn.add_theme_font_size_override("font_size", 14)
+                                                _pack_help_btn.visible = packs_row
                 var res_panel: Panel = get_node_or_null("Resources")
                 if res_panel:
                                 for c in res_panel.get_children():
@@ -1339,6 +1357,82 @@ func _on_pack_tab(idx: int) -> void:
                                 btn.modulate = Color(1, 1, 1, 1) if in_pack else Color(0.6, 0.64, 0.58, 0.72)
                 for i in range(_pack_btns.size()):
                                 _pack_btns[i].modulate = Color(1.4, 1.25, 0.7) if i == idx else Color(1, 1, 1, 0.8)
+
+
+## D20: попап-справка «что такое пачки» - тот же текст, что страница кодекса
+func _show_pack_info() -> void:
+                _play_click_sound()
+                if _pack_info_root == null:
+                                _pack_info_root = Control.new()
+                                _pack_info_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+                                _pack_info_root.mouse_filter = Control.MOUSE_FILTER_STOP
+                                _pack_info_root.visible = false
+                                add_child(_pack_info_root)
+                                var dim := ColorRect.new()
+                                dim.color = Color(0, 0, 0, 0.72)
+                                dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+                                dim.mouse_filter = Control.MOUSE_FILTER_STOP
+                                dim.gui_input.connect(func(ev: InputEvent):
+                                                if ev is InputEventMouseButton and ev.pressed:
+                                                                _pack_info_root.visible = false)
+                                _pack_info_root.add_child(dim)
+                                var panel := Panel.new()
+                                panel.anchor_left = 0.5
+                                panel.anchor_top = 0.5
+                                panel.anchor_right = 0.5
+                                panel.anchor_bottom = 0.5
+                                var vp := get_viewport().get_visible_rect().size
+                                var w: float = clampf(vp.x * 0.6, 360.0, 680.0)
+                                panel.offset_left = -w * 0.5
+                                panel.offset_right = w * 0.5
+                                panel.offset_top = -vp.y * 0.36
+                                panel.offset_bottom = vp.y * 0.36
+                                var sb := StyleBoxFlat.new()
+                                sb.bg_color = Color(0.031, 0.045, 0.026, 0.99)
+                                sb.border_color = Color("ffd94d")
+                                sb.set_border_width_all(2)
+                                sb.set_corner_radius_all(12)
+                                panel.add_theme_stylebox_override("panel", sb)
+                                _pack_info_root.add_child(panel)
+                                var v := VBoxContainer.new()
+                                v.set_anchors_preset(Control.PRESET_FULL_RECT)
+                                v.offset_left = 16
+                                v.offset_right = -16
+                                v.offset_top = 12
+                                v.offset_bottom = -12
+                                v.add_theme_constant_override("separation", 8)
+                                panel.add_child(v)
+                                var title := Label.new()
+                                title.text = Loc.t("codex.tab_packs")
+                                title.add_theme_font_override("font", BunkerUI.font_title())
+                                title.add_theme_font_size_override("font_size", 22)
+                                title.add_theme_color_override("font_color", Color("ffd94d"))
+                                title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                                v.add_child(title)
+                                var scroll := ScrollContainer.new()
+                                scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+                                scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+                                v.add_child(SwipeHelper.attach(scroll, false))
+                                var txt := Label.new()
+                                txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+                                txt.add_theme_font_override("font", BunkerUI.font_body())
+                                txt.add_theme_font_size_override("font_size", 13)
+                                txt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                                var parts: Array = []
+                                for k in ["codex.pack.what", "codex.pack.unlock", "codex.pack.battle", "codex.pack.roles", "codex.pack.synergy", "codex.pack.stats"]:
+                                                parts.append(str(Loc.t(str(k))))
+                                txt.text = "  \n\n".join(parts)
+                                scroll.add_child(txt)
+                                var back := Button.new()
+                                back.text = Loc.t("lab.back")
+                                back.custom_minimum_size = Vector2(200, 46)
+                                back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+                                BunkerUI.style_button(back, "steel", 15)
+                                back.pressed.connect(func():
+                                                _pack_info_root.visible = false
+                                                _play_click_sound())
+                                v.add_child(back)
+                _pack_info_root.visible = true
 
 
 
@@ -1429,7 +1523,7 @@ func _refresh_loadout_ui():
                                 if started:
                                                 _update_mut_header_text()
                                 else:
-                                                mutant_title.text = "МУТАНТЫ · В НАБОРЕ %d/9 (клик по виду = взять/снять)" % lab.loadout_count("mutant")
+                                                mutant_title.text = "МУТАНТЫ · ПАЧКА %d · В НАБОРЕ %d/9 (клик по виду = взять/снять)" % [_active_pack + 1, lab.loadout_count("mutant")]
                 if gm and gm.has_method("owned_anomaly_exclusive_for"):
                                 for btn in _anomaly_buttons:
                                                 var ex_t: String = gm.owned_anomaly_exclusive_for(_anomaly_buttons[btn])
@@ -1454,12 +1548,27 @@ func _refresh_loadout_ui():
                                         pb.pressed.connect(_on_pack_tab.bind(i))
                                         mutant_panel.add_child(pb)
                                         _pack_btns.append(pb)
+                                # «?» - справка «что такое пачки» (и в подготовке, и в кодексе)
+                                var hb := Button.new()
+                                hb.text = "?"
+                                hb.custom_minimum_size = Vector2(30, 30)
+                                hb.add_theme_font_size_override("font_size", 15)
+                                hb.focus_mode = Control.FOCUS_NONE
+                                hb.tooltip_text = Loc.t("packs.help_tip")
+                                hb.pressed.connect(_show_pack_info)
+                                mutant_panel.add_child(hb)
+                                _pack_help_btn = hb
                         if _pack_tabs_built:
+                                var lock_cycles: Array = MutantRoles.PACK_UNLOCK_CYCLES
                                 for i in range(_pack_btns.size()):
                                         var locked: bool = i + 1 >= open_pk
                                         _pack_btns[i].visible = start_panel.visible and not locked
-                                        _pack_btns[i].text = Loc.t("packs.tab" + str(i + 1)) if not locked else Loc.t("packs.locked", {"n": [3, 5, 7][i]})
+                                        _pack_btns[i].text = Loc.t("packs.tab" + str(i + 1)) if not locked else Loc.t("packs.locked", {"n": str(lock_cycles[i] if i < lock_cycles.size() else 7)})
                                         _pack_btns[i].modulate = Color(1.4, 1.25, 0.7) if i == _active_pack else Color(1, 1, 1, 0.8)
+                                if _pack_help_btn:
+                                        _pack_help_btn.visible = start_panel.visible
+                        elif _pack_help_btn:
+                                _pack_help_btn.visible = false
 
         # Аномалии: в бою только взятые, до боя - всё открытое коллекцией (v0.21.0)
                 var taken_anomalies: Array = []
@@ -1722,12 +1831,23 @@ func _touch_layout_panel(panel: Panel, kind: String, active_cat: String, collaps
                                 tb.size = Vector2(tw - 4.0, HudMobile.TAB_H)
                                 tb.add_theme_font_size_override("font_size", 15)
                                 tb.modulate = Color(1.35, 1.2, 0.65) if str(cats.keys()[i]) == active_cat else Color(1, 1, 1, 0.82)
+                # Вкладки пачек и «?»: своя строка над панелью, не в сетке категорий
+                if is_mut and not _pack_btns.is_empty():
+                                var pk_tw: float = (panel_w - 46.0) / float(_pack_btns.size())
+                                for i in range(_pack_btns.size()):
+                                                var pb3: Button = _pack_btns[i]
+                                                pb3.position = Vector2(4.0 + float(i) * pk_tw, -28.0)
+                                                pb3.size = Vector2(pk_tw - 4.0, 24)
+                                                pb3.add_theme_font_size_override("font_size", 12)
+                                if _pack_help_btn:
+                                                _pack_help_btn.position = Vector2(panel_w - 42.0, -28.0)
+                                                _pack_help_btn.size = Vector2(38, 24)
                 # Кнопки: оставляем только активную категорию (видимость по владению
                 # уже выставлена _refresh_loadout_ui)
                 var btns_y: float = tabs_y + HudMobile.TAB_H + row_gap
                 var grid: Array = []
                 for c in panel.get_children():
-                                if c is Button and (not is_mut or c != _mut_header_btn) and not tabs.has(c):
+                                if c is Button and (not is_mut or c != _mut_header_btn) and not tabs.has(c) and not _pack_btns.has(c) and c != _pack_help_btn:
                                                 var t: String = str(type_map.get(c, ""))
                                                 c.visible = c.visible and _touch_cat_of(kind, t) == active_cat
                                                 c.add_theme_font_size_override("font_size", 16)
