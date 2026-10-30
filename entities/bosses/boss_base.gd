@@ -31,6 +31,7 @@ const EXIT_REACH := 6.0
 const ENGAGE_RADIUS := 16.0   # мутанты ближе - босс стоит и дерётся
 const AGGRO_RADIUS := 40.0    # мутанты дальше - босс идёт к ним сам
 var _side_step_time: float = 0.0
+var _blink_cd: float = 0.0
 var dash_dir: Vector3 = Vector3.ZERO
 var dash_time: float = 0.0
 var _aggro: bool = false
@@ -85,6 +86,7 @@ func _physics_process(delta: float) -> void:
 	if hp <= 0.0:
 		return
 	_attack_cd -= delta
+	_blink_cd = maxf(_blink_cd - delta, 0.0)
 	_tick_skills()
 	var mutants := _mutants_in(10000.0)
 	# Автоатака по ближайшему
@@ -103,6 +105,21 @@ func _physics_process(delta: float) -> void:
 		dash_time -= delta
 		velocity = dash_dir * 48.0
 		move_and_slide()
+		return
+	# Стоячий босс (speed 0): если бой далеко - мигает к ближайшему мутанту,
+	# чтобы не простаивать весь рейд (раз в 6с, Туманница/Столп)
+	if move_speed <= 0.01:
+		var far_all := _mutants_in(10000.0)
+		if not far_all.is_empty():
+			var nearest: Node = far_all[0]
+			for m in far_all:
+				if m.global_position.distance_to(global_position) < nearest.global_position.distance_to(global_position):
+					nearest = m
+			if nearest.global_position.distance_to(global_position) > 25.0 and _blink_cd <= 0:
+				_blink_cd = 6.0
+				var dir_b: Vector3 = (nearest.global_position - global_position)
+				dir_b.y = 0.0
+				global_position += dir_b.normalized() * (nearest.global_position.distance_to(global_position) - 18.0)
 		return
 	if move_speed > 0.01:
 		var walk_target := Vector3.ZERO
@@ -148,6 +165,11 @@ func _update_label() -> void:
 
 func AUTO_ATTACK_DAMAGE() -> float:
 	return 26.0 * maxf(1.0, max_hp / (BossHuntData.BOSS_BASE_HP * 20.0))
+
+
+## Для Выброса и прицеливания: босс жив?
+func is_alive() -> bool:
+	return hp > 0.0
 
 
 func take_damage(amount: float, _source = null) -> void:
