@@ -29,6 +29,12 @@ var _intensity := 0.0
 var _pillar_mats: Array[ShaderMaterial] = []
 
 
+func _ready() -> void:
+	## Загрузка сцены: частицы выключены до первого start()
+	ash.emitting = false
+	sparks.emitting = false
+
+
 func start() -> void:
 	## Запуск Выброса: волна пошла от Монолита (origin сцены = центр).
 	_time = 0.0
