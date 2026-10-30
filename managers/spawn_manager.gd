@@ -576,7 +576,8 @@ func spawn_mutant(mutant_type: String, position: Vector3, _biomass_cost: float, 
                 if mutant.has_method("set_health_multiplier"):
                         mutant.set_health_multiplier(hp_mult * float(ns.get("hp", 1.0)))
                 if mutant.has_method("set_damage_multiplier"):
-                        mutant.set_damage_multiplier(float(ns.get("dmg", 1.0)))
+                        # dmg_mult уже со звёздами/синергией - вид умножает, не перезатирает
+                        mutant.set_damage_multiplier(dmg_mult * float(ns.get("dmg", 1.0)))
                 var t_ns: Array = ns.get("tint", [1.0, 1.0, 1.0])
                 if mutant.has_method("apply_exclusive_variant"):
                         mutant.apply_exclusive_variant(

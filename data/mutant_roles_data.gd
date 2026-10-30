@@ -40,9 +40,23 @@ const AURAS := {
 	"guden": {"fear": {"cd": 8.0, "r": 6.0, "push": 3.0}},
 }
 
+## Базовые показатели для карточек/тултипов (по первому подвиду из скриптов
+## сущностей). Только UI-справка: бой считает точнее (подвид+кампания+перки).
+const BASE_STATS := {
+	"dog_mutant": {"hp": 50.0, "dmg": 8.0},
+	"flesh": {"hp": 200.0, "dmg": 15.0},
+	"snork_mutant": {"hp": 120.0, "dmg": 30.0},
+	"bloodsucker": {"hp": 100.0, "dmg": 30.0},
+	"pseudodog": {"hp": 120.0, "dmg": 25.0},
+	"pseudogiant": {"hp": 400.0, "dmg": 45.0},
+	"chimera": {"hp": 250.0, "dmg": 30.0},
+	"controller_mutant": {"hp": 80.0, "dmg": 20.0},
+	"poltergeist": {"hp": 60.0, "dmg": 30.0},
+	"zombie": {"hp": 180.0, "dmg": 10.0},
+}
+
 ## 8 новых видов: база-модель, тинт, гейт кольцами, цена боя, редкость пула
-const NEW_SPECIES := {
-	"mohovik": {"base": "flesh", "name_ru": "Моховик", "name_en": "Mossback",
+const NEW_SPECIES := {	"mohovik": {"base": "flesh", "name_ru": "Моховик", "name_en": "Mossback",
 		"tint": [0.55, 0.85, 0.45], "rar": "uncommon", "cost": 120.0, "gate": 20,
 		"hp": 1.15, "dmg": 0.8, "speed": 0.9},
 	"tsveten": {"base": "poltergeist", "name_ru": "Цветень", "name_en": "Bloomwraith",
@@ -95,6 +109,28 @@ static func card_base_of(type: String) -> String:
 	if NEW_SPECIES.has(type):
 		return str(NEW_SPECIES[type]["base"])
 	return type
+
+
+## Показатели для UI (карточка/тултип): база x звёзды x эксклюзив x новый вид.
+## Тот же порядок множителей, что в spawn_manager.
+static func display_stats(type: String, stars: int = 1, awaken: int = 0) -> Dictionary:
+	var base_t: String = type
+	var ex: Dictionary = GachaData.get_exclusive(type)
+	if not ex.is_empty() and ex.has("base"):
+		base_t = str(ex["base"])
+	elif NEW_SPECIES.has(type):
+		base_t = str(NEW_SPECIES[type]["base"])
+	var st: Dictionary = BASE_STATS.get(base_t, {"hp": 100.0, "dmg": 20.0})
+	var m: float = LabData.get_star_stat_mult(stars, awaken)
+	var hp: float = float(st["hp"]) * m
+	var dmg: float = float(st["dmg"]) * m
+	if not ex.is_empty():
+		hp *= float(ex.get("hp", 1.0))
+		dmg *= float(ex.get("dmg", 1.0))
+	if NEW_SPECIES.has(type):
+		hp *= float(NEW_SPECIES[type].get("hp", 1.0))
+		dmg *= float(NEW_SPECIES[type].get("dmg", 1.0))
+	return {"hp": hp, "dmg": dmg}
 
 # ==================== ПАЧКИ ====================
 

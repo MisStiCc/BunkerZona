@@ -412,14 +412,28 @@ func refresh_mutant_unlocks():
                                                 ex_t = gm.owned_mutant_exclusive_for(type)
                                 var unlocked: bool = true if gm == null else (gm.is_mutant_unlocked(type) or not ex_t.is_empty())
                                 btn.disabled = not unlocked
+                                # Показатели вида: ХП/урон (со звёздами) + скилл новых видов.
+                                # Активный тип = эксклюзив владельца, если он замещает базовый
+                                var tip_type: String = ex_t if not ex_t.is_empty() else type
+                                var lab_tip = gm.get_lab_data() if gm else null
+                                var st_t: int = lab_tip.get_mutant_stars(tip_type) if lab_tip else 1
+                                var aw_t: int = lab_tip.get_awaken(tip_type) if lab_tip else 0
+                                var ds: Dictionary = MutantRoles.display_stats(tip_type, st_t, aw_t)
+                                var tip: String = Loc.t("card.stats", {"hp": str(int(ds["hp"])), "dmg": str(int(ds["dmg"]))})
+                                var ak := "aura." + tip_type
+                                if Loc.t(ak) != ak:
+                                                tip += "
+" + Loc.t(ak)
                                 if not ex_t.is_empty():
                                                 # Эксклюзив Чёрного ящика заменяет базовый вид (v0.21.0)
                                                 var ex_label: String = EXCLUSIVE_SHORT.get(ex_t, GachaData.display_name(ex_t))
                                                 btn.text = "✦ " + ex_label + "
 🧬" + str(int(_mutant_base_costs.get(type, 0)))
-                                                btn.tooltip_text = "Эксклюзив Чёрного ящика: %s - Зона ставит усиленную версию" % GachaData.display_name(ex_t)
+                                                btn.tooltip_text = "Эксклюзив Чёрного ящика: %s - Зона ставит усиленную версию
+%s" % [GachaData.display_name(ex_t), tip]
                                 else:
-                                                btn.tooltip_text = Loc.t("hud.locked_tip") if not unlocked else ""
+                                                btn.tooltip_text = (Loc.t("hud.locked_tip") + "
+" + tip) if not unlocked else tip
                                                 if not unlocked and not btn.text.begins_with("🔒"):
                                                                 btn.text = "🔒" + btn.text
                 _refresh_loadout_ui()

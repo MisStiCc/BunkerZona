@@ -2809,6 +2809,10 @@ func _show_card_detail(type: String, is_mutant: bool, unlocked: bool):
         if unlocked:
                 var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
                 meta_parts.append("%s %s" % [LabData.stars_text(stars), Loc.t("stars.mult_tip", {"n": "%.1f" % LabData.get_star_stat_mult(stars)})])
+                # Показатели вида: ХП/урон с учётом звёзд, эксклюзива и роли вида
+                if is_mutant:
+                        var ds: Dictionary = MutantRoles.display_stats(type, stars, lab_data.get_awaken(type))
+                        meta_parts.append(Loc.t("card.stats", {"hp": str(int(ds["hp"])), "dmg": str(int(ds["dmg"]))}))
         else:
                 meta_parts.append(Loc.t("card.locked"))
         if not is_mutant:
@@ -2833,6 +2837,11 @@ func _show_card_detail(type: String, is_mutant: bool, unlocked: bool):
         detail_desc.text = desc_txt
         if is_mutant:
                 detail_meta.text += "  ·  " + Loc.t("role.line_short", {"r": MutantRoles.role_tag(type)})
+                # Скилл/аура новых видов (D20) - отдельной строкой под описанием
+                var aura_key := "aura." + type
+                if Loc.t(aura_key) != aura_key:
+                        detail_desc.text += "
+" + Loc.t(aura_key)
         detail_panel.visible = true
 
 
