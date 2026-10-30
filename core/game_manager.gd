@@ -1338,6 +1338,7 @@ func process_run_result(result: Dictionary):
                         var gsyn: Dictionary = GuildSys.ensure(current_save_data)
                         var res_g: Dictionary = GuildSys.raid_damage(current_save_data, gsyn, gd)
                         GuildSys.after_raid(gsyn, gd)
+                        GuildSys.note_raid(gsyn)
                         # Слен босса недели: +10 круток мутантов (обещано в чате)
                         if bool(res_g.get("slain", false)):
                                         grant_mutant_rolls(10, "гильд-босс повержен")

@@ -1,5 +1,5 @@
 # ui/lab/store_panel.gd
-extends Control
+extends CanvasLayer
 class_name StorePanel
 
 ## Витрина монетизации (D16). Строится ТОЛЬКО при StoreData.ENABLED -
@@ -11,15 +11,19 @@ const COL_TEXT := Color(0.92, 0.9, 0.8)
 const COL_DIM := Color(0.72, 0.7, 0.58)
 
 var _billing: BillingManager = null
+var _root: Control = null
 var _grid: GridContainer = null
 var _note: Label = null
 var _prices: Dictionary = {}   # sku -> цена из стора (пусто = фолбэк таблицы)
 
 
 func build() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	visible = false
+	layer = 20
+	if _root == null:
+		_root = Control.new()
+	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.mouse_filter = Control.MOUSE_FILTER_STOP
+	_root.visible = false
 
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.72)
@@ -27,8 +31,8 @@ func build() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	dim.gui_input.connect(func(ev: InputEvent):
 		if ev is InputEventMouseButton and ev.pressed:
-			visible = false)
-	add_child(dim)
+			_root.visible = false)
+	_root.add_child(dim)
 
 	var panel := Panel.new()
 	panel.anchor_left = 0.5
@@ -48,7 +52,7 @@ func build() -> void:
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(12)
 	panel.add_theme_stylebox_override("panel", sb)
-	add_child(panel)
+	_root.add_child(panel)
 
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -99,7 +103,7 @@ func build() -> void:
 	close.custom_minimum_size = Vector2(220, 50)
 	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	BunkerUI.style_button(close, "steel", 16)
-	close.pressed.connect(func(): visible = false)
+	close.pressed.connect(func(): _root.visible = false)
 	v.add_child(close)
 
 	_fill()
@@ -188,7 +192,7 @@ func open() -> void:
 			_prices = prices
 			_fill())
 		_billing.start()
-	visible = true
+	_root.visible = true
 	_fill()
 
 

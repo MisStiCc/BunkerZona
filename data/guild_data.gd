@@ -14,6 +14,8 @@ const BOSS_POOL_BASE: float = 80000.0
 const BOSS_POOL_CYCLE_MULT: float = 1.15
 const BOSS_SPEED: float = 0.0        # босс стоит и дерётся (уходит = D19)
 const RAID_TIME: float = 180.0
+const FREE_RAIDS_DAILY: int = 2             # бесплатные рейды в день
+const EXTRA_RAID_SPARKS: int = 10           # доп. рейд за Искры Пробуждения
 const TOKENS_PER_DAMAGE: float = 1.0 / 500.0   # 1 жетон за 500 урона
 const RAID_TOKEN_CAP: int = 60
 

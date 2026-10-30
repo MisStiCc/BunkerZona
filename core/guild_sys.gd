@@ -22,6 +22,8 @@ static func ensure(save) -> Dictionary:
 			"boss_slain": 0,
 			"help_date": "",
 			"bot_date": "",
+			"raids_date": "",
+			"raids_today": 0,
 			"chat": [],
 		}
 		save.guild_state = g
@@ -185,6 +187,21 @@ static func call_help(save, g: Dictionary) -> String:
 
 
 # ==================== ЧАТ ====================
+
+## Осталось бесплатных рейдов сегодня
+static func raids_left_today(g: Dictionary) -> int:
+	var today := Time.get_date_string_from_system()
+	var used: int = int(g.get("raids_today", 0)) if str(g.get("raids_date", "")) == today else 0
+	return maxi(GuildData.FREE_RAIDS_DAILY - used, 0)
+
+## Отметить рейд (вызывает gm после зачёта урона)
+static func note_raid(g: Dictionary) -> void:
+	var today := Time.get_date_string_from_system()
+	if str(g.get("raids_date", "")) == today:
+		g["raids_today"] = int(g.get("raids_today", 0)) + 1
+	else:
+		g["raids_date"] = today
+		g["raids_today"] = 1
 
 static func add_chat(g: Dictionary, who: String, text: String) -> void:
 	add_chat_dict(g, {"who": who, "text": text})

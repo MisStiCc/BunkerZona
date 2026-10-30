@@ -226,13 +226,29 @@ func _page_boss(body: Control) -> void:
 	v.add_child(pr)
 	_note(v, Loc.t("guild.boss_note"))
 
+	var raids_left: int = GuildSys.raids_left_today(g)
 	var atk := Button.new()
-	atk.text = Loc.t("guild.attack")
 	atk.custom_minimum_size = Vector2(0, 56)
 	atk.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	BunkerUI.style_button(atk, "primary", 17)
+	if raids_left > 0:
+		atk.text = Loc.t("guild.attack") + "  (" + str(raids_left) + ")"
+		BunkerUI.style_button(atk, "primary", 17)
+	else:
+		atk.text = Loc.t("guild.attack_extra", {"n": GuildData.EXTRA_RAID_SPARKS})
+		BunkerUI.style_button(atk, "hazard", 15)
 	atk.pressed.connect(func():
 		_play_click()
+		var gm2 = get_tree().get_first_node_in_group("game_manager")
+		var lab2 = gm2.get_lab_data() if gm2 else null
+		var left2: int = GuildSys.raids_left_today(GuildSys.ensure(_save))
+		if left2 <= 0:
+				# Докупить за Искры Пробуждения
+				if lab2 and lab2.spend_sparks(GuildData.EXTRA_RAID_SPARKS):
+						if gm2:
+								gm2.save_to_active_slot()
+				else:
+						_toast(Loc.t("guild.need_sparks", {"n": GuildData.EXTRA_RAID_SPARKS}))
+						return
 		close()
 		gm_run_raid())
 	v.add_child(atk)
@@ -306,23 +322,53 @@ func _page_shop(body: Control) -> void:
 	tk.add_theme_color_override("font_color", COL_GOLD)
 	tk.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tk)
+	# Оформление: карточки товаров с иконкой, ценой в жетонах, кнопкой
+	var icon_types := {
+		"rolls_mut_5": ["mut_dog_mutant", true], "rolls_art_5": ["art_spark_artifact", false],
+		"bio_100k": ["mut_flesh", true], "star_feed_1": ["art_clock_artifact", false],
+	}
 	for sku in GuildData.SHOP:
 		var info: Dictionary = GuildData.SHOP[sku]
+		var card := PanelContainer.new()
+		var csb := StyleBoxFlat.new()
+		csb.bg_color = Color(0.07, 0.06, 0.1, 0.95)
+		csb.border_color = COL_PURPLE
+		csb.set_border_width_all(1)
+		csb.set_corner_radius_all(8)
+		csb.set_content_margin_all(8)
+		card.add_theme_stylebox_override("panel", csb)
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
+		row.add_theme_constant_override("separation", 12)
+		card.add_child(row)
+		var icon_pair: Array = icon_types.get(str(sku), ["mut_dog_mutant", true])
+		var av := TextureRect.new()
+		var ap: String = GachaData.card_icon_path(str(icon_pair[0]), bool(icon_pair[1]))
+		if ResourceLoader.exists(ap):
+				av.texture = load(ap)
+		av.custom_minimum_size = Vector2(56, 56)
+		av.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		av.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(av)
 		var nm := Label.new()
-		nm.text = Loc.t("guild.shop_" + str(sku)) + "  (%d)" % int(info.get("price", 0))
+		nm.text = Loc.t("guild.shop_" + str(sku))
 		nm.add_theme_font_size_override("font_size", 14)
 		nm.add_theme_color_override("font_color", COL_TEXT)
 		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		row.add_child(nm)
+		var price := Label.new()
+		price.text = str(int(info.get("price", 0))) + " Ж"
+		price.add_theme_font_override("font", BunkerUI.font_title())
+		price.add_theme_font_size_override("font_size", 16)
+		price.add_theme_color_override("font_color", COL_GOLD)
+		row.add_child(price)
 		var buy := Button.new()
 		buy.text = Loc.t("store.buy")
-		buy.custom_minimum_size = Vector2(120, 36)
-		buy.disabled = tokens < int(info.get("price", 0))
+		buy.custom_minimum_size = Vector2(120, 40)
+		buy.disabled = int(g.get("tokens", 0)) < int(info.get("price", 0))
 		buy.pressed.connect(_buy.bind(str(sku)))
 		row.add_child(buy)
-		v.add_child(row)
+		v.add_child(card)
 	_note(v, Loc.t("guild.shop_note"))
 
 

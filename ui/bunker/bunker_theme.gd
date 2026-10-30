@@ -192,7 +192,7 @@ static func make_plate(value: String, caption: String, width: float = 120.0, ico
         v.add_child(lk)
         # Задача 22: иконка валюты ПОСЛЕ цифры (get_child(0) чужого кода
         # ожидает value-Label, не ломаем порядок детей)
-        if icon_path != "" and FileAccess.file_exists(icon_path):
+        if icon_path != "" and ResourceLoader.exists(icon_path):
                 var iv := TextureRect.new()
                 iv.texture = load(icon_path)
                 iv.custom_minimum_size = Vector2(0, 26)

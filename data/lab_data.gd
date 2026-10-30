@@ -431,6 +431,15 @@ func add_sparks(n: int) -> void:
     awaken_sparks = maxi(awaken_sparks + n, 0)
 
 
+## D21: потратить Искры (доп. рейды гильд-босса). False - не хватает.
+func spend_sparks(n: int) -> bool:
+    if awaken_sparks < n:
+        return false
+    awaken_sparks -= n
+    return true
+    awaken_sparks = maxi(awaken_sparks + n, 0)
+
+
 static func get_star_stat_mult(stars: int, awaken: int = 0) -> float:
     var base: float = 1.0 + float(mini(maxi(stars, 1), MAX_STARS) - 1) * STAR_STAT_BONUS
     return base * pow(AWAKEN_STEP, float(maxi(awaken, 0)))

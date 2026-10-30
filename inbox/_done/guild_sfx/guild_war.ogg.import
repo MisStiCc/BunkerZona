@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://cebra0obj6uj7"
-path="res://.godot/imported/guild_war.ogg-d379345897ffa90d3e6fecc005d18fad.oggvorbisstr"
+path="res://.godot/imported/guild_war.ogg-dca6b64d34dad2586a8c33df1e9223ff.oggvorbisstr"
 
 [deps]
 
-source_file="res://inbox/guild_sfx/guild_war.ogg"
-dest_files=["res://.godot/imported/guild_war.ogg-d379345897ffa90d3e6fecc005d18fad.oggvorbisstr"]
+source_file="res://inbox/_done/guild_sfx/guild_war.ogg"
+dest_files=["res://.godot/imported/guild_war.ogg-dca6b64d34dad2586a8c33df1e9223ff.oggvorbisstr"]
 
 [params]
 

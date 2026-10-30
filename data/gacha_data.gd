@@ -511,7 +511,7 @@ static func card_icon_path(type: String, is_mutant: bool, gray: bool = false) ->
 		var dir := "gray/" if gray else ""
 		var base := "%s%s_%s" % [dir, "mut" if is_mutant else "art", type]
 		var png := "res://ui/cards/%s.png" % base
-		if FileAccess.file_exists(png):
+		if ResourceLoader.exists(png):
 				return png
 		return "res://ui/cards/%s.svg" % base
 
