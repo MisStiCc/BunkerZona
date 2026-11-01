@@ -28,6 +28,11 @@ static func ensure(save) -> Dictionary:
 		}
 		save.guild_state = g
 	ensure_week(save, g)
+	# D23 миграция старых сейвов: неделя уже идёт, а войны нет - объявляем сразу
+	if not g.is_empty() and str(g.get("week", "")) == week_key() and g.get("war", {}).is_empty():
+		g["war"] = _war_new(g)
+		add_chat(g, "Старина Крот", "⚔ ВОЙНА: нас вызвала %s. Оборона Бункера - %d попытки за неделю!" % [
+			str(g["war"]["enemy"]), GuildData.WAR_ATTEMPTS])
 	return g
 
 
@@ -59,6 +64,124 @@ static func ensure_week(save, g: Dictionary) -> void:
 		add_chat(g, "Старина Крот", "Новая неделя - новый Гильд-босс. Готовь отряд.")
 	g["boss_dmg"] = 0
 	g["boss_pool"] = fresh_pool(int(g.get("boss_slain", 0)))
+	# D23 ВОЙНА: прошлая резолвится финально (если не доиграна - по счёту),
+	# объявляется новая. Звук/баннер - на UI при открытии гильдии (war.fresh)
+	var war: Dictionary = g.get("war", {})
+	if not war.is_empty() and str(war.get("week", "")) != wk and str(war.get("state", "open")) == "open":
+		_war_resolve(g)
+	g["war"] = _war_new(g)
+	add_chat(g, "Старина Крот", "⚔ ВОЙНА: нас вызвала %s. Оборона Бункера - %d попытки за неделю!" % [str(g["war"]["enemy"]), GuildData.WAR_ATTEMPTS])
+
+
+# ==================== ВОЙНА (D23) ====================
+
+## Лаба через gm-группу (для силы оборонного отряда)
+static func _lab_data():
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return null
+	var gm = tree.get_first_node_in_group("game_manager")
+	if gm and gm.has_method("get_lab_data"):
+		return gm.get_lab_data()
+	return null
+
+
+## Сила обороны: размер отряда + звёзды видов + уровень гильдии
+static func _defense_power(g: Dictionary) -> int:
+	var squad: Array = []
+	var star_sum: int = 0
+	var lab = _lab_data()
+	if lab:
+		squad = lab.arena_defense_squad
+		for t in squad:
+			star_sum += maxi(lab.get_mutant_stars(str(t)), 1)
+	return 400 + 140 * squad.size() + 70 * star_sum + 25 * (guild_level(g) - 1)
+
+
+## Новая война недели: соперник и его сила детерминированы seed'ом недели
+static func _war_new(g: Dictionary) -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = week_key().hash()
+	var name_w: String = "Гильдия «%s %s»" % [
+		GuildData.WAR_ENEMY_ADJ[rng.randi() % GuildData.WAR_ENEMY_ADJ.size()],
+		GuildData.WAR_ENEMY_NOUN[rng.randi() % GuildData.WAR_ENEMY_NOUN.size()]]
+	var spread: float = 1.25 - rng.randf() * GuildData.WAR_POWER_SPREAD
+	return {
+		"week": week_key(),
+		"enemy": name_w,
+		"power": maxi(int(float(_defense_power(g)) * spread), 300),
+		"my_score": 0, "enemy_score": 0,
+		"attempts": 0,
+		"state": "open",
+		"fresh": true,
+		"result_fresh": false,
+	}
+
+
+## Итог попытки обороны (зовёт gm после забега с флагом war_defense).
+## Ничья трактуется как победа «по воле Зоны»
+static func report_war_score(g: Dictionary, waves: int) -> Dictionary:
+	var war: Dictionary = g.get("war", {})
+	if war.is_empty() or str(war.get("state", "open")) != "open":
+		return {}
+	war["attempts"] = int(war.get("attempts", 0)) + 1
+	war["my_score"] = maxi(int(war.get("my_score", 0)), waves)
+	# Симуляция соперника: первая попытка - 55% силы; дальше «отзываются»
+	# на твою лучшую (92% + 10% силы), чтобы драма решалась второй попыткой
+	var power: int = int(war.get("power", 1000))
+	if int(war["attempts"]) <= 1:
+		war["enemy_score"] = int(power * 0.55)
+	else:
+		war["enemy_score"] = maxi(int(war.get("enemy_score", 0)),
+			int(float(war["my_score"]) * GuildData.WAR_ENEMY_FIGHT + power * 0.10))
+	add_chat(g, "Разведка", "Попытка %d: мы держим %d волн, у них %d." % [
+		int(war["attempts"]), int(war["my_score"]), int(war["enemy_score"])])
+	var res := {"resolved": false, "won": false,
+		"my": int(war["my_score"]), "enemy": int(war["enemy_score"])}
+	if int(war["attempts"]) >= GuildData.WAR_ATTEMPTS:
+		var final := _war_resolve(g)
+		res["resolved"] = true
+		res["won"] = bool(final.get("won", false))
+		res["treasury"] = int(final.get("treasury", 0))
+	g["war"] = war
+	return res
+
+
+## Резолюция открытой войны по текущему счёту (попытки кончились или
+## неделя сменилась): выплаты, флаги, чат
+static func _war_resolve(g: Dictionary) -> Dictionary:
+	var war: Dictionary = g.get("war", {})
+	if war.is_empty() or str(war.get("state", "open")) != "open":
+		return war
+	var won: bool = int(war.get("my_score", 0)) >= int(war.get("enemy_score", 0))
+	war["state"] = "won" if won else "lost"
+	war["result_fresh"] = true
+	var my: int = int(war.get("my_score", 0))
+	var en: int = int(war.get("enemy_score", 0))
+	if won:
+		var gain: int = GuildData.WAR_WIN_TOKENS + GuildData.WAR_WIN_PER_LEVEL * (guild_level(g) - 1)
+		g["treasury"] = int(g.get("treasury", 0)) + gain
+		g["tokens"] = int(g.get("tokens", 0)) + GuildData.WAR_WIN_PERSONAL
+		g["war_wins"] = int(g.get("war_wins", 0)) + 1
+		g["war_streak"] = int(g.get("war_streak", 0)) + 1
+		war["treasury_gain"] = gain
+		add_chat(g, "Старина Крот", "⚔ ПОБЕДА %d-%d! В казну +%d жетонов, каждому по %d." % [
+			my, en, gain, GuildData.WAR_WIN_PERSONAL])
+	else:
+		g["tokens"] = int(g.get("tokens", 0)) + GuildData.WAR_LOSE_PERSONAL
+		g["war_streak"] = 0
+		var rng := RandomNumberGenerator.new()
+		rng.seed = str(war.get("week", "")).hash()
+		var mocks := [
+			"Ваш Бункер скрипит. Мы постучим ещё.",
+			"Слабо. Догоняйте к следующей неделе.",
+			"Зона смеётся над вашей обороной.",
+			"Забирайте утешение и растите.",
+		]
+		add_chat(g, str(war.get("enemy", "Соперник")), mocks[rng.randi() % mocks.size()])
+		add_chat(g, "Старина Крот", "Проиграли %d-%d. Собрать отряд и вернуть долг." % [my, en])
+	g["war"] = war
+	return war
 
 
 ## Целевой пул HP босса на неделю (растёт со сленами и циклом NG+)

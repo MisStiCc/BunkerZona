@@ -180,6 +180,41 @@ func _page_overview(body: Control) -> void:
 	kl.add_theme_color_override("font_color", COL_DIM)
 	hv.add_child(kl)
 	_note(v, Loc.t("guild.perk", {"p": int(GuildSys.perk_hp_bonus(g) * 100)}))
+	# D23: флаг войны в шапке + свежие баннеры (объявление/итог) со звуком
+	var war: Dictionary = g.get("war", {})
+	if not war.is_empty():
+		var flag := Label.new()
+		if str(war.get("state", "open")) == "open":
+			flag.text = Loc.t("guild.war_flag", {"name": str(war.get("enemy", "")),
+				"a": int(war.get("my_score", 0)), "b": int(war.get("enemy_score", 0))})
+			flag.add_theme_color_override("font_color",
+				COL_GOLD if int(war.get("my_score", 0)) >= int(war.get("enemy_score", 0)) else COL_DIM)
+		else:
+			flag.text = Loc.t("guild.war_flag_won") if str(war.get("state", "")) == "won" else Loc.t("guild.war_flag_lost")
+			flag.add_theme_color_override("font_color", COL_GOLD if str(war.get("state", "")) == "won" else COL_DIM)
+		flag.add_theme_font_override("font", BunkerUI.font_title())
+		flag.add_theme_font_size_override("font_size", 13)
+		v.add_child(flag)
+		if bool(war.get("fresh", false)):
+			war["fresh"] = false
+			g["war"] = war
+			_gm_save()
+			_play_guild_war_sound()
+			_note(v, Loc.t("guild.war_banner_new", {"name": str(war.get("enemy", "")), "n": GuildData.WAR_ATTEMPTS}))
+		elif bool(war.get("result_fresh", false)):
+			war["result_fresh"] = false
+			g["war"] = war
+			_gm_save()
+			_play_guild_war_sound()
+			if str(war.get("state", "")) == "won":
+				_note(v, Loc.t("guild.war_banner_win", {"a": int(war.get("my_score", 0)),
+					"b": int(war.get("enemy_score", 0)), "t": int(war.get("treasury_gain", 0))}))
+			else:
+				_note(v, Loc.t("guild.war_banner_lose", {"a": int(war.get("my_score", 0)),
+					"b": int(war.get("enemy_score", 0)), "n": GuildData.WAR_LOSE_PERSONAL}))
+	# Блок войны: соперник / счёт / попытки / В БОЙ
+	if not war.is_empty() and str(war.get("state", "open")) == "open":
+		v.add_child(_war_block(war))
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -474,6 +509,78 @@ func _note(v: VBoxContainer, text: String) -> void:
 	l.add_theme_color_override("font_color", COL_DIM)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(l)
+
+
+## D23: звук войны (баннеры объявления/итога)
+func _play_guild_war_sound() -> void:
+	var sm = get_tree().get_first_node_in_group("sound_manager")
+	if sm and sm.has_method("play_sound"):
+		sm.play_sound("guild_war", 0.8)
+
+
+## Сохранить активный слот (гашение fresh-флагов войны)
+func _gm_save() -> void:
+	var gm = get_tree().get_first_node_in_group("game_manager")
+	if gm and gm.has_method("save_to_active_slot"):
+		gm.save_to_active_slot()
+
+
+## D23: карточка войны в Обзоре - соперник, счёт, попытки, В БОЙ
+func _war_block(war: Dictionary) -> Control:
+	var panel := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.09, 0.05, 0.03, 0.95)
+	sb.border_color = COL_GOLD
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(10)
+	sb.set_content_margin_all(10)
+	panel.add_theme_stylebox_override("panel", sb)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 4)
+	panel.add_child(v)
+	var title := Label.new()
+	title.text = Loc.t("guild.war_block_title")
+	title.add_theme_font_override("font", BunkerUI.font_title())
+	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_color_override("font_color", COL_GOLD)
+	v.add_child(title)
+	var info := Label.new()
+	info.text = "%s\n%s · %s" % [str(war.get("enemy", "")),
+		Loc.t("guild.war_score", {"a": int(war.get("my_score", 0)), "b": int(war.get("enemy_score", 0))}),
+		Loc.t("guild.war_enemy_power", {"n": int(war.get("power", 0))})]
+	info.add_theme_font_size_override("font_size", 12)
+	info.add_theme_color_override("font_color", COL_TEXT)
+	v.add_child(info)
+	var left: int = maxi(GuildData.WAR_ATTEMPTS - int(war.get("attempts", 0)), 0)
+	var att := Label.new()
+	att.text = Loc.t("guild.war_attempts_left", {"n": left})
+	att.add_theme_font_size_override("font_size", 12)
+	att.add_theme_color_override("font_color", COL_DIM)
+	v.add_child(att)
+	var fight := Button.new()
+	fight.text = Loc.t("guild.war_fight")
+	fight.custom_minimum_size = Vector2(0, 48)
+	fight.focus_mode = Control.FOCUS_NONE
+	BunkerUI.style_button(fight, "hazard" if left <= 1 else "primary", 15)
+	fight.pressed.connect(_on_war_fight)
+	v.add_child(fight)
+	return panel
+
+
+## «В БОЙ»: оборона Бункера обычным выживанием с флагом войны
+func _on_war_fight() -> void:
+	_play_click()
+	var gm = get_tree().get_first_node_in_group("game_manager")
+	if gm == null:
+		return
+	var lab = gm.get_lab_data() if gm.has_method("get_lab_data") else null
+	if lab == null or lab.arena_defense_squad.is_empty():
+		_toast(Loc.t("guild.war_no_squad"))
+		return
+	gm.war_defense_run = true
+	gm.set_selected_run_mode("survival")
+	close()
+	_toast(Loc.t("guild.war_toast_start"))
 
 
 func _toast(text: String) -> void:

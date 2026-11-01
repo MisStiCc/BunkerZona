@@ -1307,6 +1307,11 @@ func _apply_campaign_result(result: Dictionary):
 ## Ставится lab_controller перед стартом выживания, гасится в process_run_result
 var arena_run_kind: String = ""
 
+## D23 Война гильдий: следующий забег выживания - оборона Бункера по войне.
+## Ставится гильд-оверлеем («В БОЙ»), гасится в process_run_result;
+## сезонный СП арены и её счётчики войной НЕ двигаются
+var war_defense_run: bool = false
+
 ## Арена-вызов: волна соперника, которую надо превзойти (0 - вольный забег).
 ## Ставится lab_controller при принятии вызова; ZoneController читает при сборе
 ## результата (прошёл больше волн, чем у вызванного = ПОБЕДА); гасится в process_run_result
@@ -1360,18 +1365,34 @@ func process_run_result(result: Dictionary):
                         if sm_rec and sm_rec.has_method("play_sound"):
                                         sm_rec.play_sound("record_new", 0.8)
 
-                # Благословение сезона (арена): +10% биомассы с волн выживания
-                if reward > 0.0:
-                        var bless_bonus: float = reward * 0.10
-                        lab.biomass += bless_bonus
+                # D23 ВОЙНА: оборона Бункера - счёт в войну недели. Сезонный СП,
+                # благословение арены и её счётчики войной не двигаются
+                if war_defense_run:
+                                war_defense_run = false
+                                if current_save_data != null:
+                                                var gw: Dictionary = GuildSys.ensure(current_save_data)
+                                                GuildSys.ensure_week(current_save_data, gw)
+                                                var wres: Dictionary = GuildSys.report_war_score(gw, waves_survived)
+                                                save_to_active_slot()
+                                                var hud_w = get_tree().get_first_node_in_group("hud")
+                                                if hud_w and hud_w.has_method("show_reward_note") and not wres.is_empty():
+                                                                if bool(wres.get("resolved", false)):
+                                                                                hud_w.show_reward_note("⚔ Война %d-%d: %s" % [int(wres.get("my", 0)), int(wres.get("enemy", 0)), "ПОБЕДА!" if bool(wres.get("won", false)) else "проиграна"])
+                                                                else:
+                                                                                hud_w.show_reward_note("⚔ Попытка засчитана: %d волн. Соперник: %d" % [int(wres.get("my", 0)), int(wres.get("enemy", 0))])
+                else:
+                        # Благословение сезона (арена): +10% биомассы с волн выживания
+                        if reward > 0.0:
+                                var bless_bonus: float = reward * 0.10
+                                lab.biomass += bless_bonus
 
-                # Пережитый выброс (v0.19.0 «БАЗАР»): успешный забег = +3 очка сезона
-                if bool(result.get("success", false)):
-                        lab.season_points += 3
-                        Prog.note_season_sp("blowouts", 3)
+                        # Пережитый выброс (v0.19.0 «БАЗАР»): успешный забег = +3 очка сезона
+                        if bool(result.get("success", false)):
+                                lab.season_points += 3
+                                Prog.note_season_sp("blowouts", 3)
 
-                # Победы арены: вызовы/оборона; каждая 5-я победа = +1 крутка мутантов
-                if not arena_run_kind.is_empty():
+                        # Победы арены: вызовы/оборона; каждая 5-я победа = +1 крутка мутантов
+                        if not arena_run_kind.is_empty():
                         if bool(result.get("success", false)):
                                 if arena_run_kind == "defense":
                                         lab.arena_wins_defense += 1
