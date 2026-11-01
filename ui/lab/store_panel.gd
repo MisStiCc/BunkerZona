@@ -166,7 +166,12 @@ func _make_card(sku: String) -> Control:
 	buy.pressed.connect(_on_buy.bind(sku))
 	v.add_child(buy)
 
-	if StoreData.EMULATE_PURCHASES:
+	# Разовые покупки (пропуск/удобства) после приобретения - серые «КУПЛЕНО»
+	if _owned_one_time(sku):
+		buy.disabled = true
+		buy.text = Loc.t("store.owned")
+		buy.modulate = Color(1, 1, 1, 0.55)
+	elif StoreData.EMULATE_PURCHASES:
 		# Эмуляция: биллинг на ПК не поднимется - кнопки НЕ гасим,
 		# покупка бесплатна и начисляет по-настоящему
 		buy.text = Loc.t("store.buy_emu")
@@ -177,6 +182,18 @@ func _make_card(sku: String) -> Control:
 	else:
 		buy.text = Loc.t("store.buy") + "  " + price
 	return pc
+
+
+## Разовый ли sku и уже куплен ли он (пропуск сезона, слоты, автосбор)
+func _owned_one_time(sku: String) -> bool:
+	var info: Dictionary = StoreData.PRODUCTS.get(sku, {})
+	var kind := str(info.get("kind", ""))
+	if kind != "pass" and kind != "conv":
+		return false
+	var gm = get_tree().get_first_node_in_group("game_manager")
+	if gm == null or gm.current_save_data == null:
+		return false
+	return gm.current_save_data.owned.has(sku)
 
 
 func _on_buy(sku: String) -> void:
@@ -239,6 +256,8 @@ func _grant_sku(sku: String) -> void:
 	var gm = get_tree().get_first_node_in_group("game_manager")
 	if gm == null or gm.current_save_data == null:
 		return
+	# задачи Зоны: покупки магазина (D25)
+	Prog.bump_task("store_buys", 1)
 	var info: Dictionary = StoreData.PRODUCTS.get(sku, {})
 	var save = gm.current_save_data
 	var lab = gm.get_lab_data()
@@ -247,6 +266,7 @@ func _grant_sku(sku: String) -> void:
 		"pass":
 			save.owned[sku] = "emulated"
 			save.pass_cycle = Prog.track_cycle()
+			Prog.bump_task("pass", 1)
 			note_text = Loc.t("store.got_pass")
 		"pack", "rolls":
 			if int(info.get("rolls_mut", 0)) > 0:
