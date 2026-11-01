@@ -376,6 +376,22 @@ func _on_hunt_boss_died(boss_id: String, sparks: int) -> void:
                 if _hunt_queue.is_empty():
                                 _hunt_active = false
                                 _hunt_finish(true, "")
+                else:
+                                # Двухбоссовый день: следующий выходит СРАЗУ (раньше не
+                                # спавнился вовсе - забег катился до таймера в поражение),
+                                # +60 с на него и честное объявление
+                                _hunt_time_left += BossHuntData.BOSS_TIME_BONUS
+                                var next_id: String = str(_hunt_queue[0])
+                                var next_name: String = str(BossHuntData.BOSSES.get(next_id, {}).get("name_ru", next_id))
+                                _hunt_spawn_next()
+                                var hud_n = get_tree().get_first_node_in_group("hud")
+                                if hud_n and hud_n.has_method("show_event_note"):
+                                                hud_n.show_event_note({
+                                                                "title_ru": "ОХОТА: %s" % next_name,
+                                                                "title_en": "HUNT: %s" % next_name,
+                                                                "desc_ru": "Второй босс дня вышел на тропу! +%d сек на охоту" % int(BossHuntData.BOSS_TIME_BONUS),
+                                                                "desc_en": "The second boss of the day joins! +%d sec on the hunt" % int(BossHuntData.BOSS_TIME_BONUS),
+                                                })
 
 
 func _on_hunt_boss_escaped(boss_id: String) -> void:

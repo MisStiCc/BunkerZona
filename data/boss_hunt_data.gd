@@ -5,6 +5,7 @@ class_name BossHuntData
 ## Ежедневный босс - режим ОХОТА (спека D19). Все ручки здесь.
 
 const HUNT_TIME: float = 180.0            # сек на всю охоту
+const BOSS_TIME_BONUS: float = 60.0       # доп. сек за каждого следующего босса дня
 const HUNT_BUDGET: float = 600.0
 const BOSS_SPEED: float = 0.0            # гильд-босс стоит и дерётся          # стартовая биомасса охоты
 const SUNDAY_BONUS_SPARK: int = 1         # +1 Искра всем в воскресенье
