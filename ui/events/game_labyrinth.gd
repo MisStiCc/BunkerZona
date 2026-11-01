@@ -481,10 +481,10 @@ func _finish(win: bool) -> void:
 
 
 func _make_dot(pos: Vector2, r: float, col: Color, glyph: String) -> Control:
-	var wrap := Control.new()
-	wrap.position = pos - Vector2(r, r)
-	wrap.size = Vector2(r * 2, r * 2)
-	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var wrap_root := Control.new()
+	wrap_root.position = pos - Vector2(r, r)
+	wrap_root.size = Vector2(r * 2, r * 2)
+	wrap_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var dot := Panel.new()
 	dot.set_anchors_preset(Control.PRESET_FULL_RECT)
 	var sb := StyleBoxFlat.new()
@@ -494,7 +494,7 @@ func _make_dot(pos: Vector2, r: float, col: Color, glyph: String) -> Control:
 	sb.set_corner_radius_all(int(r))
 	dot.add_theme_stylebox_override("panel", sb)
 	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	wrap.add_child(dot)
+	wrap_root.add_child(dot)
 	if glyph != "":
 		var lbl := Label.new()
 		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -503,6 +503,6 @@ func _make_dot(pos: Vector2, r: float, col: Color, glyph: String) -> Control:
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.add_theme_font_size_override("font_size", int(r))
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		wrap.add_child(lbl)
-	_board.add_child(wrap)
-	return wrap
+		wrap_root.add_child(lbl)
+	_board.add_child(wrap_root)
+	return wrap_root

@@ -249,12 +249,12 @@ func _fill_milestones(es: Dictionary) -> void:
 		lbl.clip_text = true
 		row.add_child(lbl)
 		var claimed: bool = int(es.get("claimed", []).find(i)) != -1
-		var ready: bool = EventOps.milestone_ready(es, i)
+		var mile_ready: bool = EventOps.milestone_ready(es, i)
 		var score_now := int(es.get("score", 0)) if str(es.get("event_id", "")) == str(_event["id"]) else 0
 		if claimed:
 				lbl.text = "✓  %d — %s" % [goal, _milestone_text(i)]
 				lbl.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-		elif ready:
+		elif mile_ready:
 				lbl.text = "✦  %d — %s" % [goal, _milestone_text(i)]
 				lbl.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
 				var claim := Button.new()

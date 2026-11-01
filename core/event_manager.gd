@@ -13,7 +13,10 @@ const SAVE_KEY := "event_state"
 static func state(save) -> Dictionary:
 	if save == null:
 		return {}
-	var es: Dictionary = save.get(SAVE_KEY, {})
+	# сейв - Resource (SaveData): Object.get() принимает ТОЛЬКО имя свойства;
+	# свойства нет/пусто -> свежий словарь
+	var es_val = save.get(SAVE_KEY)
+	var es: Dictionary = es_val if es_val is Dictionary else {}
 	var ev := EventsData.current_event(int(Time.get_unix_time_from_system()))
 	var season: int = int(ev["season"])
 	if es.is_empty() or int(es.get("season", -1)) != season:
