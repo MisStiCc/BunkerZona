@@ -227,6 +227,13 @@ func _setup_gallop():
 	var model := get_node_or_null("Model")
 	if model == null:
 		return
+	# chimera_rig_anim.glb (задача помощника) несёт СВОИ клипы через
+	# AnimationPlayer - процедурный галоп пишет в те же кости и ломает позу
+	# ("бег на двух ногах"). Есть клипы - процедурник полностью отключён,
+	# анимацию ведёт базовый клип-плеер (idle/walk/gallop/attack/death)
+	if model.find_children("*", "AnimationPlayer", true, false).size() > 0:
+		disable_body_bob = true  # клип галопа качает корпус сам, боб задвоит
+		return
 	var skels = model.find_children("*", "Skeleton3D", true, false)
 	if skels.is_empty():
 		return
