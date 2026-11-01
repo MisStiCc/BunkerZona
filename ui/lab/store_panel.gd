@@ -14,6 +14,7 @@ var _billing: BillingManager = null
 var _root: Control = null
 var _grid: GridContainer = null
 var _note: Label = null
+var _note_token: int = 0   # гасит старый таймер вспышки при новой покупке
 var _prices: Dictionary = {}   # sku -> цена из стора (пусто = фолбэк таблицы)
 
 
@@ -188,7 +189,7 @@ func _on_buy(sku: String) -> void:
 	if is_instance_valid(_billing) and _billing.store_available():
 		_billing.purchase(sku)
 		return
-	_note.text = Loc.t("store.unavailable")
+	_flash_note(Loc.t("store.unavailable"))
 	var sm_dn = get_tree().get_first_node_in_group("sound_manager")
 	if sm_dn and sm_dn.has_method("play_sound"):
 		sm_dn.play_sound("ui_deny", 0.6)
@@ -213,9 +214,7 @@ func _grant_infinite_currency() -> void:
 	var g: Dictionary = GuildSys.ensure(gm.current_save_data)
 	g["tokens"] = int(g.get("tokens", 0)) + 99999
 	gm.save_to_active_slot()
-	if _note:
-		_note.text = Loc.t("store.cheat_done")
-		_note.add_theme_color_override("font_color", Color("a8ff7a"))
+	_flash_note(Loc.t("store.cheat_done"))
 	var sm = get_tree().get_first_node_in_group("sound_manager")
 	if sm and sm.has_method("play_sound"):
 		sm.play_sound("guild_coin", 0.8)
@@ -269,9 +268,23 @@ func _grant_sku(sku: String) -> void:
 		_:
 			note_text = sku
 	gm.save_to_active_slot()
-	if _note:
-		_note.text = note_text
-		_note.add_theme_color_override("font_color", Color("a8ff7a"))
+	_flash_note(note_text)
+
+
+## Плашка результата: горит 3 с и возвращается к подписи по умолчанию.
+## Токен гасит старый таймер, если покупку сделали быстрее
+func _flash_note(text: String) -> void:
+	if _note == null:
+		return
+	_note_token += 1
+	var token := _note_token
+	_note.text = text
+	_note.add_theme_color_override("font_color", Color("a8ff7a"))
+	await get_tree().create_timer(3.0).timeout
+	if _note == null or not is_instance_valid(_note) or token != _note_token:
+		return
+	_note.text = Loc.t("store.note_power")
+	_note.add_theme_color_override("font_color", COL_DIM)
 
 ## Эксклюзив на выбор (v1 эмуляции: случайный неполученный; выбор руками -
 ## к реальному подключению биллинга)
