@@ -72,3 +72,25 @@ static func today_names(date: Dictionary = {}) -> Array:
 		var b: Dictionary = BOSSES.get(id, {})
 		out.append(str(b.get("name_ru", id)))
 	return out
+
+
+## Неделя для календаря (D22): 7 слотов Пн..Вс = [{weekday (0=Пн..6=Вс),
+## "today": bool, "ids": [боссы дня]}]. Дата симулируется сдвигом от сегодня.
+static func get_week_days(date: Dictionary = {}) -> Array:
+	var dt: Dictionary = date if not date.is_empty() else Time.get_date_dict_from_system()
+	var out: Array = []
+	# Godot weekday: 0=Вс..6=Сб -> индекс Пн-первым: (weekday + 6) % 7
+	var today_idx: int = (int(dt.get("weekday", 1)) + 6) % 7
+	for i in range(7):
+		# сдвиг даты дня: через unix-дни (учитывает границы месяцев)
+		var shifted: Dictionary = Time.get_datetime_dict_from_unix_time(
+			Time.get_unix_time_from_datetime_dict({
+				"year": int(dt.get("year", 2026)), "month": int(dt.get("month", 1)),
+				"day": int(dt.get("day", 1)), "hour": 12, "minute": 0, "second": 0,
+			}) + float(i - today_idx) * 86400.0)
+		out.append({
+			"weekday": i,
+			"today": i == today_idx,
+			"ids": get_today_bosses(shifted),
+		})
+	return out

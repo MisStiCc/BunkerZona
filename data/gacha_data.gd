@@ -505,14 +505,17 @@ static func rarity_color(rarity: String) -> Color:
 ## PNG проверяется по факту наличия файла: битые/отсутствующие бинарники
 ## не ломают иконку - молча берётся SVG-версия.
 static func card_icon_path(type: String, is_mutant: bool, gray: bool = false) -> String:
-		# D20: у новых видов поддержки - арт базовой модели
-		if is_mutant and MutantRoles.is_new_species(type):
-			type = MutantRoles.card_base_of(type)
 		var dir := "gray/" if gray else ""
 		var base := "%s%s_%s" % [dir, "mut" if is_mutant else "art", type]
 		var png := "res://ui/cards/%s.png" % base
 		if ResourceLoader.exists(png):
 				return png
+		# D20: у новых видов поддержки свой арт; при отсутствии - арт базы
+		if is_mutant and MutantRoles.is_new_species(type):
+				base = "%s%s_%s" % [dir, "mut", MutantRoles.card_base_of(type)]
+				png = "res://ui/cards/%s.png" % base
+				if ResourceLoader.exists(png):
+						return png
 		return "res://ui/cards/%s.svg" % base
 
 

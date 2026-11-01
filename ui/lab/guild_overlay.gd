@@ -213,6 +213,11 @@ func _page_boss(body: Control) -> void:
 	var left: float = GuildSys.boss_hp_left(g)
 
 	_head_line(v, Loc.t("hunt.guild_boss_name", {"name": str(bdata.get("name_ru", boss_id))}))
+	# Портрет босса недели (общий хелпер D22; нет файла - заглушка-буква)
+	var prow := HBoxContainer.new()
+	prow.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(prow)
+	prow.add_child(HuntCalendar.portrait(boss_id, 96.0))
 	var bar := ProgressBar.new()
 	bar.max_value = pool
 	bar.value = dmg

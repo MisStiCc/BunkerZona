@@ -12,6 +12,7 @@ var echo_hp: float = 1500.0
 var echo_max_hp: float = 1500.0
 var _hp_label: Label3D = null
 var _body: MeshInstance3D = null
+var _model: Node3D = null
 var _fallen: bool = false
 
 
@@ -28,20 +29,26 @@ func _ready() -> void:
 	col.position.y = 2.5
 	add_child(col)
 
-	_body = MeshInstance3D.new()
-	var obelisk := CylinderMesh.new()
-	obelisk.top_radius = 0.25
-	obelisk.bottom_radius = 0.9
-	obelisk.height = 5.0
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.16, 0.10, 0.26)
-	mat.emission_enabled = true
-	mat.emission = Color(0.70, 0.40, 1.00)
-	mat.emission_energy_multiplier = 0.8
-	_body.mesh = obelisk
-	_body.material_override = mat
-	_body.position.y = 2.5
-	add_child(_body)
+	# Модель обелиска (задача 35, процедурная CC0); нет файла - цилиндр-фолбэк
+	var model_path := "res://models/echo_obelisk.glb"
+	if ResourceLoader.exists(model_path):
+		_model = load(model_path).instantiate()
+		add_child(_model)
+	else:
+		_body = MeshInstance3D.new()
+		var obelisk := CylinderMesh.new()
+		obelisk.top_radius = 0.25
+		obelisk.bottom_radius = 0.9
+		obelisk.height = 5.0
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.16, 0.10, 0.26)
+		mat.emission_enabled = true
+		mat.emission = Color(0.70, 0.40, 1.00)
+		mat.emission_energy_multiplier = 0.8
+		_body.mesh = obelisk
+		_body.material_override = mat
+		_body.position.y = 2.5
+		add_child(_body)
 
 	_hp_label = Label3D.new()
 	_hp_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -87,6 +94,16 @@ func _fall() -> void:
 		if mat:
 			mat.emission_energy_multiplier = 0.1
 			mat.albedo_color = Color(0.1, 0.1, 0.12)
+	elif _model:
+		# модель: глушим руны-эмиссию и оседаем
+		for m in _model.find_children("*", "MeshInstance3D", true, false):
+			var mi := m as MeshInstance3D
+			for si in range(mi.get_surface_override_material_count()):
+				var sm := mi.get_active_material(si)
+				if sm is StandardMaterial3D and (sm as StandardMaterial3D).emission_enabled:
+					var dimmed := sm.duplicate() as StandardMaterial3D
+					dimmed.emission_energy_multiplier = 0.05
+					mi.set_surface_override_material(si, dimmed)
 	var tw := create_tween()
 	tw.tween_property(self, "scale", Vector3(0.4, 0.1, 0.4), 0.8).set_trans(Tween.TRANS_QUAD)
 	fallen.emit(self)

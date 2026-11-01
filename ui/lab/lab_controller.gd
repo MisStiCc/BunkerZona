@@ -1278,6 +1278,7 @@ var _farm_modes_wrap: Control = null
 
 
 var _codex: CodexOverlay = null
+var _hunt_cal: HuntCalendar = null
 var _store_panel: StorePanel = null
 
 func _on_store_pressed() -> void:
@@ -1320,6 +1321,16 @@ func _on_codex_pressed() -> void:
                 _codex = CodexOverlay.new()
                 add_child(_codex)
         _codex.open()
+
+
+## D22: недельный календарь боссов ОХОТЫ
+func _on_hunt_calendar_pressed() -> void:
+        _play_click_sound()
+        if _hunt_cal == null:
+                _hunt_cal = HuntCalendar.new()
+                _hunt_cal.lab = self
+                add_child(_hunt_cal)
+        _hunt_cal.open()
 
 
 func _build_farm_ui():
@@ -1367,6 +1378,16 @@ func _build_farm_ui():
                 hunt_btn.pressed.connect(_on_hunt_pressed)
                 hunt_btn.mouse_entered.connect(_play_hover_sound)
                 bottom.add_child(hunt_btn)
+                # D22: календарь недели ОХОТЫ (кто в какой день)
+                var huntcal_btn := Button.new()
+                huntcal_btn.name = "HuntCalendarButton"
+                huntcal_btn.text = Loc.t("huntcal.calendar_btn")
+                huntcal_btn.custom_minimum_size = Vector2(0, 62)
+                huntcal_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                BunkerUI.style_button(huntcal_btn, "steel", 18)
+                huntcal_btn.pressed.connect(_on_hunt_calendar_pressed)
+                huntcal_btn.mouse_entered.connect(_play_hover_sound)
+                bottom.add_child(huntcal_btn)
                 # Кодекс Зоны: справка по правилам (спека zona_codex)
                 var codex_btn := Button.new()
                 codex_btn.name = "CodexButton"
