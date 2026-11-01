@@ -2504,6 +2504,17 @@ func _build_gallery_ui():
                 gal_btn.mouse_entered.connect(_play_hover_sound)
                 bottom.add_child(gal_btn)
 
+                # ИВЕНТ (D24): циклические события live-ops
+                var ev_btn := Button.new()
+                ev_btn.name = "EventButton"
+                ev_btn.text = Loc.t("evt.button")
+                ev_btn.custom_minimum_size = Vector2(0, 62)
+                ev_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                BunkerUI.style_button(ev_btn, "hazard", 18)
+                ev_btn.pressed.connect(_on_event_pressed)
+                ev_btn.mouse_entered.connect(_play_hover_sound)
+                bottom.add_child(ev_btn)
+
         gallery_panel = Control.new()
         gallery_panel.name = "GalleryPanel"
         gallery_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -5288,6 +5299,23 @@ func _make_task_row(kind: String, t: Dictionary) -> Control:
         var h := HBoxContainer.new()
         h.add_theme_constant_override("separation", 12)
         row.add_child(h)
+        # Иконка типа задачи (помощник, 48px глифы): маппинг по ключу счётчика
+        const KEY_ICON := {"wins": "task_win", "arena_wins": "task_win",
+                "campaign_wins": "task_win", "kills": "task_boss",
+                "artifacts": "task_artifact", "waves": "task_survive",
+                "tower_wins": "task_floor", "tower_intro": "task_floor",
+                "guild": "task_guild"}
+        var icon_key: String = str(KEY_ICON.get(str(def.get("key", "")), ""))
+        if icon_key != "":
+                var icon_path := "res://assets/ui/icons/tasks/%s.png" % icon_key
+                if ResourceLoader.exists(icon_path):
+                        var ticon := TextureRect.new()
+                        ticon.texture = load(icon_path)
+                        ticon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                        ticon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                        ticon.custom_minimum_size = Vector2(40, 40)
+                        ticon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+                        h.add_child(ticon)
         var v := VBoxContainer.new()
         v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -5343,6 +5371,17 @@ func _on_task_claim(kind: String, id: String):
 var _tp_cycle: int = 1
 var _tp_owned: Dictionary = {}
 var _tp_pass: bool = false
+
+# ИВЕНТ (D24): хаб циклических событий
+var _event_hub: EventHub = null
+
+
+func _on_event_pressed() -> void:
+        _play_click_sound()
+        if _event_hub == null:
+                _event_hub = EventHub.new()
+                add_child(_event_hub)
+        _event_hub.open()
 
 
 func _rebuild_tasks_track():

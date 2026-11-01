@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://entities/mutants/chimera.gd" id="1"]
 [ext_resource type="PackedScene" path="res://entities/mutants/base_mutant.tscn" id="2"]
-[ext_resource type="PackedScene" path="res://models/chimera_rig.glb" id="3"]
+[ext_resource type="PackedScene" path="res://models/chimera_rig_anim.glb" id="3"]
 
 [node name="Chimera" instance=ExtResource("2")]
 editable_children = true
