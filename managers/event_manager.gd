@@ -269,6 +269,15 @@ func reset():
     pass # print("EventManager сброшен", "EventManager")
 
 
+## Мультипачка (D20): бой пачки выигран - забег продолжается. Снимает
+## блокировку победы и гасит счётчик Выбросов; накопленная биомасса
+## (база награды) НЕ трогается
+func reset_battle_state() -> void:
+    _run_over = false
+    is_radiating = false
+    pulse_count = 0
+
+
 # ==================== ГЕТТЕРЫ ====================
 
 func get_pulse_count() -> int:

@@ -450,13 +450,15 @@ static func get_star_stat_mult(stars: int, awaken: int = 0) -> float:
 @export var awaken_sparks: int = 0
 @export var loadout_mutants_p2: Array = []
 @export var loadout_mutants_p3: Array = []
+@export var loadout_mutants_p4: Array = []
 @export var active_pack: int = 0
 
-## Мутанты активной пачки
+## Мутанты активной пачки (0=база, 1..3 = пачки NG+)
 func pack_mutants(pack: int) -> Array:
     match int(pack):
         1: return loadout_mutants_p2
         2: return loadout_mutants_p3
+        3: return loadout_mutants_p4
         _: return loadout_mutants
 
 
@@ -464,6 +466,7 @@ func set_pack_mutants(pack: int, arr: Array) -> void:
     match int(pack):
         1: loadout_mutants_p2 = arr
         2: loadout_mutants_p3 = arr
+        3: loadout_mutants_p4 = arr
         0: loadout_mutants = arr
 
 
@@ -479,10 +482,13 @@ func all_pack_mutants() -> Array:
     for t in loadout_mutants_p3:
         if not out.has(t):
             out.append(t)
+    for t in loadout_mutants_p4:
+        if not out.has(t):
+            out.append(t)
     return out
 
 
-## Пачка, где сидит вид (0/1/2); -1 - нигде
+## Пачка, где сидит вид (0/1/2/3); -1 - нигде
 func pack_of_mutant(type: String) -> int:
     if type in loadout_mutants:
         return 0
@@ -490,6 +496,8 @@ func pack_of_mutant(type: String) -> int:
         return 1
     if type in loadout_mutants_p3:
         return 2
+    if type in loadout_mutants_p4:
+        return 3
     return -1
 
 
@@ -572,9 +580,10 @@ func in_loadout(kind: String, type: String) -> bool:
     return loadout_list(kind).has(type)
 
 
-## Взять/снять вид из набора. "added" / "removed" / "full" (лимит 9)
-func toggle_loadout(kind: String, type: String) -> String:
-    var list := loadout_list(kind)
+## Взять/снять вид из набора. "added" / "removed" / "full" (лимит 9).
+## pack: пачка мутантов (0=база, 1..3); аномалии всегда в общем списке
+func toggle_loadout(kind: String, type: String, pack: int = 0) -> String:
+    var list: Array = loadout_anomalies if kind == "anomaly" else pack_mutants(pack)
     if list.has(type):
         list.erase(type)
         return "removed"
@@ -619,3 +628,6 @@ func reset():
     exclusive_anomalies.clear()
     loadout_anomalies.clear()
     loadout_mutants.clear()
+    loadout_mutants_p2.clear()
+    loadout_mutants_p3.clear()
+    loadout_mutants_p4.clear()

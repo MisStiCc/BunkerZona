@@ -152,6 +152,12 @@ func show_result(result: Dictionary):
                 lines.append(Loc.t("result.br_leftover", {"n": int(float(br["leftover"]))}))
             if float(br.get("level_bonus", 0.0)) > 0.0:
                 lines.append(Loc.t("result.br_bonus", {"n": int(float(br["level_bonus"]))}))
+            # Мультипачка (D20): боёв пачек и их множитель
+            var packs_won: int = int(result.get("pack_battles_won", 0))
+            if packs_won > 0:
+                lines.append(Loc.t("result.packs", {"n": packs_won}))
+            if float(br.get("pack_mult", 1.0)) > 1.0:
+                lines.append(Loc.t("result.pack_mult", {"n": "%.1f" % float(br["pack_mult"])}))
             if float(br.get("cycle_mult", 1.0)) > 1.0:
                 lines.append(Loc.t("result.br_cycle", {"m": "%.2f" % float(br["cycle_mult"])}))
             reward_label.text += "

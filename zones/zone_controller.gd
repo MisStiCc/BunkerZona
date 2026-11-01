@@ -58,6 +58,13 @@ var _shop_artifacts_pending: Array[String] = []
 var _gacha_rewards_log: Array[String] = []
 # Фаза подготовки: сталкеры не спавнятся, пока игрок не нажмёт СТАРТ
 var is_prep_phase: bool = true
+# D20 мультипачка: каждая непустая пачка ведёт СВОЙ бой, друг за дружкой;
+# проигрыш любой = поражение забега, за каждую доп. пачку награда +50%
+var _pack_battles: Array = []       # непустые пачки: [[типы...], ...]
+var _pack_battle_slots: Array = []  # слот пачки (0..3) каждого боя
+var _pack_battle_idx: int = 0       # текущий бой
+var _pack_battles_won: int = 0      # выиграно боёв (множитель награды)
+var _pack_battle_active: bool = false
 # Мобильный режим «тап = ставить»: "" | "anomaly:<type>" | "mutant:<type>"
 # Включается/выключается из HUD (кнопки аномалий/мутантов на тач-устройствах),
 # тап по земле (Signals.ground_tapped) ставит выбранное в точку
@@ -227,6 +234,12 @@ func start_run():
                 if not is_prep_phase:
                                 return
                 is_prep_phase = false
+                # Мультипачка: свежий снапшот текущей пачки (состав правили в подготовке)
+                if _pack_battle_active and _pack_battle_idx < _pack_battle_slots.size():
+                                var gm_s = get_tree().get_first_node_in_group("game_manager")
+                                var lab_s = gm_s.get_lab_data() if gm_s and gm_s.has_method("get_lab_data") else null
+                                if lab_s:
+                                                _pack_battles[_pack_battle_idx] = (lab_s.pack_mutants(int(_pack_battle_slots[_pack_battle_idx])) as Array).duplicate()
                 if str(run_params.get("run_mode", "")) == "hunt":
                                 _hunt_begin()
                                 return
@@ -428,7 +441,96 @@ func _on_all_waves_cleared():
                 if is_run_finished:
                                 return
                 pass # print("ПОБЕДА: все волны отбиты!")
+                # D20 мультипачка: выигран только бой одной пачки - забег продолжается
+                if not _on_battle_won():
+                                return
                 finish_run(true)
+
+
+# ==================== МУЛЬТИПАЧКА (D20): БОИ ДРУГ ЗА ДРУЖКОЙ ====================
+
+## Бой пачки выигран. true - забег завершён (пачки кончились), false -
+## продолжаем следующим боем (интермиссия уже запущена)
+func _on_battle_won() -> bool:
+                if not _pack_battle_active:
+                                return true
+                _pack_battles_won += 1
+                var cur_slot: int = _pack_battle_slots[_pack_battle_idx] if _pack_battle_idx < _pack_battle_slots.size() else -1
+                _rebuild_pack_battles(cur_slot)
+                # следующий бой: первая непустая пачка ПОСЛЕ только что выигранной
+                var next_pos := -1
+                for i in range(_pack_battle_slots.size()):
+                                if cur_slot >= 0 and int(_pack_battle_slots[i]) > cur_slot:
+                                                next_pos = i
+                                                break
+                if next_pos < 0:
+                                # пачек больше нет - забег действительно завершён
+                                _pack_battle_active = false
+                                return true
+                _pack_battle_idx = next_pos
+                _begin_next_pack_battle()
+                return false
+
+
+## Пересчёт непустых пачек (состав могли править в подготовке между боями).
+## keep_slot - слот только что выигранной пачки (индекс сохраняется по нему)
+func _rebuild_pack_battles(keep_slot: int) -> void:
+                var gm_p = get_tree().get_first_node_in_group("game_manager")
+                var lab_p = gm_p.get_lab_data() if gm_p and gm_p.has_method("get_lab_data") else null
+                if lab_p == null:
+                                return
+                var cyc_p: int = int(gm_p.get_campaign_cycle()) if gm_p.has_method("get_campaign_cycle") else 0
+                _pack_battles = []
+                _pack_battle_slots = []
+                for pk in range(MutantRoles.packs_open(cyc_p)):
+                                var arr_p: Array = lab_p.pack_mutants(pk)
+                                if not arr_p.is_empty():
+                                                _pack_battles.append((arr_p as Array).duplicate())
+                                                _pack_battle_slots.append(pk)
+                var pos := _pack_battle_slots.find(keep_slot)
+                _pack_battle_idx = pos if pos >= 0 else 0
+
+
+## Интермиссия: победившая пачка уходит с поля, мир возвращается в
+## подготовку - энергия в максимум, волны с первой, СТАРТ заново
+func _begin_next_pack_battle() -> void:
+                get_tree().paused = false
+                # мутанты прошлого боя уходят (аномалии/Эхо остаются стоят)
+                for m in get_tree().get_nodes_in_group("mutants"):
+                                if is_instance_valid(m):
+                                                m.queue_free()
+                # Выброс погасить и снять боевую блокировку победы
+                _fade_out_emission_fx(0.6)
+                if event_manager:
+                                event_manager.reset_battle_state()
+                # Энергия в максимум: подготовка заново
+                if resource_manager:
+                                resource_manager.current_energy = resource_manager.max_energy
+                # Волны следующего боя - с первой
+                if spawn_manager:
+                                spawn_manager.stop_spawning()
+                                spawn_manager.current_wave = 0
+                is_prep_phase = true
+                var hud_b = get_tree().get_first_node_in_group("hud")
+                if hud_b:
+                                var slot: int = int(_pack_battle_slots[_pack_battle_idx]) if _pack_battle_idx < _pack_battle_slots.size() else 0
+                                if hud_b.has_method("reopen_prep"):
+                                                hud_b.reopen_prep(slot + 1, _pack_battles.size())
+                                if hud_b.has_method("show_event_note"):
+                                                hud_b.show_event_note({
+                                                                "title_ru": "ПАЧКА %d ОТБИТА" % _pack_battles_won,
+                                                                "title_en": "PACK %d HELD" % _pack_battles_won,
+                                                                "desc_ru": "Бой %d/%d позади. Готовь состав следующей пачки и жми СТАРТ" % [_pack_battles_won, _pack_battles_won + 1],
+                                                                "desc_en": "Battle %d/%d done. Prepare the next pack and press START" % [_pack_battles_won, _pack_battles_won + 1],
+                                                })
+
+
+## Мультипачка: типы мутантов, которые можно ставить в ТЕКУЩЕМ бою
+## (пусто = ограничений нет - однопачечный забег)
+func current_battle_pack_types() -> Array:
+                if not _pack_battle_active or _pack_battle_idx >= _pack_battles.size():
+                                return []
+                return _pack_battles[_pack_battle_idx]
 
 
 func _connect_to_hud():
@@ -683,6 +785,32 @@ func _initialize_run():
                                                                                                 "desc_ru": syn_note,
                                                                                                 "desc_en": syn_note,
                                                                                 })
+                # D20 мультипачка: непустые пачки = последовательные бои
+                _pack_battles = []
+                _pack_battle_slots = []
+                _pack_battle_idx = 0
+                _pack_battles_won = 0
+                var gm_pk2 = get_tree().get_first_node_in_group("game_manager")
+                var lab_pk2 = gm_pk2.get_lab_data() if gm_pk2 and gm_pk2.has_method("get_lab_data") else null
+                if lab_pk2:
+                                var cyc_pk: int = int(gm_pk2.get_campaign_cycle()) if gm_pk2.has_method("get_campaign_cycle") else 0
+                                for pk in range(MutantRoles.packs_open(cyc_pk)):
+                                                var arr_pk: Array = lab_pk2.pack_mutants(pk)
+                                                if not arr_pk.is_empty():
+                                                                _pack_battles.append((arr_pk as Array).duplicate())
+                                                                _pack_battle_slots.append(pk)
+                                _pack_battle_active = _pack_battles.size() >= 2 \
+                                                                and str(run_params.get("run_mode", "")) != "survival" \
+                                                                and str(run_params.get("run_mode", "")) != "hunt"
+                                if _pack_battle_active:
+                                                var hud_m = get_tree().get_first_node_in_group("hud")
+                                                if hud_m and hud_m.has_method("show_event_note"):
+                                                                hud_m.show_event_note({
+                                                                                "title_ru": "МУЛЬТИПАЧКА: %d БОЯ" % _pack_battles.size(),
+                                                                                "title_en": "MULTIPACK: %d BATTLES" % _pack_battles.size(),
+                                                                                "desc_ru": "Каждая пачка бьёт свой бой, друг за дружкой - победить все! Награда x%.1f" % (1.0 + 0.5 * float(_pack_battles.size() - 1)),
+                                                                                "desc_en": "Each pack fights its own battle, back to back - win them all! Reward x%.1f" % (1.0 + 0.5 * float(_pack_battles.size() - 1)),
+                                                                })
                 # Применяем бонусы из лаборатории
                 _apply_lab_bonuses()
 
@@ -1912,6 +2040,10 @@ func _on_game_over():
 
 
 func _on_game_won(run_number: int, reward: float):
+                # D20 мультипачка: победил бой одной пачки - награды/гачу НЕ выдаём,
+                # забег продолжается следующим боем (снимаем паузу победы)
+                if not _on_battle_won():
+                                return
                 # В кампании награда считается в _collect_run_result (боевой доход + бонус уровня);
                 # дефолтная формула event_manager (100 x забег x сложность) в кампанию не течёт
                 if not run_params.has("campaign_params"):
@@ -2004,6 +2136,14 @@ func spawn_mutant(mutant_type: String, position: Vector3) -> Node:
                                 if not gm.is_mutant_unlocked(mutant_type) and ex_type.is_empty():
                                                 pass # print("Зона: мутант не разблокирован - откройте его кампанией или гачей: " + mutant_type)
                                                 return null
+
+                # Мультипачка (D20): в текущем бою ставятся только мутанты активной пачки
+                var pack_types: Array = current_battle_pack_types()
+                if not pack_types.is_empty() and not (mutant_type in pack_types):
+                                var hud_d = get_tree().get_first_node_in_group("hud")
+                                if hud_d and hud_d.has_method("show_reward_note"):
+                                                hud_d.show_reward_note("Вид не из активной пачки - в этом бою ставятся только её мутанты")
+                                return null
 
                 var cost = spawn_manager.get_mutant_cost(mutant_type)
                 if not resource_manager.spend_biomass(cost):
@@ -2410,6 +2550,14 @@ func _collect_run_result(success: bool) -> Dictionary:
                 if not echo_fronts.is_empty():
                                 reward *= (1.0 + 0.25 * float(echo_fronts.size()))
 
+                # МУЛЬТИПАЧКА (D20): +50% награды за каждую пачку сверх первой
+                if _pack_battles_won >= 1:
+                                var pk_mult: float = 1.0 + 0.5 * float(_pack_battles_won - 1)
+                                if pk_mult > 1.0:
+                                                reward *= pk_mult
+                                                breakdown["pack_mult"] = pk_mult
+                                breakdown["pack_battles"] = _pack_battles_won
+
                 # Выживание: награда за пройденные волны платится при любом исходе -
                 # смерть здесь ожидаемый конец забега, а не провал
                 if run_params.get("run_mode", "") == "survival":
@@ -2457,6 +2605,7 @@ func _collect_run_result(success: bool) -> Dictionary:
                                 "hunt_killed": _hunt_killed.duplicate(),
                                 "boss_dmg_dealt": int(_hunt_dmg_total),
                                 "guild_boss": bool(run_params.get("guild_boss", false)),
+                                "pack_battles_won": _pack_battles_won,
                                 "reward_breakdown": breakdown,
                                 "kills_by_rank": _kills_by_rank.duplicate(),
                                 "statistics": stats,

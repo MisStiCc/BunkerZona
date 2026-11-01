@@ -23,7 +23,7 @@ const PAGES := [
 	["codex.tab_res", ["codex.res.energy", "codex.res.bio", "codex.res.rolls", "codex.res.sp"]],
 	["codex.tab_anom", ["codex.anom.place", "codex.anom.unlock", "codex.anom.sets", "codex.anom.trophy"]],
 	["codex.tab_mut", ["codex.mut.cost", "codex.mut.stars", "codex.mut.recycle"]],
-	["codex.tab_packs", ["codex.pack.what", "codex.pack.unlock", "codex.pack.battle", "codex.pack.roles", "codex.pack.synergy", "codex.pack.stats"]],
+	["codex.tab_packs", ["codex.pack.what", "codex.pack.unlock", "codex.pack.battle", "codex.pack.turn", "codex.pack.roles", "codex.pack.synergy", "codex.pack.stats"]],
 	["codex.tab_rad", ["codex.rad.blow", "codex.rad.zone"]],
 	["codex.tab_modes", ["codex.modes.campaign", "codex.modes.tower", "codex.modes.survival", "codex.modes.season"]],
 ]

@@ -1341,6 +1341,22 @@ const MUTANT_ORDER := ["zombie", "dog_mutant", "flesh", "snork_mutant", "pseudod
 const EXCLUSIVE_SHORT := {"alpha_pseudodog": "Альфа-вожак", "ash_snork": "Пепельник", "obsidian_controller": "Обсидиан.пастырь"}
 
 
+## D20 мультипачка: возврат в подготовку перед боем следующей пачки.
+## pack_num - номер следующей пачки (1-базный), total - всего боёв
+func reopen_prep(pack_num: int, total: int) -> void:
+                get_tree().paused = false
+                start_panel.visible = true
+                _mutants_collapsed = false
+                _update_mut_header_text()
+                _refresh_loadout_ui()
+                # авто-переключение редактора на пачку текущего боя (если вкладки есть);
+                # после refresh - чтобы подсветка состава пачки не перетёрлась
+                var slot_idx: int = clampi(pack_num - 1, 0, maxi(_pack_btns.size() - 1, 0))
+                if _pack_btns.size() > 0:
+                                _on_pack_tab(slot_idx)
+                show_reward_note("ПАЧКА %d/%d - готовь состав и жми СТАРТ" % [pack_num, total])
+
+
 ## D20: переключение активной пачки в фазе набора
 func _on_pack_tab(idx: int) -> void:
                 _play_click_sound()
@@ -1419,7 +1435,7 @@ func _show_pack_info() -> void:
                                 txt.add_theme_font_size_override("font_size", 13)
                                 txt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
                                 var parts: Array = []
-                                for k in ["codex.pack.what", "codex.pack.unlock", "codex.pack.battle", "codex.pack.roles", "codex.pack.synergy", "codex.pack.stats"]:
+                                for k in ["codex.pack.what", "codex.pack.unlock", "codex.pack.battle", "codex.pack.turn", "codex.pack.roles", "codex.pack.synergy", "codex.pack.stats"]:
                                                 parts.append(str(Loc.t(str(k))))
                                 txt.text = "  \n\n".join(parts)
                                 scroll.add_child(txt)
@@ -1593,15 +1609,21 @@ func _refresh_loadout_ui():
                                 return
                 _layout_taken(taken_anomalies, get_node_or_null("AnomalyPanel"), 4)
                 # Мутанты: в бою только взятые, до боя - вся галерея (v0.21.0).
+                # Мультипачка (D20): в текущем бою видны только мутанты активной пачки.
                 # Порядок - по цене биомассы: слева дешёвые, справа супер-мутанты
+                var battle_pack: Array = []
+                if started:
+                                var zc_bp = get_tree().get_first_node_in_group("zone_controller")
+                                if zc_bp and zc_bp.has_method("current_battle_pack_types"):
+                                                battle_pack = zc_bp.current_battle_pack_types()
                 var taken_mutants: Array = []
                 for btn in _mutant_buttons:
                                 var mtype: String = _mutant_buttons[btn]
                                 var mtaken: bool = lab.in_loadout("mutant", mtype)
                                 var mowned: bool = _mutant_owned(mtype)
                                 if started:
-                                                btn.visible = mtaken
-                                                if mtaken:
+                                                btn.visible = mtaken and (battle_pack.is_empty() or mtype in battle_pack)
+                                                if btn.visible:
                                                                 taken_mutants.append(btn)
                                 else:
                                                 btn.visible = mowned
