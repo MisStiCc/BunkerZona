@@ -91,13 +91,13 @@ const UNLOCK_TABLE := {
 		5: {"mutants": ["snork_mutant"], "artifacts": ["gas_bottle_artifact"]},
 		8: {"mutants": ["pseudodog"]},
 		10: {"artifacts": ["rare_artifact", "energy_artifact"]},
-		15: {"mutants": ["poltergeist"]},
+		15: {"mutants": ["poltergeist", "kremen", "mayak"]},		# +оригиналы (гейт 12/14 округлён к 15)
 		20: {"mutants": ["controller_mutant"], "artifacts": ["clock_artifact"]},
-		25: {"mutants": ["bloodsucker"], "artifacts": ["hourglass_artifact"]},
+		25: {"mutants": ["bloodsucker", "sporonosets", "iskropluy", "rzhavnik"], "artifacts": ["hourglass_artifact"]},
 		30: {"artifacts": ["graviton_artifact"]},
 		35: {"artifacts": ["fireball_artifact"]},
 		40: {"artifacts": ["jumper_artifact", "flesh_artifact"]},
-		45: {"mutants": ["pseudogiant"]},
+		45: {"mutants": ["pseudogiant", "chrevo", "horovod", "kosar"]},
 		# v0.30.0 «ЗОНА МУТИРУЕТ»: вариации по уровням кампании
 		12: {"mutants": ["dvoroviy_pes", "tuhlaya_plot"]},
 		18: {"mutants": ["gniloy_zombie", "brodyashiy_snork"]},
@@ -115,9 +115,10 @@ const UNLOCK_TABLE := {
 # Химера - джекпот: исключена из пула до 30 уровня кампании, дальше её вес растёт
 const MUTANT_POOL := {
 		"common": [["zombie", 30.0], ["dog_mutant", 25.0], ["flesh", 25.0]],
-		"uncommon": [["leden", 6.0], ["vikhor", 5.0], ["mohovik", 5.0], ["zaveden", 4.0], ["shorokh", 3.0], ["snork_mutant", 12.0], ["pseudodog", 10.0], ["poltergeist", 8.0]],
-		"rare": [["tsveten", 4.0], ["guden", 3.5], ["zhivitsa", 3.0], ["controller_mutant", 6.0], ["bloodsucker", 5.0]],
-		"legendary": [["pseudogiant", 4.0], ["chimera", 0.0]],
+		"uncommon": [["leden", 6.0], ["vikhor", 5.0], ["mohovik", 5.0], ["zaveden", 4.0], ["shorokh", 3.0], ["kremen", 4.0], ["sporonosets", 4.0], ["mayak", 4.0], ["snork_mutant", 12.0], ["pseudodog", 10.0], ["poltergeist", 8.0]],
+		"rare": [["tsveten", 4.0], ["guden", 3.5], ["zhivitsa", 3.0], ["rzhavnik", 3.5], ["iskropluy", 3.5], ["controller_mutant", 6.0], ["bloodsucker", 5.0]],
+		"epic": [["chrevo", 1.8]],
+		"legendary": [["pseudogiant", 4.0], ["kosar", 1.5], ["horovod", 1.5], ["chimera", 0.0]],
 }
 
 # Пул артефактов по редкости (сцены из entities/artifacts)

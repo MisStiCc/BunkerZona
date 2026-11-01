@@ -1709,10 +1709,6 @@ class ScannerView:
 
         func _draw() -> void:
                 _draw_grid()
-                # Задача 24: арт-рамка рисует текстуру вместо колец/гексов
-                if frame_art:
-                        draw_texture_rect(frame_art, Rect2(Vector2.ZERO, size), false)
-                        return
                 var c := size * 0.5
                 var ring_r := minf(size.x, size.y) * 0.49
                 if ring_r < 40.0:
@@ -1720,6 +1716,12 @@ class ScannerView:
                 _draw_rings(c, ring_r)
                 _draw_hex(c, ring_r)
                 _draw_scanline(c, ring_r)
+                # Задача 24 (фикс помощника): рамка-арт - квадрат ПО ЦЕНТРУ
+                # гекса (ring_r x 1.18), ПОВЕРХ аватара; НЕ растяжка на весь
+                # виджет (та растяжка накрывала сканер и обрывала _draw)
+                if frame_art:
+                        var fr := ring_r * 1.18
+                        draw_texture_rect(frame_art, Rect2(c - Vector2(fr, fr) * 0.5, Vector2(fr, fr)), false)
 
         func _draw_grid() -> void:
                 var g := 44.0

@@ -1,0 +1,258 @@
+INFO Draco mesh compression is available, use library at E:\StalkerRevert\Tools\blender-4.5.9-windows-x64\4.5\scripts\addons_core\io_scene_gltf2\extern_draco.dll
+23:15:50 | INFO: Starting glTF 2.0 export
+23:15:50 | INFO: Extracting primitive: Cube.001
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.006
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.007
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.001
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.002
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.003
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.004
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.005
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube.004
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube.005
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube.002
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube.003
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Finished glTF 2.0 export in 0.40599799156188965 s
+
+  EXPORT OK kremen.glb
+kremen: клипов 4
+23:15:50 | INFO: Starting glTF 2.0 export
+23:15:50 | INFO: Extracting primitive: Cube
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube.001
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube.003
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube.002
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cube.004
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.001
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Sphere.002
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.004
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.008
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.006
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.010
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.003
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.007
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.005
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.009
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.001
+23:15:50 | INFO: Primitives created: 1
+23:15:50 | INFO: Extracting primitive: Cone.002
+23:15:50 | INFO: Primitives created: 1
+23:15:51 | INFO: Finished glTF 2.0 export in 0.4049980640411377 s
+
+  EXPORT OK rzhavnik.glb
+rzhavnik: клипов 4
+23:15:51 | INFO: Starting glTF 2.0 export
+23:15:51 | INFO: Extracting primitive: Cone
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.001
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.002
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.003
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.004
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.005
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.006
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.007
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone.001
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone.002
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone.003
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone.004
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone.005
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Finished glTF 2.0 export in 0.3570232391357422 s
+
+  EXPORT OK sporonosets.glb
+sporonosets: клипов 4
+23:15:51 | INFO: Starting glTF 2.0 export
+23:15:51 | INFO: Extracting primitive: Sphere
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.001
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.003
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone.001
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone.002
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Cone.003
+23:15:51 | INFO: Primitives created: 1
+23:15:51 | INFO: Extracting primitive: Sphere.002
+23:15:51 | INFO: Primitives created: 1
+23:15:52 | INFO: Finished glTF 2.0 export in 0.3450193405151367 s
+
+  EXPORT OK chrevo.glb
+chrevo: клипов 4
+23:15:52 | INFO: Starting glTF 2.0 export
+23:15:52 | INFO: Extracting primitive: Sphere.006
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere.007
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere.005
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Cone
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere.001
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere.002
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere.003
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere.004
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Finished glTF 2.0 export in 0.3159968852996826 s
+
+  EXPORT OK iskropluy.glb
+iskropluy: клипов 4
+23:15:52 | INFO: Starting glTF 2.0 export
+23:15:52 | INFO: Extracting primitive: Cube.002
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Cube.004
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Cube.003
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Cube.005
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Cone.001
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Cone
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere.001
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Sphere.002
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Cube.001
+23:15:52 | INFO: Primitives created: 1
+23:15:52 | INFO: Extracting primitive: Cube
+23:15:52 | INFO: Primitives created: 1
+23:15:53 | INFO: Finished glTF 2.0 export in 0.43700218200683594 s
+
+  EXPORT OK kosar.glb
+kosar: клипов 4
+23:15:53 | INFO: Starting glTF 2.0 export
+23:15:53 | INFO: Extracting primitive: Cone
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cone.003
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Sphere.001
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Sphere
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cone.001
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cone.002
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cube
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cube.001
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cube.002
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cube.003
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Finished glTF 2.0 export in 0.24599266052246094 s
+
+  EXPORT OK mayak.glb
+mayak: клипов 4
+23:15:53 | INFO: Starting glTF 2.0 export
+23:15:53 | INFO: Extracting primitive: Cone.001
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cone.002
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cone.004
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cone.005
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cone.007
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cone.008
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cube.006
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cube.007
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Cube.008
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Sphere
+23:15:53 | INFO: Primitives created: 1
+23:15:53 | INFO: Extracting primitive: Sphere.001
+23:15:53 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Sphere.002
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cone
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cone.003
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cone.006
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cube
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cube.001
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cube.002
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cube.003
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cube.004
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Extracting primitive: Cube.005
+23:15:54 | INFO: Primitives created: 1
+23:15:54 | INFO: Finished glTF 2.0 export in 0.39299726486206055 s
+
+  EXPORT OK horovod.glb
+horovod: клипов 4
+Blender 4.5.9 LTS (hash 8bf95cbd38d1 built 2026-04-21 01:33:45)
+
+Blender quit

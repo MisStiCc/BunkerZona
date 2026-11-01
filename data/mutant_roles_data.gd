@@ -26,6 +26,11 @@ const ROLES := {
 	"mohovik": Role.HEAL, "tsveten": Role.HEAL, "zhivitsa": Role.HEAL,
 	"zaveden": Role.BUFF, "vikhor": Role.BUFF, "shorokh": Role.BUFF,
 	"leden": Role.CONTROL, "guden": Role.CONTROL,
+	# 8 оригиналов (задача 43): ключи = enum Role как строки
+	"kremen": Role.TANK, "rzhavnik": Role.TANK,
+	"sporonosets": Role.HEAL, "chrevo": Role.HEAL,
+	"iskropluy": Role.DMG, "kosar": Role.DMG,
+	"mayak": Role.BUFF, "horovod": Role.BUFF,
 }
 
 ## Ауры/эффекты новых видов (исполнитель - components/aura_component.gd)
@@ -40,6 +45,38 @@ const AURAS := {
 	"guden": {"fear": {"cd": 8.0, "r": 6.0, "push": 3.0}},
 }
 
+## 8 ОРИГИНАЛЬНЫХ мутантов (задача 43, помощник): свои модели+клипы,
+## роли под пачки ТАНИ/ЛЕЧ/УРОН/БАФ. scene_of - база-сцена спавна
+const NEW_ORIGINALS := {
+	"kremen": {"name_ru": "Кремень", "name_en": "Flintstone", "role": "TANK",
+		"rarity": "uncommon", "gate": 12, "cost": 130.0, "hp": 2.0, "dmg": 0.6, "speed": 0.85, "scene": "flesh"},
+	"rzhavnik": {"name_ru": "Ржавник", "name_en": "Rustman", "role": "TANK",
+		"rarity": "rare", "gate": 26, "cost": 160.0, "hp": 1.8, "dmg": 0.8, "speed": 0.95, "scene": "flesh"},
+	"sporonosets": {"name_ru": "Спороносец", "name_en": "Sporobearer", "role": "HEAL",
+		"rarity": "uncommon", "gate": 16, "cost": 140.0, "hp": 1.0, "dmg": 0.5, "speed": 0.95, "scene": "zombie"},
+	"chrevo": {"name_ru": "Чрево", "name_en": "Wombbeast", "role": "HEAL",
+		"rarity": "epic", "gate": 34, "cost": 180.0, "hp": 1.2, "dmg": 0.6, "speed": 0.85, "scene": "zombie"},
+	"iskropluy": {"name_ru": "Искроплюй", "name_en": "Spitspark", "role": "DMG",
+		"rarity": "rare", "gate": 22, "cost": 150.0, "hp": 0.85, "dmg": 1.45, "speed": 1.1, "scene": "pseudodog"},
+	"kosar": {"name_ru": "Косарь", "name_en": "Reaper", "role": "DMG",
+		"rarity": "legendary", "gate": 46, "cost": 220.0, "hp": 0.9, "dmg": 1.6, "speed": 1.15, "scene": "bloodsucker"},
+	"mayak": {"name_ru": "Маяк", "name_en": "Beacon", "role": "BUFF",
+		"rarity": "uncommon", "gate": 14, "cost": 120.0, "hp": 1.0, "dmg": 0.55, "speed": 0.9, "scene": "snork_mutant"},
+	"horovod": {"name_ru": "Хоровод", "name_en": "Roundel", "role": "BUFF",
+		"rarity": "legendary", "gate": 44, "cost": 220.0, "hp": 1.1, "dmg": 0.7, "speed": 1.0, "scene": "snork_mutant"},
+}
+
+
+## Оригинал ли это
+static func is_original(type: String) -> bool:
+	return NEW_ORIGINALS.has(type)
+
+
+## Данные оригинала (пусто = не оригинал)
+static func original_of(type: String) -> Dictionary:
+	return NEW_ORIGINALS.get(type, {})
+
+
 ## Базовые показатели для карточек/тултипов (по первому подвиду из скриптов
 ## сущностей). Только UI-справка: бой считает точнее (подвид+кампания+перки).
 const BASE_STATS := {
@@ -53,6 +90,15 @@ const BASE_STATS := {
 	"controller_mutant": {"hp": 80.0, "dmg": 20.0},
 	"poltergeist": {"hp": 60.0, "dmg": 30.0},
 	"zombie": {"hp": 180.0, "dmg": 10.0},
+	# оригиналы: база 100 ХП/20 урона x их множители (UI-справка)
+	"kremen": {"hp": 200.0, "dmg": 12.0},
+	"rzhavnik": {"hp": 180.0, "dmg": 16.0},
+	"sporonosets": {"hp": 100.0, "dmg": 10.0},
+	"chrevo": {"hp": 120.0, "dmg": 12.0},
+	"iskropluy": {"hp": 85.0, "dmg": 29.0},
+	"kosar": {"hp": 90.0, "dmg": 32.0},
+	"mayak": {"hp": 100.0, "dmg": 11.0},
+	"horovod": {"hp": 110.0, "dmg": 14.0},
 }
 
 ## 8 новых видов: база-модель, тинт, гейт кольцами, цена боя, редкость пула
@@ -114,6 +160,11 @@ static func card_base_of(type: String) -> String:
 ## Показатели для UI (карточка/тултип): база x звёзды x эксклюзив x новый вид.
 ## Тот же порядок множителей, что в spawn_manager.
 static func display_stats(type: String, stars: int = 1, awaken: int = 0) -> Dictionary:
+	# оригиналы (задача 43): статы из NEW_ORIGINALS напрямую
+	if NEW_ORIGINALS.has(type):
+		var st: Dictionary = NEW_ORIGINALS[type]
+		var m2: float = LabData.get_star_stat_mult(stars, awaken)
+		return {"hp": float(st["hp"]) * m2, "dmg": float(st["dmg"]) * m2}
 	var base_t: String = type
 	var ex: Dictionary = GachaData.get_exclusive(type)
 	if not ex.is_empty() and ex.has("base"):

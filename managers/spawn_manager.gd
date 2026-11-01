@@ -163,6 +163,13 @@ func _ready():
                 if mutant_scenes.has(ns_base) and not mutant_scenes.has(ns_id):
                         mutant_scenes[ns_id] = mutant_scenes[ns_base]
 
+        # Задача 43: оригиналы - сцена спавна по базу роли (модель подменяет
+        # Model: 3D совпадает с карточкой)
+        for o_id in MutantRoles.NEW_ORIGINALS:
+                var o_scene: String = str(MutantRoles.NEW_ORIGINALS[o_id]["scene"])
+                if mutant_scenes.has(o_scene) and not mutant_scenes.has(o_id):
+                        mutant_scenes[o_id] = mutant_scenes[o_scene]
+
         # Эксклюзивы Чёрного ящика: тип -> сцена-основа (вариант окраса/статов).
         # Отдельные модели художника позже заменят сцену по ключу base.
         for ex in GachaData.EXCLUSIVE_MUTANTS:
@@ -605,6 +612,24 @@ func spawn_mutant(mutant_type: String, position: Vector3, _biomass_cost: float, 
         if dmg_mult != 1.0 and mutant.has_method("set_damage_multiplier"):
                 mutant.set_damage_multiplier(dmg_mult)
         
+        # Задача 43: оригиналы - собственная анимированная модель вместо базы
+        var orig: Dictionary = MutantRoles.original_of(mutant_type)
+        if not orig.is_empty():
+                var o_model_path := "res://models/animals/%s_anim.glb" % mutant_type
+                if ResourceLoader.exists(o_model_path) and mutant.has_method("apply_exclusive_variant"):
+                        var o_model: Node3D = (load(o_model_path) as PackedScene).instantiate()
+                        o_model.name = "Model"
+                        var old_m: Node = mutant.get_node_or_null("Model")
+                        if old_m:
+                                        old_m.queue_free()
+                        mutant.add_child(o_model)
+                if mutant.has_method("apply_exclusive_variant"):
+                        mutant.apply_exclusive_variant(mutant_type, str(orig.get("name_ru", mutant_type)), Color(1, 1, 1), float(orig.get("speed", 1.0)))
+                if mutant.has_method("set_health_multiplier") and float(orig.get("hp", 1.0)) != 1.0:
+                        mutant.set_health_multiplier(hp_mult * float(orig["hp"]))
+                if mutant.has_method("set_damage_multiplier") and float(orig.get("dmg", 1.0)) != 1.0:
+                        mutant.set_damage_multiplier(dmg_mult * float(orig["dmg"]))
+
         # D20: новые виды поддержки - тинт/имя/статы/аура
         var ns: Dictionary = MutantRoles.species_of(mutant_type)
         if not ns.is_empty():
