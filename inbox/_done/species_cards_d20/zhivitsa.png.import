@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://52f6lkggvjkr"
-path="res://.godot/imported/zhivitsa.png-f1a3dfa665cd48055b66795299d35e45.ctex"
+path="res://.godot/imported/zhivitsa.png-293102a1e2b0e385b9e0884f35ad0a7d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/species_cards_d20/zhivitsa.png"
-dest_files=["res://.godot/imported/zhivitsa.png-f1a3dfa665cd48055b66795299d35e45.ctex"]
+source_file="res://inbox/_done/species_cards_d20/zhivitsa.png"
+dest_files=["res://.godot/imported/zhivitsa.png-293102a1e2b0e385b9e0884f35ad0a7d.ctex"]
 
 [params]
 

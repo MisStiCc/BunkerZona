@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cki0s3tkwed76"
-path="res://.godot/imported/mat_bolota.png-0d107df34884dcf1f37afb9723124d20.ctex"
+path="res://.godot/imported/mat_bolota.png-b886e0ecf824a00f43c64b83a4c06c40.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/boss_portraits/mat_bolota.png"
-dest_files=["res://.godot/imported/mat_bolota.png-0d107df34884dcf1f37afb9723124d20.ctex"]
+source_file="res://inbox/_done/boss_portraits/mat_bolota.png"
+dest_files=["res://.godot/imported/mat_bolota.png-b886e0ecf824a00f43c64b83a4c06c40.ctex"]
 
 [params]
 

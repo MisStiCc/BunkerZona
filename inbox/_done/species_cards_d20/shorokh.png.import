@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bfyru4qqfx34k"
-path="res://.godot/imported/shorokh.png-a6326eb20ac337551983105abe108887.ctex"
+path="res://.godot/imported/shorokh.png-4849e6ea82c36a8de0ef83da06a8e453.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/species_cards_d20/shorokh.png"
-dest_files=["res://.godot/imported/shorokh.png-a6326eb20ac337551983105abe108887.ctex"]
+source_file="res://inbox/_done/species_cards_d20/shorokh.png"
+dest_files=["res://.godot/imported/shorokh.png-4849e6ea82c36a8de0ef83da06a8e453.ctex"]
 
 [params]
 

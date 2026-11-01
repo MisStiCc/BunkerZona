@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d4eewfcvkpsgr"
-path="res://.godot/imported/guild_banner_gold.png-84d41d83932a5b74d13f3acfe8e0f6da.ctex"
+path="res://.godot/imported/guild_banner_gold.png-c93c2bbfa1f06d61f683ff5475d05363.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/guild_banner/guild_banner_gold.png"
-dest_files=["res://.godot/imported/guild_banner_gold.png-84d41d83932a5b74d13f3acfe8e0f6da.ctex"]
+source_file="res://inbox/_done/guild_banner/guild_banner_gold.png"
+dest_files=["res://.godot/imported/guild_banner_gold.png-c93c2bbfa1f06d61f683ff5475d05363.ctex"]
 
 [params]
 

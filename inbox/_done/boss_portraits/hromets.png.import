@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://7pt0y7iabftq"
-path="res://.godot/imported/hromets.png-ca2cb90078be547d9fd70730ad4377c6.ctex"
+path="res://.godot/imported/hromets.png-8399cd8cc480dc5f41afa380e59166b1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/boss_portraits/hromets.png"
-dest_files=["res://.godot/imported/hromets.png-ca2cb90078be547d9fd70730ad4377c6.ctex"]
+source_file="res://inbox/_done/boss_portraits/hromets.png"
+dest_files=["res://.godot/imported/hromets.png-8399cd8cc480dc5f41afa380e59166b1.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c30lpujt6pxxf"
-path="res://.godot/imported/leden.png-69f979a11931e20bcb409bd9bddd014f.ctex"
+path="res://.godot/imported/leden.png-45479722adba69c26275c9091bfc297d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/species_cards_d20/leden.png"
-dest_files=["res://.godot/imported/leden.png-69f979a11931e20bcb409bd9bddd014f.ctex"]
+source_file="res://inbox/_done/species_cards_d20/leden.png"
+dest_files=["res://.godot/imported/leden.png-45479722adba69c26275c9091bfc297d.ctex"]
 
 [params]
 

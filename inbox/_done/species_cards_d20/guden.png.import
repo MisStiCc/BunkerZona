@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://drihe6rf36a2y"
-path="res://.godot/imported/guden.png-4a8ebd742b595d52a40eec4bd6bf0723.ctex"
+path="res://.godot/imported/guden.png-d7e17a8dfd4c63d85b4507e81f732852.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/species_cards_d20/guden.png"
-dest_files=["res://.godot/imported/guden.png-4a8ebd742b595d52a40eec4bd6bf0723.ctex"]
+source_file="res://inbox/_done/species_cards_d20/guden.png"
+dest_files=["res://.godot/imported/guden.png-d7e17a8dfd4c63d85b4507e81f732852.ctex"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://5fmajubf415j"
-path="res://.godot/imported/echo_obelisk.glb-2aa0609c85f98df0cc357bb1c67f61d6.scn"
+path="res://.godot/imported/echo_obelisk.glb-47445f5b828b0750299a737fac4ed42a.scn"
 
 [deps]
 
-source_file="res://inbox/echo_obelisk/echo_obelisk.glb"
-dest_files=["res://.godot/imported/echo_obelisk.glb-2aa0609c85f98df0cc357bb1c67f61d6.scn"]
+source_file="res://inbox/_done/echo_obelisk/echo_obelisk.glb"
+dest_files=["res://.godot/imported/echo_obelisk.glb-47445f5b828b0750299a737fac4ed42a.scn"]
 
 [params]
 

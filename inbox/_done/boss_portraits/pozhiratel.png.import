@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dg0x77ybyklcy"
-path="res://.godot/imported/pozhiratel.png-e25e73525449e63b3b1c7c0695ef6764.ctex"
+path="res://.godot/imported/pozhiratel.png-d4533fd80e5d0efb049b6c0baa23acc5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/boss_portraits/pozhiratel.png"
-dest_files=["res://.godot/imported/pozhiratel.png-e25e73525449e63b3b1c7c0695ef6764.ctex"]
+source_file="res://inbox/_done/boss_portraits/pozhiratel.png"
+dest_files=["res://.godot/imported/pozhiratel.png-d4533fd80e5d0efb049b6c0baa23acc5.ctex"]
 
 [params]
 

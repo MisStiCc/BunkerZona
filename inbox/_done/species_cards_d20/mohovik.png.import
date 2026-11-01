@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://r0lwkkuq3kwc"
-path="res://.godot/imported/mohovik.png-8ba95e3d6a66330b5f27d04c7f7e5d83.ctex"
+path="res://.godot/imported/mohovik.png-9daec19bf2da596d7a60744f0140e6af.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/species_cards_d20/mohovik.png"
-dest_files=["res://.godot/imported/mohovik.png-8ba95e3d6a66330b5f27d04c7f7e5d83.ctex"]
+source_file="res://inbox/_done/species_cards_d20/mohovik.png"
+dest_files=["res://.godot/imported/mohovik.png-9daec19bf2da596d7a60744f0140e6af.ctex"]
 
 [params]
 

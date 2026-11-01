@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bah4gk7fdrtjs"
-path="res://.godot/imported/vikhor.png-c206e81f7f376af67a601b3bee0c57a7.ctex"
+path="res://.godot/imported/vikhor.png-4e68b9469b45f4c6d56999d64c27189b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/species_cards_d20/vikhor.png"
-dest_files=["res://.godot/imported/vikhor.png-c206e81f7f376af67a601b3bee0c57a7.ctex"]
+source_file="res://inbox/_done/species_cards_d20/vikhor.png"
+dest_files=["res://.godot/imported/vikhor.png-4e68b9469b45f4c6d56999d64c27189b.ctex"]
 
 [params]
 
