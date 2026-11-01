@@ -3,7 +3,7 @@ extends Node
 class_name Helpers
 
 ## Жёсткая граница мира по XZ (периметр + запас на кламп камер)
-const WORLD_LIMIT: float = 165.0
+const WORLD_LIMIT: float = 200.0  # крайний круг периметра (150) + итерация кольца
 
 
 static func format_number(value: float, decimals: int = 0) -> String:

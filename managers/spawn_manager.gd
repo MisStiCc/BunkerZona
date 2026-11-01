@@ -401,6 +401,8 @@ func _spawn_stalker() -> bool:
         
         if stalker.has_signal("died"):
                 stalker.died.connect(_on_stalker_died)
+                if stalker.has_signal("escaped_map"):
+                                stalker.escaped_map.connect(_on_stalker_escaped)
         
         active_stalkers.append(stalker)
         
@@ -538,6 +540,12 @@ func _get_fallback_spawn_position() -> Vector3:
                 return Vector3(fallback_pos.x, SPAWN_HEIGHT, fallback_pos.z)
         
         return Vector3(monolith.global_position.x, SPAWN_HEIGHT, monolith.global_position.z)
+
+
+## Ушёл за границу карты: снимаем с учёта БЕЗ килла и награды
+func _on_stalker_escaped(stalker: Node):
+        if stalker in active_stalkers:
+                active_stalkers.erase(stalker)
 
 
 func _on_stalker_died(stalker: Node):

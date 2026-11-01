@@ -6,7 +6,8 @@ class_name MinimapDots
 ## Мировые координаты (XZ от монолита в центре) проецируются на квадрат карты.
 
 # Метры от монолита до края карты (спавн-кольцо 90-150м + запас)
-const WORLD_HALF: float = 160.0
+const WORLD_HALF: float = 205.0
+# Граница карты (Helpers.WORLD_LIMIT) - рисуется явным кольцом
 # Перерисовка точек (чаще незачем, точки и так двигаются медленно)
 const UPDATE_INTERVAL: float = 0.2
 
@@ -43,6 +44,10 @@ func world_to_map(world_pos: Vector3) -> Vector2:
 
 
 func _draw():
+	# Граница карты: стальное кольцо на WORLD_LIMIT (200м)
+	var half = size / 2.0
+	var border_px: float = 200.0 / WORLD_HALF * half.x
+	draw_arc(half, border_px, 0, TAU, 64, Color(0.55, 0.62, 0.55, 0.9), 2.0)
 	# Монолит - янтарное кольцо в центре
 	draw_arc(size / 2.0, 5.0, 0, TAU, 24, Color(1.0, 0.75, 0.2), 2.0)
 	draw_circle(size / 2.0, 2.0, Color(1.0, 0.75, 0.2))

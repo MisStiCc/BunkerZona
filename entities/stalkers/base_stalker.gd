@@ -7,6 +7,7 @@ class_name BaseStalker
 
 # Сигналы
 signal died(stalker: BaseStalker)
+signal escaped_map(stalker: BaseStalker)   # ушёл за границу карты (с артефактом)
 signal attacked(target: Node3D)
 signal artifact_picked_up(artifact: Node, value: int)
 signal artifact_dropped(artifact: Node)
@@ -159,8 +160,9 @@ func _physics_process(delta):
 		move_and_slide()
 	
 	# Граница мира ( Helpers.WORLD_LIMIT ) - периметр не выпускает
-	global_position.x = clampf(global_position.x, -Helpers.WORLD_LIMIT, Helpers.WORLD_LIMIT)
-	global_position.z = clampf(global_position.z, -Helpers.WORLD_LIMIT, Helpers.WORLD_LIMIT)
+	# (несун артефакта выходит ЗА неё раньше клампа: dist > 200 в FSM)
+	global_position.x = clampf(global_position.x, -Helpers.WORLD_LIMIT + 1.0, Helpers.WORLD_LIMIT - 1.0)
+	global_position.z = clampf(global_position.z, -Helpers.WORLD_LIMIT + 1.0, Helpers.WORLD_LIMIT - 1.0)
 
 
 func _update_effects(delta):
@@ -437,3 +439,8 @@ func _notification(what):
 		# Очищаем ссылки при удалении
 		if memory_component:
 			memory_component.clear_memory()
+
+## Ушёл за границу карты (несун артефакта): корректно снять с учёта и исчезнуть
+func escape_map() -> void:
+	escaped_map.emit(self)
+	queue_free()

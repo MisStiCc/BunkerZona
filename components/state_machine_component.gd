@@ -307,13 +307,15 @@ func _process_attack_mutant(_delta):
 
 func _process_carry_artifact(delta):
 	if carry and carry.has_artifact():
-		# Артефакт украден, когда сталкер вынес его за периметр Зоны
+		# Артефакт украден, когда сталкер ВЫШЕЛ ЗА ГРАНИЦУ карты (200м):
+		# унёс и исчез - "убегает не до конца" (кража на 150м с разворотом)
+		# больше не повторяется
 		var dist_from_monolith: float = stalker.global_position.distance_to(
 			monolith.global_position if monolith and is_instance_valid(monolith) else Vector3.ZERO)
-		if dist_from_monolith > 150.0:
-			# "StateMachine: CARRY_ARTIFACT - артефакт украден (вышел за периметр)"  # (лог отключён)
+		if dist_from_monolith > 195.0:
 			carry.steal_artifact()
-			set_state(GameEnums.StalkerState.SEEK_MONOLITH)
+			if stalker.has_method("escape_map"):
+				stalker.escape_map()
 			return
 		_update_anti_stuck(_get_edge_position(), delta)
 		if navigation and (not navigation.is_navigating() or _target_update_timer > 2.0):
@@ -455,11 +457,10 @@ func _get_attack_target() -> Node:
 
 
 func _get_edge_position() -> Vector3:
-	# Точка кражи - У ПЕРИМЕТРА, внутри границ мира (200м были за клампом
-	# и сталкер топтался на границе вечно, не доходя до цели)
+	# Точка побега - ЗА границей карты (200м), чтобы несун шёл до самого выхода
 	if monolith and is_instance_valid(monolith):
 		var dir = (stalker.global_position - monolith.global_position).normalized()
-		return monolith.global_position + dir * 150
+		return monolith.global_position + dir * 210
 	return stalker.global_position + Vector3(120, 0, 0)
 
 
