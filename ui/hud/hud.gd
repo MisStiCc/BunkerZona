@@ -1561,6 +1561,12 @@ func _refresh_loadout_ui():
                                         pb.custom_minimum_size = Vector2(0, 30)
                                         pb.add_theme_font_size_override("font_size", 12)
                                         pb.focus_mode = Control.FOCUS_NONE
+                                        # Иконки пачек I-IV (помощник, стальные плиты)
+                                        var pk_icon: String = "res://assets/ui/icons/packs/pack_%d.png" % (i + 1)
+                                        if ResourceLoader.exists(pk_icon):
+                                                        pb.icon = load(pk_icon)
+                                                        pb.expand_icon = true
+                                                        pb.add_theme_constant_override("icon_max_width", 20)
                                         pb.pressed.connect(_on_pack_tab.bind(i))
                                         mutant_panel.add_child(pb)
                                         _pack_btns.append(pb)

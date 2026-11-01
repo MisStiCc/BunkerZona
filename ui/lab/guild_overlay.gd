@@ -152,7 +152,11 @@ func _page_overview(body: Control) -> void:
 	head.add_theme_constant_override("separation", 12)
 	v.add_child(head)
 	var emblem := TextureRect.new()
-	if ResourceLoader.exists("res://assets/ui/brand/logo_stack.png"):
+	# Эмблема гильдии (щит с трефойлом, помощник); нет файла - лого стека
+	var emblem_path := "res://assets/ui/guild/guild_emblem_256.png"
+	if ResourceLoader.exists(emblem_path):
+			emblem.texture = load(emblem_path)
+	elif ResourceLoader.exists("res://assets/ui/brand/logo_stack.png"):
 			emblem.texture = load("res://assets/ui/brand/logo_stack.png")
 	emblem.custom_minimum_size = Vector2(96, 78)
 	emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -535,9 +539,21 @@ func _war_block(war: Dictionary) -> Control:
 	sb.set_corner_radius_all(10)
 	sb.set_content_margin_all(10)
 	panel.add_theme_stylebox_override("panel", sb)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 10)
+	panel.add_child(h)
+	# Багровое знамя войны (глиф-молния)
+	var banner := TextureRect.new()
+	if ResourceLoader.exists("res://assets/ui/guild/guild_banner_crimson.png"):
+			banner.texture = load("res://assets/ui/guild/guild_banner_crimson.png")
+			banner.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			banner.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			banner.custom_minimum_size = Vector2(64, 64)
+			h.add_child(banner)
 	var v := VBoxContainer.new()
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.add_theme_constant_override("separation", 4)
-	panel.add_child(v)
+	h.add_child(v)
 	var title := Label.new()
 	title.text = Loc.t("guild.war_block_title")
 	title.add_theme_font_override("font", BunkerUI.font_title())

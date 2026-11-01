@@ -300,6 +300,9 @@ func _hunt_spawn_next():
                                 # Гильд-босс: ГИБРИД двух боссов (скиллы обоих), пробуждённый
                                 # фиолетовый окрас, ×2.2 крупнее обычного. Стоит и дерётся,
                                 # HP = остаток недельного пула
+                                var sm_gb = get_tree().get_first_node_in_group("sound_manager")
+                                if sm_gb and sm_gb.has_method("play_sound"):
+                                                sm_gb.play_sound("mutant_guildboss", 0.9)   # рык «двух боссов в одном»
                                 data = data.duplicate()
                                 var hybrid_ids: Array = BossHuntData.BOSSES.keys()
                                 hybrid_ids.erase(id)
