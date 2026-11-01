@@ -1,6 +1,6 @@
 # core/event_manager.gd
 extends RefCounted
-class_name EventManager
+class_name EventOps
 
 ## Циклические события live-ops (D24): текущий ивент по дате, счёт,
 ## осколки, вехи, магазин. Статика над сейвом (паттерн GuildSys);

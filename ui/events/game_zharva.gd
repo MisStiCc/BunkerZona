@@ -441,7 +441,7 @@ func _finish() -> void:
 	_busy = true
 	var shards := 0
 	if game_manager and game_manager.current_save_data:
-		shards = EventManager.add_score(game_manager.current_save_data, _event, _score)
+		shards = EventOps.add_score(game_manager.current_save_data, _event, _score)
 		game_manager.save_to_active_slot()
 	var sm = get_tree().get_first_node_in_group("sound_manager")
 	if sm and sm.has_method("play_sound"):

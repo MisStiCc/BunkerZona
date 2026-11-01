@@ -32,7 +32,7 @@ func _ready() -> void:
 func open() -> void:
 	_event = EventsData.current_event(int(Time.get_unix_time_from_system()))
 	if game_manager and game_manager.current_save_data:
-		EventManager.state(game_manager.current_save_data)
+		EventOps.state(game_manager.current_save_data)
 	_refresh()
 	_root.visible = true
 
@@ -181,7 +181,7 @@ func _refresh() -> void:
 	_title.text = Loc.t("evt.banner") % str(_event["title_" + lang])
 	_desc.text = str(_event["desc_" + lang])
 	_time.text = Loc.t("evt.time_left") % int(_event["days_left"])
-	var es := EventManager.state(game_manager.current_save_data) \
+	var es := EventOps.state(game_manager.current_save_data) \
 		if game_manager and game_manager.current_save_data else {}
 	_score.text = Loc.t("evt.score_line") % [int(es.get("score", 0)), int(es.get("best", 0))]
 	_shards.text = Loc.t("evt.shards_line") % int(es.get("shards", 0))
@@ -249,7 +249,7 @@ func _fill_milestones(es: Dictionary) -> void:
 		lbl.clip_text = true
 		row.add_child(lbl)
 		var claimed: bool = int(es.get("claimed", []).find(i)) != -1
-		var ready: bool = EventManager.milestone_ready(es, i)
+		var ready: bool = EventOps.milestone_ready(es, i)
 		var score_now := int(es.get("score", 0)) if str(es.get("event_id", "")) == str(_event["id"]) else 0
 		if claimed:
 				lbl.text = "✓  %d — %s" % [goal, _milestone_text(i)]
@@ -290,7 +290,7 @@ func _milestone_text(idx: int) -> String:
 func _fill_shop() -> void:
 	for c in _shop_list.get_children():
 		c.queue_free()
-	var es := EventManager.state(game_manager.current_save_data) \
+	var es := EventOps.state(game_manager.current_save_data) \
 		if game_manager and game_manager.current_save_data else {}
 	for shop_id in EventsData.SHOP:
 		var item: Dictionary = EventsData.SHOP[shop_id]
@@ -323,7 +323,7 @@ func _fill_shop() -> void:
 func _on_claim(idx: int) -> void:
 	if game_manager == null or game_manager.current_save_data == null:
 		return
-	var prem := EventManager.claim_milestone(game_manager.current_save_data, idx)
+	var prem := EventOps.claim_milestone(game_manager.current_save_data, idx)
 	if not prem.is_empty():
 		var sm = get_tree().get_first_node_in_group("sound_manager")
 		if sm and sm.has_method("play_sound"):
@@ -334,7 +334,7 @@ func _on_claim(idx: int) -> void:
 func _on_buy(shop_id: String) -> void:
 	if game_manager == null or game_manager.current_save_data == null:
 		return
-	var payload := EventManager.shop_buy(game_manager.current_save_data, shop_id)
+	var payload := EventOps.shop_buy(game_manager.current_save_data, shop_id)
 	var sm = get_tree().get_first_node_in_group("sound_manager")
 	if sm and sm.has_method("play_sound"):
 		sm.play_sound("exchange" if not payload.is_empty() else "ui_hover", 0.7)
