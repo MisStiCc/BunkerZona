@@ -493,8 +493,40 @@ func _apply_bunker_style():
                 help_btn.pressed.connect(_on_codex_pressed)
                 add_child(help_btn)
 
+        # --- Баннер ивента (D24): кнопка над версией слева, лёгкий пульс ---
+        var ev := EventsData.current_event(int(Time.get_unix_time_from_system()))
+        if get_node_or_null("EventBanner") == null:
+                var ev_btn := Button.new()
+                ev_btn.name = "EventBanner"
+                ev_btn.text = Loc.t("evt.banner") % str(ev["title_" + ("ru" if Loc.lang == "ru" else "en")])
+                ev_btn.tooltip_text = str(ev["desc_" + ("ru" if Loc.lang == "ru" else "en")])
+                ev_btn.anchor_top = 1.0
+                ev_btn.anchor_bottom = 1.0
+                ev_btn.offset_left = 20
+                ev_btn.offset_right = 340
+                ev_btn.offset_top = -80
+                ev_btn.offset_bottom = -40
+                ev_btn.grow_vertical = Control.GROW_DIRECTION_BEGIN
+                ev_btn.focus_mode = Control.FOCUS_NONE
+                BunkerUI.style_button(ev_btn, "hazard", 14)
+                ev_btn.pressed.connect(_on_event_banner)
+                add_child(ev_btn)
+                var tw := create_tween()
+                tw.set_loops(2)
+                tw.tween_property(ev_btn, "modulate:a", 0.65, 0.6)
+                tw.tween_property(ev_btn, "modulate:a", 1.0, 0.6)
+
 
 var _codex: CodexOverlay = null
+var _event_hub: EventHub = null
+
+
+func _on_event_banner():
+        _play_click_sound()
+        if _event_hub == null:
+                _event_hub = EventHub.new()
+                add_child(_event_hub)
+        _event_hub.open()
 
 
 func _on_codex_pressed():
