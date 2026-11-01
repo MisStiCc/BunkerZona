@@ -455,8 +455,21 @@ func _patrol(_delta):
         
         var target_pos = patrol_points[current_patrol_index]
         
-        # Используем навигацию для движения к точке патруля
-        if navigation_component and not navigation_component.is_navigating():
+        # Без сталкеров ходим НАПРЯМУЮ: сотня мутантов непрерывно запрашивает
+        # пути у навмеша и роняет FPS (репорт: толпа тормозит в затишье,
+        # с волной - норм). Препятствия страхует антизастревание v3;
+        # сталкеры рядом - навмешь (обход строений) как раньше
+        if target_stalker == null:
+                var dir3: Vector3 = target_pos - global_position
+                var dir2 := Vector2(dir3.x, dir3.z)
+                if dir2.length() > 0.5:
+                        var dir := Vector3(dir2.x, 0.0, dir2.y).normalized()
+                        velocity.x = dir.x * speed * 0.6
+                        velocity.z = dir.z * speed * 0.6
+                else:
+                        velocity.x = 0.0
+                        velocity.z = 0.0
+        elif navigation_component and not navigation_component.is_navigating():
                 navigation_component.move_to(target_pos)
         
         # Прибытие по горизонтали: вертикальные 1.8м до навмеша съедали порог
@@ -464,7 +477,7 @@ func _patrol(_delta):
         var to_point = target_pos - global_position
         if Vector2(to_point.x, to_point.z).length() < 1.5:
                 current_patrol_index = (current_patrol_index + 1) % patrol_points.size()
-                if navigation_component:
+                if target_stalker != null and navigation_component:
                         navigation_component.move_to(patrol_points[current_patrol_index])
         
         # В патруле тоже ищем цели

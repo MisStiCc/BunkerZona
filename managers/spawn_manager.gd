@@ -17,6 +17,12 @@ signal synergy_activated(synergy: Dictionary)
 # Параметры спавна
 @export var max_waves: int = 3
 @export var wave_break: float = 45.0
+
+# Кнопка «вызвать волну» (выживание): размер последней волны, киллы на её
+# старте и флаг живой передышки (для гейта "перебей больше половины")
+var wave_spawned: int = 0
+var _wave_kill_base: int = 0
+var _break_pending: bool = false
 @export var min_stalkers_per_wave: int = 12
 @export var max_stalkers_per_wave: int = 24
 @export var spawn_radius: float = 120.0
@@ -196,6 +202,23 @@ func force_wave():
                 _start_wave()
 
 
+## Кнопка «вызвать волну»: в передышке и убито БОЛЬШЕ ПОЛОВИНЫ волны
+func can_force_wave() -> bool:
+        if not is_active or is_spawning or not _break_pending:
+                return false
+        var killed_in_wave: int = _stalkers_killed - _wave_kill_base
+        return wave_spawned > 0 and killed_in_wave * 2 > wave_spawned
+
+
+## Досрочный вызов: гасим флаг передышки (спящее ожидание проснётся и выйдет)
+func force_next_wave() -> bool:
+        if not can_force_wave():
+                return false
+        _break_pending = false
+        _start_wave()
+        return true
+
+
 func set_difficulty(difficulty: float):
         _difficulty = difficulty
         # print("Сложность спавна: " + str(difficulty))
@@ -213,6 +236,8 @@ func _start_wave():
 
         is_spawning = true
         current_wave += 1
+        _break_pending = false
+        _wave_kill_base = _stalkers_killed
 
         _spawn_reward_mutants()
 
@@ -234,6 +259,7 @@ func _start_wave():
                 await get_tree().create_timer(0.3).timeout
 
         is_spawning = false
+        wave_spawned = spawned
         wave_ended.emit(current_wave, spawned)
         # print("Волна " + str(current_wave) + " завершена, создано: " + str(spawned))
 
@@ -248,9 +274,10 @@ func _schedule_next_wave():
         if not is_active:
                 return
         break_started.emit(current_wave, wave_break)
+        _break_pending = true
         # print("Пауза между волнами: " + str(wave_break) + " с. Следующая волна: " + str(current_wave + 1))
         await get_tree().create_timer(wave_break).timeout
-        if not is_active:
+        if not is_active or not _break_pending:
                 return
         _start_wave()
 

@@ -102,6 +102,7 @@ var _echo_btn: Button = null
 var _active_pack: int = 0
 var _pack_tabs_built: bool = false
 var _pack_help_btn: Button = null   # «?» - справка по пачкам
+var _next_wave_btn: Button = null   # выживание: вызвать следующую волну досрочно
 var _pack_info_root: Control = null # попап-справка (строится лениво)
 var _touch_anom_cat: String = "heat"
 var _touch_mut_cat: String = "squad"
@@ -156,6 +157,32 @@ func _ready():
                                 zone_controller.wave_started.connect(_on_wave_started)
                                 if zone_controller.has_signal("wave_break_started"):
                                                 zone_controller.wave_break_started.connect(_on_break_started)
+
+                # Кнопка «ВЫЗВАТЬ ВОЛНУ» (выживание): скип передышки, если
+                # перебито больше половины волны. Видимость тикает раз в 0.5с
+                var nw := Button.new()
+                nw.name = "NextWaveButton"
+                nw.text = Loc.t("hud.next_wave")
+                nw.custom_minimum_size = Vector2(240, 44)
+                nw.anchor_left = 0.5
+                nw.anchor_right = 0.5
+                nw.anchor_top = 1.0
+                nw.anchor_bottom = 1.0
+                nw.offset_left = -130
+                nw.offset_right = 130
+                nw.offset_top = -158
+                nw.offset_bottom = -114
+                nw.focus_mode = Control.FOCUS_NONE
+                nw.visible = false
+                BunkerUI.style_button(nw, "steel", 15)
+                nw.pressed.connect(_on_next_wave_pressed)
+                add_child(nw)
+                _next_wave_btn = nw
+                var nw_timer := Timer.new()
+                nw_timer.wait_time = 0.5
+                nw_timer.autostart = true
+                nw_timer.timeout.connect(_update_next_wave_btn)
+                add_child(nw_timer)
 
                 _connect_buttons()
                 _mut_header_btn = get_node_or_null("MutantPanel/Header")
@@ -1339,6 +1366,27 @@ const ANOMALY_ORDER := ["heat_anomaly", "electric_anomaly", "acid_anomaly", "gra
 const MUTANT_ORDER := ["zombie", "dog_mutant", "flesh", "snork_mutant", "pseudodog", "poltergeist", "controller_mutant", "bloodsucker", "chimera", "pseudogiant"]
 # Короткие имена эксклюзивов для боевых кнопок (полные - в подсказке и галерее)
 const EXCLUSIVE_SHORT := {"alpha_pseudodog": "Альфа-вожак", "ash_snork": "Пепельник", "obsidian_controller": "Обсидиан.пастырь"}
+
+
+## Выживание: тик видимости кнопки «ВЫЗВАТЬ ВОЛНУ» (раз в 0.5с)
+func _update_next_wave_btn() -> void:
+                if _next_wave_btn == null:
+                                return
+                if zone_controller == null or zone_controller.get("run_params") == null:
+                                _next_wave_btn.visible = false
+                                return
+                var is_survival: bool = str(zone_controller.run_params.get("run_mode", "")) == "survival"
+                var sm = zone_controller.spawn_manager
+                _next_wave_btn.visible = is_survival and not start_panel.visible                                 and sm != null and sm.has_method("can_force_wave") and sm.can_force_wave()
+
+
+func _on_next_wave_pressed() -> void:
+                _play_click_sound()
+                var sm = zone_controller.spawn_manager if zone_controller else null
+                if sm == null or not sm.has_method("force_next_wave") or not sm.force_next_wave():
+                                show_reward_note(Loc.t("hud.next_wave_hint"))
+                                return
+                show_reward_note(Loc.t("hud.next_wave_called"))
 
 
 ## D20 мультипачка: возврат в подготовку перед боем следующей пачки.
