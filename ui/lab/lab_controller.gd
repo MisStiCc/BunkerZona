@@ -3434,8 +3434,22 @@ func _on_prem_claim_all() -> void:
                         granted += 1
         game_manager.save_to_active_slot()
         if granted > 0:
+                var sm = get_tree().get_first_node_in_group("sound_manager")
+                if sm and sm.has_method("play_sound"):
+                        sm.play_sound("upgrade", 0.95, 1.05)
                 _show_message(Loc.t("store.claimed_all", {"n": granted}))
         _tw_refresh()
+
+
+## Кнопка на треке: пока пропуска нет — открыть магазин (CTA покупки);
+## когда есть — забрать всё накопленное премиум-содержимое
+func _on_prem_track_button() -> void:
+        if game_manager and game_manager.current_save_data \
+                        and StoreData.pass_active(Prog.track_cycle(), game_manager.current_save_data.owned):
+                _on_prem_claim_all()
+        else:
+                _play_click_sound()
+                _on_store_pressed()
 
 
 ## D18 Прорыв: 5★ -> 6★ за Искры Пробуждения
@@ -3816,7 +3830,7 @@ func _build_arena_ui():
         if bottom:
                 var arena_btn := Button.new()
                 arena_btn.name = "ArenaButton"
-                arena_btn.text = "АРЕНА"
+                arena_btn.text = Loc.t("arena.tab")
                 arena_btn.custom_minimum_size = Vector2(0, 62)
                 arena_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
                 BunkerUI.style_button(arena_btn, "steel", 18)
@@ -3852,7 +3866,7 @@ func _build_arena_ui():
 
         var back := Button.new()
         back.name = "ArenaBackButton"
-        back.text = "◄  НАЗАД"
+        back.text = Loc.t("arena.back")
         back.custom_minimum_size = Vector2(180, 56)
         back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         BunkerUI.style_button(back, "steel", 18)
@@ -3861,13 +3875,13 @@ func _build_arena_ui():
         head.add_child(back)
 
         var t1 := Label.new()
-        t1.text = "АРЕНА"
+        t1.text = Loc.t("arena.title")
         t1.add_theme_font_override("font", BunkerUI.font_title())
         t1.add_theme_font_size_override("font_size", 34)
         t1.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
         head.add_child(t1)
         var t2 := Label.new()
-        t2.text = "ВЫЖИВАНИЯ"
+        t2.text = Loc.t("arena.subtitle")
         t2.add_theme_font_override("font", BunkerUI.font_title())
         t2.add_theme_font_size_override("font_size", 34)
         t2.add_theme_color_override("font_color", BunkerUI.DANGER_HI)
@@ -3878,14 +3892,14 @@ func _build_arena_ui():
         var sv := VBoxContainer.new()
         sv.add_theme_constant_override("separation", 0)
         var sa := Label.new()
-        sa.text = "ВЫБРОС I"
+        sa.text = Loc.t("arena.blowout_roman")
         sa.add_theme_font_override("font", BunkerUI.font_title())
         sa.add_theme_font_size_override("font_size", 18)
         sa.add_theme_color_override("font_color", BunkerUI.HAZARD)
         sa.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         var sb := Label.new()
         _arena_season_label = sb
-        sb.text = "сезон %d · лига «САРКОФАГ»" % _arena_season_number()
+        sb.text = Loc.t("arena.season_liga", {"n": _arena_season_number()})
         sb.add_theme_font_override("font", BunkerUI.font_mono())
         sb.add_theme_font_size_override("font_size", 12)
         sb.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
@@ -3914,14 +3928,14 @@ func _build_arena_ui():
         rv.add_theme_constant_override("separation", 0)
         var r1 := Label.new()
         _arena_rank_label = r1
-        r1.text = "— МЕСТО"
+        r1.text = Loc.t("arena.place_suffix")
         r1.add_theme_font_override("font", BunkerUI.font_title())
         r1.add_theme_font_size_override("font_size", 18)
         r1.add_theme_color_override("font_color", Color("ffd94d"))
         r1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         var r2 := Label.new()
         _arena_rank_sub = r2
-        r2.text = "зона повышения"
+        r2.text = Loc.t("arena.promo_zone")
         r2.add_theme_font_override("font", BunkerUI.font_mono())
         r2.add_theme_font_size_override("font_size", 11)
         r2.add_theme_color_override("font_color", Color("9a8349"))
@@ -3983,7 +3997,7 @@ func _build_arena_ui():
         bless.add_theme_stylebox_override("panel", bsb2)
         var bl := Label.new()
         _arena_bless_label = bl
-        bl.text = "Благословение сезона: +10% биомассы с волн выживания и +1 крутка за каждую 5-ю победу в вызове."
+        bl.text = Loc.t("arena.blessing")
         bl.add_theme_font_override("font", BunkerUI.font_body())
         bl.add_theme_font_size_override("font_size", 14)
         bl.add_theme_color_override("font_color", Color("c9b06a"))
@@ -3995,7 +4009,7 @@ func _build_arena_ui():
         quick.add_theme_constant_override("separation", 12)
         side.add_child(quick)
         var q1 := Button.new()
-        q1.text = "▶  БЫСТРЫЙ ВЫЗОВ"
+        q1.text = Loc.t("arena.quick")
         q1.custom_minimum_size = Vector2(0, 60)
         q1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         BunkerUI.style_button(q1, "hazard", 17, true)
@@ -4003,7 +4017,7 @@ func _build_arena_ui():
         q1.mouse_entered.connect(_play_hover_sound)
         quick.add_child(q1)
         var q2 := Button.new()
-        q2.text = "СМЕНА ОБОРОНЫ"
+        q2.text = Loc.t("arena.change_defense")
         q2.custom_minimum_size = Vector2(0, 60)
         q2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         BunkerUI.style_button(q2, "steel", 15)
@@ -4126,7 +4140,7 @@ func _make_arena_foe_row(foe: Dictionary, is_me: bool) -> Control:
         ava.add_theme_stylebox_override("panel", asb)
         var al := Label.new()
         al.set_anchors_preset(Control.PRESET_FULL_RECT)
-        al.text = "Я" if is_me else str(foe.get("name", "?")).substr(0, 1)
+        al.text = Loc.t("arena.you_initial") if is_me else str(foe.get("name", "?")).substr(0, 1)
         al.add_theme_font_override("font", BunkerUI.font_title())
         al.add_theme_font_size_override("font_size", 28)
         al.add_theme_color_override("font_color", Color("ffd94d") if is_me else Color(0.9, 1.0, 0.8, 0.3))
@@ -4141,7 +4155,7 @@ func _make_arena_foe_row(foe: Dictionary, is_me: bool) -> Control:
         who.alignment = BoxContainer.ALIGNMENT_CENTER
         who.add_theme_constant_override("separation", 0)
         var nm := Label.new()
-        nm.text = "СТАЛКЕР" if is_me else str(foe.get("name", ""))
+        nm.text = Loc.t("arena.you_name") if is_me else str(foe.get("name", ""))
         nm.add_theme_font_override("font", BunkerUI.font_title())
         nm.add_theme_font_size_override("font_size", 19)
         nm.add_theme_color_override("font_color", Color("ffd94d") if is_me else BunkerUI.TEXT_LIGHT)
@@ -4151,9 +4165,9 @@ func _make_arena_foe_row(foe: Dictionary, is_me: bool) -> Control:
                 var mcount := 0
                 if lab_data:
                         mcount = lab_data.unlocked_mutants.size()
-                cl.text = "в обороне %d из %d мутантов" % [lab_data.arena_defense_squad.size(), mcount]
+                cl.text = Loc.t("arena.defense_count", {"a": lab_data.arena_defense_squad.size(), "b": mcount})
         else:
-                cl.text = "%s · %s в отряде" % [str(foe.get("clan", "")), str(foe.get("pet", ""))]
+                cl.text = Loc.t("arena.foe_squad", {"clan": str(foe.get("clan", "")), "pet": str(foe.get("pet", ""))})
         cl.add_theme_font_override("font", BunkerUI.font_body())
         cl.add_theme_font_size_override("font_size", 13)
         cl.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
@@ -4192,11 +4206,11 @@ func _make_arena_foe_row(foe: Dictionary, is_me: bool) -> Control:
         call_btn.custom_minimum_size = Vector2(170, 50)
         call_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         if is_me:
-                call_btn.text = "ОБОРОНА"
+                call_btn.text = Loc.t("arena.defense_btn")
                 BunkerUI.style_button(call_btn, "ghost", 15)
                 call_btn.pressed.connect(_on_arena_defend_run_pressed)
         else:
-                call_btn.text = "ВЫЗОВ"
+                call_btn.text = Loc.t("arena.challenge_btn")
                 BunkerUI.style_button(call_btn, "hazard", 16, true)
                 call_btn.pressed.connect(_on_arena_challenge.bind(str(foe.get("name", ""))))
         call_btn.mouse_entered.connect(_play_hover_sound)
@@ -4234,7 +4248,7 @@ func _make_claim_row(kind: String, idx: int, k: String, v: String) -> Control:
         vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
         row.add_child(vl)
         var btn := Button.new()
-        btn.text = "ЗАБРАТЬ"
+        btn.text = Loc.t("medals.claim")
         btn.custom_minimum_size = Vector2(120, 36)
         BunkerUI.style_button(btn, "primary", 14)
         btn.pressed.connect(_on_arena_claim.bind(kind, idx))
@@ -4365,15 +4379,15 @@ func _rebuild_arena_panel():
 
         # Живая шапка: сезон, место, благословение
         if _arena_season_label:
-                _arena_season_label.text = "сезон %d · лига «САРКОФАГ»" % _arena_season_number()
+                _arena_season_label.text = Loc.t("arena.season_liga", {"n": _arena_season_number()})
         if _arena_rank_label:
-                _arena_rank_label.text = "%d МЕСТО" % my_place
+                _arena_rank_label.text = Loc.t("arena.place_n", {"n": my_place})
         if _arena_rank_sub:
-                _arena_rank_sub.text = "зона повышения" if my_place <= 2 else "закрепись в топ-2"
+                _arena_rank_sub.text = Loc.t("arena.promo_zone") if my_place <= 2 else Loc.t("arena.hold_top")
         if _arena_bless_label:
                 var wins_total: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
                 var to_spin: int = 5 - (wins_total % 5)
-                _arena_bless_label.text = "Благословение сезона: +10%% биомассы с волн выживания и +1 крутка за каждую 5-ю победу в вызове. Побед: %d · до крутки: %d" % [wins_total, to_spin]
+                _arena_bless_label.text = Loc.t("arena.blessing_stat", {"wins": wins_total, "left": to_spin})
 
         var title := Label.new()
         title.add_theme_font_override("font", BunkerUI.font_title())
@@ -4388,7 +4402,7 @@ func _rebuild_arena_panel():
                         for m in medals:
                                 if bool(m[3]):
                                         done_count += 1
-                        title.text = "СЕЗОННЫЕ НАГРАДЫ · медалей %d/%d" % [done_count, medals.size()]
+                        title.text = Loc.t("arena.season_rewards", {"a": done_count, "b": medals.size()})
                         var midx := 0
                         for m in medals:
                                 var mclaimed: bool = bool(lab_data.arena_medals_claimed.get(midx, false))
@@ -4401,7 +4415,7 @@ func _rebuild_arena_panel():
                                         _arena_board_box.add_child(_make_arena_board_row(str(m[0]), mval, false))
                                 midx += 1
                 1:
-                        title.text = "ЗАЛ СЛАВЫ · лига «САРКОФАГ»"
+                        title.text = Loc.t("arena.hall")
                         var place := 1
                         for e in board:
                                 _arena_board_box.add_child(_make_arena_board_row(
@@ -4410,7 +4424,7 @@ func _rebuild_arena_panel():
                                         str(e.get("name", "")).begins_with("СТАЛКЕР")))
                                 place += 1
                 2:
-                        title.text = "ОТЧЁТЫ БОЁВ"
+                        title.text = Loc.t("arena.reports")
                         _arena_board_box.add_child(_make_arena_board_row("Забегов всего", str(total_runs)))
                         _arena_board_box.add_child(_make_arena_board_row("Побед", str(wins), true))
                         _arena_board_box.add_child(_make_arena_board_row("Поражений", str(losses)))
@@ -4418,7 +4432,7 @@ func _rebuild_arena_panel():
                         _arena_board_box.add_child(_make_arena_board_row("Сталкеров перебито", str(kills)))
                         _arena_board_box.add_child(_make_arena_board_row("Артефактов в хранилище", str(lab_data.won_artifacts.size())))
                 3:
-                        title.text = "ЗАЩИТНЫЙ ОТРЯД"
+                        title.text = Loc.t("arena.defense_squad")
                         for t in lab_data.unlocked_mutants:
                                 _arena_board_box.add_child(_make_arena_board_row(
                                         Loc.type_name(str(t)),
@@ -4426,9 +4440,9 @@ func _rebuild_arena_panel():
                         if lab_data.unlocked_mutants.is_empty():
                                 _arena_board_box.add_child(_make_arena_board_row("Отряд пуст", "крутите Гачу Зоны"))
                 _:
-                        title.text = "ЗАДАЧИ СЕЗОНА"
-                        var st_names := ["Победы сезона ×10", "Рекорд волны 30", "Вызовы приняты ×5", "Перебить 500 сталкеров"]
-                        var st_rew := ["+10 круток", "+15 круток", "+5 круток", "+50 000 био"]
+                        title.text = Loc.t("arena.tasks")
+                        var st_names := [Loc.t("arena.task_wins"), Loc.t("arena.task_wave"), Loc.t("arena.task_calls"), Loc.t("arena.task_kills")]
+                        var st_rew := [Loc.t("arena.rew_rolls", {"n": 10}), Loc.t("arena.rew_rolls", {"n": 15}), Loc.t("arena.rew_rolls", {"n": 5}), Loc.t("arena.rew_bio")]
                         var st_prog := ["%d / 10" % mini(wins, 10), "%d / 30" % mini(rec, 30), "%d / 5" % mini(total_runs, 5), "%d / 500" % mini(kills, 500)]
                         var st_done := [wins >= 10, rec >= 30, total_runs >= 5, kills >= 500]
                         for si in range(4):
@@ -4436,7 +4450,7 @@ func _rebuild_arena_panel():
                                 if bool(st_done[si]) and not sclaimed:
                                         _arena_board_box.add_child(_make_claim_row("task", si, str(st_names[si]), "%s · %s" % [str(st_rew[si]), str(st_prog[si])]))
                                 elif sclaimed:
-                                        _arena_board_box.add_child(_make_arena_board_row(str(st_names[si]), "ПОЛУЧЕНО · %s" % str(st_rew[si]), true))
+                                        _arena_board_box.add_child(_make_arena_board_row(str(st_names[si]), Loc.t("arena.claimed", {"n": str(st_rew[si])}), true))
                                 else:
                                         _arena_board_box.add_child(_make_arena_board_row(str(st_names[si]), "%s · %s" % [str(st_rew[si]), str(st_prog[si])], false))
 
@@ -4458,7 +4472,7 @@ func _on_arena_challenge(foe_name: String):
                         if str(r.get("name", "")) == foe_name:
                                 target_wave = int(r.get("wave", 0))
                                 break
-                _show_message("Вызов принят: %s. Цель - превзойти волну %d!" % [foe_name, target_wave], 1.6)
+                _show_message(Loc.t("arena.challenge_accepted", {"name": foe_name, "n": target_wave}), 1.6)
         game_manager.arena_run_kind = "challenge"
         game_manager.arena_target_wave = target_wave
         _arena_season_timer.stop()
@@ -4473,7 +4487,7 @@ func _on_arena_defend_run_pressed():
         if not game_manager:
                 return
         game_manager.arena_run_kind = "defense"
-        _show_message("Оборона арены: отряд принял бой!", 1.6)
+        _show_message(Loc.t("arena.defense_fight"), 1.6)
         _arena_season_timer.stop()
         game_manager.set_selected_run_mode("survival")
         _refresh_campaign_ui()
@@ -4571,13 +4585,13 @@ func _build_defense_ui():
         head.add_theme_constant_override("separation", 16)
         root.add_child(head)
         var title := Label.new()
-        title.text = "СМЕНА ОБОРОНЫ"
+        title.text = Loc.t("arena.change_defense")
         title.add_theme_font_override("font", BunkerUI.font_title())
         title.add_theme_font_size_override("font_size", 34)
         title.add_theme_color_override("font_color", BunkerUI.HAZARD)
         head.add_child(title)
         var sub := Label.new()
-        sub.text = "кто держит арену, пока ты в вылазке"
+        sub.text = Loc.t("arena.defense_sub")
         sub.add_theme_font_override("font", BunkerUI.font_body())
         sub.add_theme_font_size_override("font_size", 15)
         sub.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
@@ -4587,7 +4601,7 @@ func _build_defense_ui():
         sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         head.add_child(sp)
         var done_btn := Button.new()
-        done_btn.text = "ГОТОВО"
+        done_btn.text = Loc.t("arena.done")
         done_btn.custom_minimum_size = Vector2(160, 56)
         BunkerUI.style_button(done_btn, "hazard", 17, true)
         done_btn.pressed.connect(_on_defense_close_pressed)
@@ -4783,7 +4797,7 @@ func _build_gates_ui():
         root.add_child(foot)
 
         var back := Button.new()
-        back.text = "◄  НАЗАД"
+        back.text = Loc.t("arena.back")
         back.custom_minimum_size = Vector2(190, 60)
         BunkerUI.style_button(back, "steel", 19)
         back.pressed.connect(_on_gates_close_pressed)
@@ -4987,7 +5001,7 @@ func _build_tasks_ui():
         root.add_child(head)
 
         var back := Button.new()
-        back.text = "◄  НАЗАД"
+        back.text = Loc.t("arena.back")
         back.custom_minimum_size = Vector2(170, 54)
         back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         BunkerUI.style_button(back, "steel", 18)
@@ -5174,25 +5188,27 @@ func _refresh_tasks_panel():
         else:
                 _tasks_track_sub.text = "трек закрыт — собирай очки нового цикла"
                 _tasks_track_bar_max(1, 0)
-        # D16: бейдж пропуска сезона + "забрать всё" за пройденные ступени
+        # D16: боевой пропуск — статус золотом или CTA покупки (открывает магазин)
         if StoreData.ENABLED and game_manager and game_manager.current_save_data:
                 var owned_p: Dictionary = game_manager.current_save_data.owned
                 var cyc_p: int = Prog.track_cycle()
-                if StoreData.pass_active(cyc_p, owned_p):
-                        _tasks_track_sub.text += "  ·  ПРЕМИУМ СЕЗОНА АКТИВЕН"
-                        if _tasks_prem_btn == null:
-                                _tasks_prem_btn = Button.new()
-                                _tasks_prem_btn.custom_minimum_size = Vector2(240, 34)
-                                _tasks_prem_btn.add_theme_font_size_override("font_size", 13)
-                                BunkerUI.style_button(_tasks_prem_btn, "hazard", 13)
-                                _tasks_prem_btn.pressed.connect(_on_prem_claim_all)
-                                if _tasks_points_label and _tasks_points_label.get_parent():
+                if _tasks_prem_btn == null:
+                        _tasks_prem_btn = Button.new()
+                        _tasks_prem_btn.custom_minimum_size = Vector2(260, 34)
+                        _tasks_prem_btn.add_theme_font_size_override("font_size", 13)
+                        BunkerUI.style_button(_tasks_prem_btn, "hazard", 13)
+                        _tasks_prem_btn.pressed.connect(_on_prem_track_button)
+                        if _tasks_points_label and _tasks_points_label.get_parent():
                                         _tasks_points_label.get_parent().add_child(_tasks_prem_btn)
+                if StoreData.pass_active(cyc_p, owned_p):
                         var pending: int = _prem_pending_count(owned_p, cyc_p)
                         _tasks_prem_btn.visible = pending > 0
-                        _tasks_prem_btn.text = Loc.t("store.claim_all", {"n": pending})
-                elif _tasks_prem_btn:
-                        _tasks_prem_btn.visible = false
+                        _tasks_prem_btn.text = "★ " + Loc.t("store.claim_all", {"n": pending})
+                else:
+                        _tasks_prem_btn.visible = true
+                        _tasks_prem_btn.text = Loc.t("pass.cta")
+        elif _tasks_prem_btn:
+                _tasks_prem_btn.visible = false
         # Задачи и сундуки
         _rebuild_tasks_lists()
         _rebuild_tasks_track()
@@ -5284,7 +5300,7 @@ func _make_task_row(kind: String, t: Dictionary) -> Control:
                 btn.disabled = true
                 BunkerUI.style_button(btn, "steel", 15)
         elif bool(t["done"]):
-                btn.text = "ЗАБРАТЬ"
+                btn.text = Loc.t("medals.claim")
                 BunkerUI.style_button(btn, "primary", 16)
                 btn.pressed.connect(_on_task_claim.bind(kind, str(def["id"])))
         else:
@@ -5302,7 +5318,16 @@ func _on_task_claim(kind: String, id: String):
                 _refresh_tasks_panel()
 
 
+# Боевой пропуск (D16): кэш состояния на пересборку трека
+var _tp_cycle: int = 1
+var _tp_owned: Dictionary = {}
+var _tp_pass: bool = false
+
+
 func _rebuild_tasks_track():
+        _tp_cycle = Prog.track_cycle()
+        _tp_owned = game_manager.current_save_data.owned if game_manager and game_manager.current_save_data else {}
+        _tp_pass = StoreData.ENABLED and StoreData.pass_active(_tp_cycle, _tp_owned)
         for child in _tasks_track_row.get_children():
                 child.queue_free()
         for i in range(1, Prog.TRACK_TIERS + 1):
@@ -5316,7 +5341,7 @@ func _make_chest_tile(tier: int) -> Control:
         var claimed := Prog.tier_claimed(tier)
         var enough := Prog.track_points() >= tier * Prog.TIER_COST
         var tile := Button.new()
-        tile.custom_minimum_size = Vector2(148, 168)
+        tile.custom_minimum_size = Vector2(148, 214)
         var sb := StyleBoxFlat.new()
         sb.bg_color = BunkerUI.STEEL_HI if not claimed else Color(0.06, 0.09, 0.06)
         sb.border_color = col
@@ -5385,34 +5410,149 @@ func _make_chest_tile(tier: int) -> Control:
         state.add_theme_font_size_override("font_size", 13)
         state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         v.add_child(state)
+
+        # ==== ПРЕМИУМ-ПОЛОСА ПРОПУСКА (D16): вторая строка награды ступени ====
+        if StoreData.ENABLED:
+                var prem: Dictionary = StoreData.premium_reward(tier, _tp_cycle)
+                var prem_claimed: bool = _tp_owned.has("prem_%d_%d" % [_tp_cycle, tier])
+                var milestone: bool = StoreData.PASS_PREMIUM.has(tier)
+                var gold := Color(1.0, 0.72, 0.25)
+                var strip := Panel.new()
+                strip.custom_minimum_size = Vector2(0, 46)
+                var psb := StyleBoxFlat.new()
+                psb.set_corner_radius_all(6)
+                psb.set_content_margin_all(3.0)
+                if _tp_pass:
+                        psb.bg_color = Color(gold.r, gold.g, gold.b, 0.16 if not milestone else 0.30)
+                        psb.border_color = gold
+                else:
+                        psb.bg_color = Color(0.10, 0.10, 0.09)
+                        psb.border_color = Color(gold, 0.35)
+                psb.set_border_width_all(2 if milestone else 1)
+                strip.add_theme_stylebox_override("panel", psb)
+                strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                v.add_child(strip)
+
+                var pv := VBoxContainer.new()
+                pv.set_anchors_preset(Control.PRESET_FULL_RECT)
+                pv.add_theme_constant_override("separation", 0)
+                pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                strip.add_child(pv)
+                var head := Label.new()
+                head.text = "★ ПРЕМИУМ" if milestone else "★"
+                head.add_theme_font_override("font", BunkerUI.font_mono())
+                head.add_theme_font_size_override("font_size", 9)
+                head.add_theme_color_override("font_color", gold if _tp_pass else Color(gold, 0.5))
+                head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                pv.add_child(head)
+                var prem_l := Label.new()
+                prem_l.text = _prem_summary(prem)
+                prem_l.add_theme_font_override("font", BunkerUI.font_body())
+                prem_l.add_theme_font_size_override("font_size", 11)
+                prem_l.add_theme_color_override("font_color",
+                        BunkerUI.TEXT_BRIGHT if _tp_pass else BunkerUI.TEXT_FAINT)
+                prem_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                prem_l.clip_text = true
+                pv.add_child(prem_l)
+                var prem_state := Label.new()
+                if not _tp_pass:
+                        prem_state.text = "🔒 ПРОПУСК"
+                        prem_state.add_theme_color_override("font_color", Color(gold, 0.65))
+                elif prem_claimed:
+                        prem_state.text = "✓"
+                        prem_state.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+                elif enough:
+                        prem_state.text = "✦ ГОТОВО"
+                        prem_state.add_theme_color_override("font_color", gold)
+                else:
+                        prem_state.text = "· · ·"
+                        prem_state.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+                prem_state.add_theme_font_override("font", BunkerUI.font_mono())
+                prem_state.add_theme_font_size_override("font_size", 10)
+                prem_state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                pv.add_child(prem_state)
+
+        # Один клик забирает ступень целиком: сундук + премиум (если готов)
         if enough and not claimed:
-                tile.pressed.connect(_on_chest_claim.bind(tier))
+                tile.pressed.connect(_on_tile_pressed.bind(tier))
+        elif _tp_pass and StoreData.prem_claim_pending(tier, _tp_cycle, _tp_owned):
+                tile.pressed.connect(_on_tile_pressed.bind(tier))
         tile.mouse_entered.connect(_play_hover_sound)
         return tile
 
 
-func _on_chest_claim(tier: int):
-        _play_click_sound()
-        var rewards: Dictionary = Prog.claim_tier(tier)
-        if rewards.is_empty():
-                return
+## Короткая строка содержимого премиум-награды
+func _prem_summary(prem: Dictionary) -> String:
         var parts: Array[String] = []
-        if int(rewards.get("biomass", 0)) > 0:
-                parts.append("+%d биомассы" % int(rewards["biomass"]))
-        if int(rewards.get("mutant_rolls", 0)) > 0:
-                parts.append("+%d круток мутантов" % int(rewards["mutant_rolls"]))
-        if int(rewards.get("anomaly_rolls", 0)) > 0:
-                parts.append("+%d круток аномалий" % int(rewards["anomaly_rolls"]))
-        if str(rewards.get("exclusive_type", "")) != "":
-                parts.append("ЭКСКЛЮЗИВ «%s»: %s" % [
-                        str(rewards["exclusive_name"]),
-                        "новый в коллекции" if bool(rewards.get("exclusive_new")) else "повтор — копия на ферму"])
-        if str(rewards.get("ex_anomaly_type", "")) != "":
-                parts.append("АНОМАЛИЯ-ЭКСКЛЮЗИВ «%s»: %s" % [
-                        str(rewards["ex_anomaly_name"]),
-                        "новая в коллекции" if bool(rewards.get("ex_anomaly_new")) else "повтор — +400 биомассы"])
-        _show_message("%s ОТКРЫТ: %s" % [Prog.chest_name(Prog.chest_kind(tier)), ", ".join(parts)], 2.6)
+        if int(prem.get("rolls_mut", 0)) > 0:
+                parts.append("★мут ×%d" % int(prem["rolls_mut"]))
+        if int(prem.get("rolls_art", 0)) > 0:
+                parts.append("★ан ×%d" % int(prem["rolls_art"]))
+        if float(prem.get("bio", 0.0)) > 0.0:
+                parts.append("био %dК" % int(float(prem["bio"]) / 1000.0))
+        if prem.has("cos_frame"):
+                parts.append("рамка")
+        if prem.has("cos_avatar"):
+                parts.append("аватар")
+        if prem.has("cos_title"):
+                parts.append("титул")
+        if prem.has("cos_set"):
+                parts.append("КОМПЛЕКТ")
+        return " · ".join(parts) if not parts.is_empty() else "награда"
+
+
+## Клик по ступени трека: сундук + премиум пропуска одной кнопкой
+func _on_tile_pressed(tier: int) -> void:
+        _play_click_sound()
+        var granted: Array[String] = []
+
+        # Сундук (бесплатная ветка) — с богатым разбором эксклюзивов
+        if not Prog.tier_claimed(tier) and Prog.track_points() >= tier * Prog.TIER_COST:
+                var rewards: Dictionary = Prog.claim_tier(tier)
+                if int(rewards.get("biomass", 0)) > 0:
+                        granted.append("+%d биомассы" % int(rewards["biomass"]))
+                if int(rewards.get("mutant_rolls", 0)) > 0:
+                        granted.append("+%d круток мутантов" % int(rewards["mutant_rolls"]))
+                if int(rewards.get("anomaly_rolls", 0)) > 0:
+                        granted.append("+%d круток аномалий" % int(rewards["anomaly_rolls"]))
+                if str(rewards.get("exclusive_type", "")) != "":
+                        granted.append("ЭКСКЛЮЗИВ «%s»: %s" % [
+                                str(rewards["exclusive_name"]),
+                                "новый в коллекции" if bool(rewards.get("exclusive_new")) else "повтор — копия на ферму"])
+                if str(rewards.get("ex_anomaly_type", "")) != "":
+                        granted.append("АНОМАЛИЯ-ЭКСКЛЮЗИВ «%s»: %s" % [
+                                str(rewards["ex_anomaly_name"]),
+                                "новая в коллекции" if bool(rewards.get("ex_anomaly_new")) else "повтор — +400 биомассы"])
+
+        # Премиум пропуска (если активен и ступень пройдена)
+        if _tp_pass and StoreData.prem_claim_pending(tier, _tp_cycle, _tp_owned) \
+                        and game_manager and game_manager.current_save_data:
+                var prem: Dictionary = StoreData.premium_reward(tier, _tp_cycle)
+                if int(prem.get("rolls_mut", 0)) > 0:
+                        game_manager.grant_mutant_rolls(int(prem["rolls_mut"]), "пропуск сезона")
+                        granted.append("★мут ×%d" % int(prem["rolls_mut"]))
+                if int(prem.get("rolls_art", 0)) > 0:
+                        game_manager.grant_anomaly_rolls(int(prem["rolls_art"]), "пропуск сезона")
+                        granted.append("★ан ×%d" % int(prem["rolls_art"]))
+                if float(prem.get("bio", 0.0)) > 0.0 and game_manager.get_lab_data():
+                        game_manager.get_lab_data().biomass += float(prem["bio"])
+                        granted.append("био %dК" % int(float(prem["bio"]) / 1000.0))
+                for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
+                        if prem.has(cos_key):
+                                game_manager.current_save_data.owned["cos_" + str(prem[cos_key])] = true
+                                granted.append("косметика сезона")
+                _tp_owned["prem_%d_%d" % [_tp_cycle, tier]] = true
+                game_manager.save_to_active_slot()
+
+        if not granted.is_empty():
+                var sm = get_tree().get_first_node_in_group("sound_manager")
+                if sm and sm.has_method("play_sound"):
+                        sm.play_sound("upgrade", 0.9, 1.0)
+                _show_message("%s: %s" % [
+                        Loc.t("pass.claimed_line", {"n": tier, "list": ""}).trim_suffix(": "),
+                        ", ".join(granted)], 3.0)
         _refresh_tasks_panel()
+
 
 
 func _on_prog_task_done(title: String, xp: int, pts: int):

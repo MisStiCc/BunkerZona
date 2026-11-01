@@ -26,6 +26,8 @@ const PAGES := [
 	["codex.tab_packs", ["codex.pack.what", "codex.pack.unlock", "codex.pack.battle", "codex.pack.turn", "codex.pack.roles", "codex.pack.synergy", "codex.pack.stats"]],
 	["codex.tab_rad", ["codex.rad.blow", "codex.rad.zone"]],
 	["codex.tab_modes", ["codex.modes.campaign", "codex.modes.tower", "codex.modes.survival", "codex.modes.season"]],
+	["codex.tab_hunt", ["codex.hunt.what", "codex.hunt.reward", "codex.hunt.escape"]],
+	["codex.tab_guild", ["codex.guild.what", "codex.guild.boss", "codex.guild.tokens"]],
 ]
 
 
@@ -137,7 +139,8 @@ func _refresh() -> void:
 		b.button_pressed = i == _page
 		b.custom_minimum_size = Vector2(0, 40)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.add_theme_font_size_override("font_size", 12)
+		# вкладок много - мельче шрифт, чтобы названия не резались
+		b.add_theme_font_size_override("font_size", 12 if PAGES.size() <= 6 else 10)
 		b.focus_mode = Control.FOCUS_NONE
 		b.pressed.connect(_on_tab.bind(i))
 		_tabs_box.add_child(b)

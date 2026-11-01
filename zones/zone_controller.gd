@@ -154,8 +154,9 @@ func _ready():
                 # Эмбиент забега (задача 15): ветер - лесной на Припяти, степной в Зоне
                 if sm and sm.has_method("play_ambient"):
                                 sm.play_ambient("wind_forest_01" if str(run_params.get("map", "procedural")) == "pripyat" else "wind_open_01")
-                # Погода Припяти (v0.31.2): радиоактивный дождь на передышках
-                if str(run_params.get("map", "procedural")) == "pripyat" and spawn_manager:
+                # Погода (v0.31.2): радиоактивный дождь на передышках - и Припять,
+                # и процедурная Зона (раньше ливал только на Припяти)
+                if spawn_manager:
                                 _weather = PripyatWeather.new()
                                 add_child(_weather)
                                 spawn_manager.break_started.connect(func(_w: int, _d: float): _weather.roll_break())
