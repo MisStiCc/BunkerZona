@@ -26,6 +26,9 @@ class_name SaveData
 @export var hunt_claimed: Dictionary = {}
 # D21 Гильдия (офлайн-эмуляция): имя/казна/жетоны/чат/рейд
 @export var guild_state: Dictionary = {}
+# D24 Циклические события (live-ops): {season, event_id, score, best,
+# shards, claimed:[], bought:{}} — миграция: отсутствует = пусто.
+@export var event_state: Dictionary = {}
 # Режим сложности кампании: easy / normal / hard (CampaignData)
 @export var campaign_mode: String = "normal"
 

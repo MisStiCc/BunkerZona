@@ -82,6 +82,11 @@ static func premium_reward(tier: int, _cycle: int) -> Dictionary:
 	return PASS_ALT_STEP[idx]
 
 
+## Премиум ступени пройден, но ещё не забран (трек/кнопка ЗАБРАТЬ ВСЁ)
+static func prem_claim_pending(tier: int, cycle: int, owned: Dictionary) -> bool:
+	return not owned.has("prem_%d_%d" % [cycle, tier])
+
+
 ## Слоты набора: 12 при купленных conv_slots12, иначе 9
 static func slots_allowed(owned: Dictionary) -> int:
 	if ENABLED and owned.has("conv_slots12"):
