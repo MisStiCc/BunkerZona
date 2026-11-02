@@ -1270,6 +1270,7 @@ func apply_awaken(target: String) -> String:
         lab.biomass -= bio_cost
         lab.add_awaken(target)
         save_to_active_slot()
+        Prog.bump_task("awaken", 1)
         return ""
 
 

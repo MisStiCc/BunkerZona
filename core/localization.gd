@@ -710,6 +710,13 @@ const STRINGS := {
         "uley.win": {"ru": "УЛЕЙ РАЗОРЁН", "en": "THE HIVE IS BROKEN"},
         "uley.dead": {"ru": "Химера пала…", "en": "The Chimera has fallen…"},
         "evt.soon": {"ru": "Этот ивент скоро откроется", "en": "This event opens soon"},
+
+        # ==== ПОЧТА (D25, ui/lab/mail_overlay.gd) ====
+        "mail.button": {"ru": "ПОЧТА", "en": "MAIL"},
+        "mail.title": {"ru": "ПОЧТА БУНКЕРА", "en": "BUNKER MAIL"},
+        "mail.empty": {"ru": "Пусто. Зона молчит — но ненадолго.", "en": "Empty. The Zone is silent - for now."},
+        "mail.claim": {"ru": "ЗАБРАТЬ ВЛОЖЕНИЕ", "en": "CLAIM ATTACHMENT"},
+        "mail.claimed": {"ru": "✓ вложение получено", "en": "✓ attachment claimed"},
         "evt.g_zharva": {"ru": "ЖАТВА", "en": "HARVEST"},
         "evt.g_uley": {"ru": "УЛЕЙ", "en": "THE HIVE"},
         "evt.g_labyrinth": {"ru": "ЛАБИРИНТ ВЫБРОСА", "en": "BLOWOUT LABYRINTH"},

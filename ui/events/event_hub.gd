@@ -292,8 +292,13 @@ func _fill_shop() -> void:
 		c.queue_free()
 	var es := EventOps.state(game_manager.current_save_data) \
 		if game_manager and game_manager.current_save_data else {}
+	# финал полугодия: распродажа осколков ×0.7
+	var sale: bool = str(_event.get("id", "")) == "finale"
 	for shop_id in EventsData.SHOP:
 		var item: Dictionary = EventsData.SHOP[shop_id]
+		if sale:
+			item = item.duplicate()
+			item["shards"] = int(ceil(float(item["shards"]) * 0.7))
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		_shop_list.add_child(row)

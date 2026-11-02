@@ -42,6 +42,12 @@ static func add_score(save, ev: Dictionary, score: int) -> int:
 	var shards: int = EventsData.shards_for(str(ev["id"]), s)
 	es["shards"] = int(es.get("shards", 0)) + shards
 	save.set(SAVE_KEY, es)
+	# задачи Зоны: партии и очки ивентов (D25)
+	var tree := Engine.get_main_loop() as SceneTree
+	var prog = tree.root.get_node_or_null("Prog") if tree else null
+	if prog and prog.has_method("bump_task"):
+			prog.bump_task("event_games", 1)
+			prog.bump_task("event_score", s)
 	return shards
 
 
@@ -63,6 +69,10 @@ static func claim_milestone(save, idx: int) -> Dictionary:
 	var prem: Dictionary = EventsData.MILESTONE_REWARDS[idx]
 	_grant_payload(save, prem)
 	save.set(SAVE_KEY, es)
+	var tree := Engine.get_main_loop() as SceneTree
+	var prog = tree.root.get_node_or_null("Prog") if tree else null
+	if prog and prog.has_method("bump_task"):
+			prog.bump_task("event_milestones", 1)
 	return prem
 
 

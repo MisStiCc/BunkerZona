@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://hyv23mdg16cu"
-path="res://.godot/imported/keeper_anim.glb-5cf522bc363db67b3c9b32d3b1d36640.scn"
+path="res://.godot/imported/keeper_anim.glb-6d42e50ca1f6886a8e458af24805fe9c.scn"
 
 [deps]
 
-source_file="res://inbox/keeper_model/keeper_anim.glb"
-dest_files=["res://.godot/imported/keeper_anim.glb-5cf522bc363db67b3c9b32d3b1d36640.scn"]
+source_file="res://inbox/_done/keeper_model/keeper_anim.glb"
+dest_files=["res://.godot/imported/keeper_anim.glb-6d42e50ca1f6886a8e458af24805fe9c.scn"]
 
 [params]
 

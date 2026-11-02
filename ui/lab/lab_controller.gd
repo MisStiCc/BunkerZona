@@ -2504,6 +2504,17 @@ func _build_gallery_ui():
                 gal_btn.mouse_entered.connect(_play_hover_sound)
                 bottom.add_child(gal_btn)
 
+                # ПОЧТА (D25): письма с наградами (сезоны арены и пр.)
+                var mail_btn := Button.new()
+                mail_btn.name = "MailButton"
+                mail_btn.text = Loc.t("mail.button")
+                mail_btn.custom_minimum_size = Vector2(0, 62)
+                mail_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                BunkerUI.style_button(mail_btn, "steel", 18)
+                mail_btn.pressed.connect(_on_mail_pressed)
+                mail_btn.mouse_entered.connect(_play_hover_sound)
+                bottom.add_child(mail_btn)
+
                 # ИВЕНТ (D24): циклические события live-ops
                 var ev_btn := Button.new()
                 ev_btn.name = "EventButton"
@@ -4394,9 +4405,15 @@ func _rebuild_arena_panel():
                 losses = statistics.losses
                 kills = statistics.stalkers_killed
 
-        # Зал славы: ранжируем по ВОЛНАМ выживания (кто дальше прошёл), сила - тай-брейк; моё место
-        var board: Array = _arena_rivals.duplicate()
-        board.append({"name": "СТАЛКЕР (ВЫ)", "power": _arena_player_power(), "wave": rec})
+        # D25: rollover сезона (сброс задач/медалей/счётчиков, письмо с
+        # наградой за место). Старый рекорд больше не участвует — сезонные волны.
+        ArenaSeason.ensure_season(game_manager.current_save_data)
+
+        # Зал славы: сезонные волны vs соперники СЕЗОНА (не пожизненный рекорд)
+        var my_season_wave: int = int(game_manager.current_save_data.lab_data.get(
+                "arena_season_waves", 0)) if game_manager and game_manager.current_save_data else 0
+        var board: Array = ArenaSeason.rivals(_arena_season_number() - 7)
+        board.append({"name": "СТАЛКЕР (ВЫ)", "power": _arena_player_power(), "wave": my_season_wave})
         board.sort_custom(func(a, b):
                 var wa := int(a.get("wave", 0))
                 var wb := int(b.get("wave", 0))
@@ -4473,10 +4490,12 @@ func _rebuild_arena_panel():
                                 _arena_board_box.add_child(_make_arena_board_row("Отряд пуст", "крутите Гачу Зоны"))
                 _:
                         title.text = Loc.t("arena.tasks")
+                        var season_wins: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
+                        var season_wave: int = int(lab_data.arena_season_waves) if "arena_season_waves" in lab_data else 0
                         var st_names := [Loc.t("arena.task_wins"), Loc.t("arena.task_wave"), Loc.t("arena.task_calls"), Loc.t("arena.task_kills")]
                         var st_rew := [Loc.t("arena.rew_rolls", {"n": 10}), Loc.t("arena.rew_rolls", {"n": 15}), Loc.t("arena.rew_rolls", {"n": 5}), Loc.t("arena.rew_bio")]
-                        var st_prog := ["%d / 10" % mini(wins, 10), "%d / 30" % mini(rec, 30), "%d / 5" % mini(total_runs, 5), "%d / 500" % mini(kills, 500)]
-                        var st_done := [wins >= 10, rec >= 30, total_runs >= 5, kills >= 500]
+                        var st_prog := ["%d / 10" % mini(season_wins, 10), "%d / 30" % mini(season_wave, 30), "%d / 5" % mini(total_runs, 5), "%d / 500" % mini(kills, 500)]
+                        var st_done := [season_wins >= 10, season_wave >= 30, total_runs >= 5, kills >= 500]
                         for si in range(4):
                                 var sclaimed: bool = bool(lab_data.arena_season_tasks_claimed.get(si, false))
                                 if bool(st_done[si]) and not sclaimed:
@@ -4544,17 +4563,15 @@ func _update_arena_timer():
 
 ## Номер сезона: недели с 19.10.2026 (тот самый «сезон 7») + 6
 func _arena_season_number() -> int:
-        var start := Time.get_unix_time_from_datetime_dict({"year": 2026, "month": 10, "day": 19, "hour": 0, "minute": 0, "second": 0})
-        var now := Time.get_unix_time_from_system()
-        return 7 + int(floor(maxf(0.0, now - start) / 604800.0))
+        return 7 + int(ArenaSeason.season_info()["idx"])
 
 
 ## 9 сезонных медалей по реальным условиям: [название, награда, прогресс, выполнено]
 func _arena_medals(my_place: int) -> Array:
-        var rec := 0
+        # D25: медали сезонные — условия от полей СЕЗОНА (сброшены rollover'ом)
+        var rec: int = int(lab_data.arena_season_waves) if "arena_season_waves" in lab_data else 0
         var runs := 0
         if statistics:
-                rec = statistics.best_survival_wave
                 runs = statistics.total_runs
         var wins_total: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
         var mutants: int = lab_data.unlocked_mutants.size()
@@ -5374,10 +5391,22 @@ var _tp_pass: bool = false
 
 # ИВЕНТ (D24): хаб циклических событий
 var _event_hub: EventHub = null
+var _mail_overlay: Control = null
+
+
+func _on_mail_pressed() -> void:
+        _play_click_sound()
+        if _mail_overlay == null:
+                _mail_overlay = MailOverlay.new()
+                add_child(_mail_overlay)
+        _mail_overlay.open()
 
 
 func _on_event_pressed() -> void:
         _play_click_sound()
+        # Видимый диагност: юзер видит, что обработчик жив
+        var ev_now: Dictionary = EventsData.current_event(int(Time.get_unix_time_from_system()))
+        _show_message(str(ev_now.get("title_ru", "СОБЫТИЯ")))
         if _event_hub == null:
                 _event_hub = EventHub.new()
                 add_child(_event_hub)
@@ -5541,7 +5570,8 @@ func _make_chest_tile(tier: int) -> Control:
         return tile
 
 
-## Короткая строка содержимого премиум-награды
+
+
 func _prem_summary(prem: Dictionary) -> String:
         var parts: Array[String] = []
         if int(prem.get("rolls_mut", 0)) > 0:
@@ -5884,6 +5914,7 @@ func _tw_rebuild_rows() -> void:
         _tw_rows.clear()
         var dt: Array = Prog.daily_tasks()
         var wt: Array = Prog.weekly_tasks()
+        var mt: Array = Prog.monthly_tasks()
         _tw_add_section(Loc.t("tw.today"))
         _tw_fill_section(dt, "d")
         var wdone := 0
@@ -5892,6 +5923,12 @@ func _tw_rebuild_rows() -> void:
                         wdone += 1
         _tw_add_section("%s · %d/%d" % [Loc.t("tw.weekly"), wdone, wt.size()])
         _tw_fill_section(wt, "w")
+        var mdone := 0
+        for t in mt:
+                if bool(t["claimed"]):
+                        mdone += 1
+        _tw_add_section("%s · %d/%d" % [Loc.t("tw.monthly"), mdone, mt.size()])
+        _tw_fill_section(mt, "m")
 
 
 func _tw_add_section(text: String) -> void:

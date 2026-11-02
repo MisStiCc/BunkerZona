@@ -21,9 +21,10 @@ signal season_closed(summary: Dictionary)
 
 const DAILY_SLOTS := 6
 const WEEKLY_SLOTS := 5
+const MONTHLY_SLOTS := 4
 const TRACK_TIERS := 30
 const TIER_COST := 10
-const POOL_VERSION := 2
+const POOL_VERSION := 3
 
 # ==================== ПУЛЫ ЗАДАЧ ====================
 # key - счётчик прогресса; need - цель; xp/pts - награда за закрытие.
@@ -45,6 +46,12 @@ const DAILY_POOL := [
 		{"id": "d_tower3", "title": "Пройди 3 этажа башни", "need": 3, "key": "tower_wins", "xp": 45, "pts": 12},
 		{"id": "d_camp", "title": "Заверши 2 уровня кампании", "need": 2, "key": "campaign_wins", "xp": 40, "pts": 10},
 		{"id": "d_xp", "title": "Заработай 300 опыта за день", "need": 300, "key": "xp", "xp": 50, "pts": 15},
+		{"id": "d_hunt", "title": "Убей босса ОХОТЫ", "need": 1, "key": "hunt_wins", "xp": 45, "pts": 12},
+		{"id": "d_raid", "title": "Сделай рейд по Гильд-боссу", "need": 1, "key": "guild_raids", "xp": 45, "pts": 12},
+		{"id": "d_event", "title": "Сыграй партию в ивенте", "need": 1, "key": "event_games", "xp": 40, "pts": 10},
+		{"id": "d_event300", "title": "Набери 300 очков в ивенте", "need": 300, "key": "event_score", "xp": 45, "pts": 12},
+		{"id": "d_awaken", "title": "Соверши Прорыв мутанта", "need": 1, "key": "awaken", "xp": 45, "pts": 12},
+		{"id": "d_shop", "title": "Купи что-нибудь в МАГАЗИНЕ", "need": 1, "key": "store_buys", "xp": 40, "pts": 10},
 ]
 
 const WEEKLY_POOL := [
@@ -62,6 +69,27 @@ const WEEKLY_POOL := [
 		{"id": "w_camp", "title": "6 уровней кампании за неделю", "need": 6, "key": "campaign_wins", "xp": 120, "pts": 30},
 		{"id": "w_gacha", "title": "15 призывов в гаче за неделю", "need": 15, "key": "gacha", "xp": 120, "pts": 30},
 		{"id": "w_xp", "title": "600 опыта за неделю", "need": 600, "key": "xp", "xp": 150, "pts": 40},
+		{"id": "w_hunt3", "title": "Убей 3 боссов ОХОТЫ за неделю", "need": 3, "key": "hunt_wins", "xp": 120, "pts": 30},
+		{"id": "w_hunt7", "title": "Убей 7 боссов ОХОТЫ за неделю", "need": 7, "key": "hunt_wins", "xp": 140, "pts": 35},
+		{"id": "w_raid3", "title": "3 рейда по Гильд-боссу за неделю", "need": 3, "key": "guild_raids", "xp": 120, "pts": 30},
+		{"id": "w_event5", "title": "Сыграй 5 партий в ивентах", "need": 5, "key": "event_games", "xp": 120, "pts": 30},
+		{"id": "w_events", "title": "Набери 3000 очков в ивентах", "need": 3000, "key": "event_score", "xp": 140, "pts": 35},
+		{"id": "w_mile5", "title": "Закрой 5 вех ивента", "need": 5, "key": "event_milestones", "xp": 130, "pts": 32},
+		{"id": "w_awaken2", "title": "2 Прорыва мутантов за неделю", "need": 2, "key": "awaken", "xp": 130, "pts": 32},
+		{"id": "w_pass", "title": "Купи Пропуск сезона", "need": 1, "key": "pass", "xp": 150, "pts": 40},
+]
+
+# ==================== МЕСЯЧНЫЙ ПУЛ (D25) ====================
+# Окно - календарный месяц; награды заметно жирнее недельных.
+const MONTHLY_POOL := [
+		{"id": "m_runs40", "title": "40 забегов за месяц", "need": 40, "key": "runs", "xp": 300, "pts": 80},
+		{"id": "m_kills400", "title": "400 сталкеров за месяц", "need": 400, "key": "kills", "xp": 320, "pts": 85},
+		{"id": "m_waves120", "title": "120 волн выживания за месяц", "need": 120, "key": "waves", "xp": 320, "pts": 85},
+		{"id": "m_boss10", "title": "10 боссов ОХОТЫ за месяц", "need": 10, "key": "hunt_wins", "xp": 340, "pts": 90},
+		{"id": "m_raid12", "title": "12 рейдов по Гильд-боссу за месяц", "need": 12, "key": "guild_raids", "xp": 340, "pts": 90},
+		{"id": "m_events8", "title": "8000 очков в ивентах за месяц", "need": 8000, "key": "event_score", "xp": 360, "pts": 95},
+		{"id": "m_gacha40", "title": "40 призывов в гаче за месяц", "need": 40, "key": "gacha", "xp": 320, "pts": 85},
+		{"id": "m_art40", "title": "40 артефактов за месяц", "need": 40, "key": "artifacts", "xp": 320, "pts": 85},
 ]
 
 # ==================== СЛУЖЕБНОЕ ====================
@@ -153,6 +181,13 @@ func _week_key() -> String:
 		return "%d-W%02d" % [int(d["year"]), (doy - 1) / 7 + 1]
 
 
+
+func _month_key() -> String:
+		var d := Time.get_date_dict_from_system()
+		return "%d-%02d" % [int(d["year"]), int(d["month"])]
+
+
+
 func _day_of_year(y: int, m: int, d: int) -> int:
 		var cum := [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
 		var idx: int = clampi(m - 1, 0, 11)
@@ -163,14 +198,16 @@ func _quests() -> Dictionary:
 		var s = _save()
 		if s == null:
 				if not _mem.has("q"):
-						_mem["q"] = {"day": "", "week": "", "dpool": [], "wpool": [],
-								"dprog": {}, "wprog": {}, "dclaim": {}, "wclaim": {}}
+						_mem["q"] = {"day": "", "week": "", "month": "", "dpool": [], "wpool": [],
+								"mpool": [], "dprog": {}, "wprog": {}, "mprog": {},
+								"dclaim": {}, "wclaim": {}, "mclaim": {}}
 				var mq: Dictionary = _mem["q"]
 				_ensure_quests(mq)
 				return mq
 		if s.prog_quests == null or s.prog_quests.is_empty():
-				s.prog_quests = {"day": "", "week": "", "dpool": [], "wpool": [],
-						"dprog": {}, "wprog": {}, "dclaim": {}, "wclaim": {}}
+				s.prog_quests = {"day": "", "week": "", "month": "", "dpool": [], "wpool": [],
+						"mpool": [], "dprog": {}, "wprog": {}, "mprog": {},
+						"dclaim": {}, "wclaim": {}, "mclaim": {}}
 		_ensure_quests(s.prog_quests)
 		return s.prog_quests
 
@@ -192,6 +229,12 @@ func _ensure_quests(q: Dictionary) -> void:
 				q["wprog"] = {}
 				q["wclaim"] = {}
 				q["wpool"] = _pick_pool(WEEKLY_POOL, WEEKLY_SLOTS, "week:" + wk)
+		var mk := _month_key()
+		if str(q.get("month", "")) != mk:
+				q["month"] = mk
+				q["mprog"] = {}
+				q["mclaim"] = {}
+				q["mpool"] = _pick_pool(MONTHLY_POOL, MONTHLY_SLOTS, "month:" + mk)
 
 
 func _pick_pool(pool: Array, slots: int, seed_str: String) -> Array:
@@ -221,11 +264,15 @@ func weekly_tasks() -> Array:
 		return _task_view("w")
 
 
+func monthly_tasks() -> Array:
+		return _task_view("m")
+
+
 func _task_view(kind: String) -> Array:
 		var q := _quests()
-		var pool: Array = q["dpool"] if kind == "d" else q["wpool"]
-		var prog: Dictionary = q["dprog"] if kind == "d" else q["wprog"]
-		var claim: Dictionary = q["dclaim"] if kind == "d" else q["wclaim"]
+		var pool: Array = q["dpool"] if kind == "d" else (q["mpool"] if kind == "m" else q["wpool"])
+		var prog: Dictionary = q["dprog"] if kind == "d" else (q["mprog"] if kind == "m" else q["wprog"])
+		var claim: Dictionary = q["dclaim"] if kind == "d" else (q["mclaim"] if kind == "m" else q["wclaim"])
 		var out: Array = []
 		for defn in pool:
 				var id := str(defn["id"])
@@ -240,12 +287,18 @@ func _task_view(kind: String) -> Array:
 		return out
 
 
+## Публичный счётчик задач (ОХОТА/гильдия/ивенты/магазин/Прорыв)
+func bump_task(key: String, amount: int = 1) -> void:
+		_bump(key, amount)
+		_count(key, amount)
+
+
 func _bump(key: String, amount: int) -> void:
 		if amount <= 0:
 				return
 		var q := _quests()
 		var touched := false
-		for pair in [["dprog", "dpool"], ["wprog", "wpool"]]:
+		for pair in [["dprog", "dpool"], ["wprog", "wpool"], ["mprog", "mpool"]]:
 				var prog: Dictionary = q[pair[0]]
 				var pool: Array = q[pair[1]]
 				for defn in pool:
@@ -264,9 +317,9 @@ func _bump(key: String, amount: int) -> void:
 ## Забрать награду за задачу. Возвращает true если закрыто.
 func claim_task(kind: String, id: String) -> bool:
 		var q := _quests()
-		var pool: Array = q["dpool"] if kind == "d" else q["wpool"]
-		var prog: Dictionary = q["dprog"] if kind == "d" else q["wprog"]
-		var claim: Dictionary = q["dclaim"] if kind == "d" else q["wclaim"]
+		var pool: Array = q["dpool"] if kind == "d" else (q["mpool"] if kind == "m" else q["wpool"])
+		var prog: Dictionary = q["dprog"] if kind == "d" else (q["mprog"] if kind == "m" else q["wprog"])
+		var claim: Dictionary = q["dclaim"] if kind == "d" else (q["mclaim"] if kind == "m" else q["wclaim"])
 		for defn in pool:
 				if str(defn["id"]) == id:
 						if bool(claim.get(id, false)):
@@ -495,6 +548,15 @@ func on_run_result(result: Dictionary) -> void:
 		if arts > 0:
 				_bump("artifacts", arts)
 				_count("artifacts", arts)
+
+		# ОХОТА (D19): победа над боссом дня; гильд-рейд — отдельный счётчик
+		if str(result.get("mode", "")) == "hunt":
+				if success:
+						_bump("hunt_wins", 1)
+						_count("hunt_wins", 1)
+				if bool(result.get("guild_boss", false)):
+						_bump("guild_raids", 1)
+						_count("guild_raids", 1)
 
 		var xp := 0
 		var pts := 1

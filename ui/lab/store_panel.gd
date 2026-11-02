@@ -44,8 +44,8 @@ func build() -> void:
 	# Якоря-доли: панель центрируется при любом разрешении
 	panel.anchor_top = 0.10
 	panel.anchor_bottom = 0.92
-	panel.offset_left = -330.0
-	panel.offset_right = 330.0
+	panel.offset_left = -430.0
+	panel.offset_right = 430.0
 	panel.offset_top = 0.0
 	panel.offset_bottom = 0.0
 	var sb := StyleBoxFlat.new()
@@ -55,6 +55,23 @@ func build() -> void:
 	sb.set_corner_radius_all(12)
 	panel.add_theme_stylebox_override("panel", sb)
 	_root.add_child(panel)
+
+	# Фон панели: тёмный градиент + туманные пятна (GradienTexture2D, без ассетов)
+	var bg := TextureRect.new()
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	var gtx := GradientTexture2D.new()
+	var gr := Gradient.new()
+	gr.colors = PackedColorArray([Color(0.055, 0.065, 0.05, 1.0), Color(0.02, 0.025, 0.018, 1.0)])
+	gr.offsets = PackedFloat32Array([0.0, 1.0])
+	gtx.gradient = gr
+	gtx.fill_from = Vector2(0.5, 0.0)
+	gtx.fill_to = Vector2(0.5, 1.0)
+	bg.texture = gtx
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(bg)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.move_child(bg, 0)   # фон под всем контентом
 
 	var v := VBoxContainer.new()
 	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -149,16 +166,39 @@ func _make_card(sku: String) -> Control:
 	pc.add_theme_stylebox_override("panel", sb)
 
 	var v := VBoxContainer.new()
-	v.custom_minimum_size = Vector2(380, 0)
-	v.add_theme_constant_override("separation", 4)
+	v.custom_minimum_size = Vector2(400, 0)
+	v.add_theme_constant_override("separation", 5)
 	pc.add_child(v)
+
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	v.add_child(top)
+
+	var ic_path := _icon_for_sku(sku, info)
+	if ic_path != "" and ResourceLoader.exists(ic_path):
+		var ic := TextureRect.new()
+		ic.texture = load(ic_path)
+		ic.custom_minimum_size = Vector2(52, 52)
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		top.add_child(ic)
 
 	var name_l := Label.new()
 	name_l.text = Loc.t("store.sku_" + sku) if _has_key("store.sku_" + sku) else sku
 	name_l.add_theme_font_override("font", BunkerUI.font_title())
-	name_l.add_theme_font_size_override("font_size", 19)
+	name_l.add_theme_font_size_override("font_size", 18)
 	name_l.add_theme_color_override("font_color", COL_GOLD)
-	v.add_child(name_l)
+	name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(name_l)
+
+	var price_l := Label.new()
+	price_l.text = price
+	price_l.add_theme_font_override("font", BunkerUI.font_mono())
+	price_l.add_theme_font_size_override("font_size", 13)
+	price_l.add_theme_color_override("font_color", COL_DIM)
+	price_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	v.add_child(price_l)
 
 	var buy := Button.new()
 	buy.custom_minimum_size = Vector2(0, 48)
@@ -182,6 +222,25 @@ func _make_card(sku: String) -> Control:
 	else:
 		buy.text = Loc.t("store.buy") + "  " + price
 	return pc
+
+
+## Иконка товара (набор подготовщика, Задача 40-бис)
+func _icon_for_sku(sku: String, info: Dictionary) -> String:
+	var kind := str(info.get("kind", ""))
+	var base := "res://inbox/_done/currency_icons/"
+	if kind == "pass":
+		return base + "icon_ticket.png"
+	if sku == "offer_first":
+		return base + "icon_pack.png"
+	if kind == "excl":
+		return base + "icon_exclusive.png"
+	if kind == "conv":
+		return base + ("icon_slots.png" if sku.find("slot") >= 0 else "icon_autocollect.png")
+	if kind == "bio":
+		return base + "icon_biomass.png"
+	if kind == "rolls":
+		return base + "icon_pull.png"
+	return ""
 
 
 ## Разовый ли sku и уже куплен ли он (пропуск сезона, слоты, автосбор)

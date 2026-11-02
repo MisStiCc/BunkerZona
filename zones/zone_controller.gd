@@ -2583,6 +2583,10 @@ func _collect_run_result(success: bool) -> Dictionary:
                 if run_params.get("run_mode", "") == "survival":
                                 waves_survived = maxi(0, (spawn_manager.current_wave if spawn_manager else 1) - 1)
                                 reward += SurvivalData.wave_bonus(waves_survived)
+                                # D25: сезонные волны арены (для места в рейтинге)
+                                var sm_as = get_tree().get_first_node_in_group("game_manager")
+                                if sm_as and sm_as.current_save_data != null:
+                                                MailOverlay.note_season_wave(sm_as.current_save_data, waves_survived)
                                 # Логика победы (v0.21.0 «ЛИГА ВОЛН»):
                                 # 1) арена-вызов: волна вызванного превзойдена - ПОБЕДА
                                 var gm_node = get_tree().get_first_node_in_group("game_manager")

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://wuo1nuto0880"
-path="res://.godot/imported/sarcofag.png-0b5aea5dce47e010fee8e41a55bebb12.ctex"
+path="res://.godot/imported/sarcofag.png-aca4ccf5774bc4d1c56b10531f1821dc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/medals/sarcofag.png"
-dest_files=["res://.godot/imported/sarcofag.png-0b5aea5dce47e010fee8e41a55bebb12.ctex"]
+source_file="res://inbox/_done/medals/sarcofag.png"
+dest_files=["res://.godot/imported/sarcofag.png-aca4ccf5774bc4d1c56b10531f1821dc.ctex"]
 
 [params]
 

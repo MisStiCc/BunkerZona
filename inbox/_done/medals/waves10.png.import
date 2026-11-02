@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bm60iaemuij05"
-path="res://.godot/imported/waves10.png-6a95dfa062214bc398d34df10f677418.ctex"
+path="res://.godot/imported/waves10.png-aece0302b0a2f5a06f15d1d293f245b1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/medals/waves10.png"
-dest_files=["res://.godot/imported/waves10.png-6a95dfa062214bc398d34df10f677418.ctex"]
+source_file="res://inbox/_done/medals/waves10.png"
+dest_files=["res://.godot/imported/waves10.png-aece0302b0a2f5a06f15d1d293f245b1.ctex"]
 
 [params]
 

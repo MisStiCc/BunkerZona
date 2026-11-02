@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bio2wc4g3rpnm"
-path="res://.godot/imported/collector20.png-f59fae940af77f62d6a4ca2dbc25e4fa.ctex"
+path="res://.godot/imported/collector20.png-5f1c10d0b633c96c5efd3044c2a8dcec.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/medals/collector20.png"
-dest_files=["res://.godot/imported/collector20.png-f59fae940af77f62d6a4ca2dbc25e4fa.ctex"]
+source_file="res://inbox/_done/medals/collector20.png"
+dest_files=["res://.godot/imported/collector20.png-5f1c10d0b633c96c5efd3044c2a8dcec.ctex"]
 
 [params]
 

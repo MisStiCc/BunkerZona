@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b3bpyyd6rq2dx"
-path="res://.godot/imported/arena5.png-22ce336ca749f24559ddf4e19c4eb94d.ctex"
+path="res://.godot/imported/arena5.png-2d7e9e841f92206b5ed68f767bef51ce.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/medals/arena5.png"
-dest_files=["res://.godot/imported/arena5.png-22ce336ca749f24559ddf4e19c4eb94d.ctex"]
+source_file="res://inbox/_done/medals/arena5.png"
+dest_files=["res://.godot/imported/arena5.png-2d7e9e841f92206b5ed68f767bef51ce.ctex"]
 
 [params]
 

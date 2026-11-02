@@ -24,7 +24,9 @@ class_name SaveData
 @export var pass_cycle: int = 0
 # D19 Охота: отметки награждённых боссов за день {дата: [id]}
 @export var hunt_claimed: Dictionary = {}
-# D21 Гильдия (офлайн-эмуляция): имя/казна/жетоны/чат/рейд
+# D21 Гильдия (офлайн-эмуляция): имя/казна/жетоны/чат/рейд + ПОЧТА (письма
+# с наградами: сезоны арены и прочие начисления) {from,title_ru,title_en,
+# body_ru,body_en,reward:{...},claimed:bool}
 @export var guild_state: Dictionary = {}
 # D24 Циклические события (live-ops): {season, event_id, score, best,
 # shards, claimed:[], bought:{}} — миграция: отсутствует = пусто.

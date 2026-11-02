@@ -583,7 +583,10 @@ func _war_block(war: Dictionary) -> Control:
 	return panel
 
 
-## «В БОЙ»: оборона Бункера обычным выживанием с флагом войны
+## «В БОЙ»: оборона Бункера обычным выживанием с флагом войны.
+## Баг-фикс: раньше ставился только флаг — забег не стартовал (и тост
+## уходил в несуществующий HUD лабы). Теперь старт через лабу, как у
+## обороны арены: war_defense_run + survival + _on_start_run_pressed.
 func _on_war_fight() -> void:
 	_play_click()
 	var gm = get_tree().get_first_node_in_group("game_manager")
@@ -591,12 +594,40 @@ func _on_war_fight() -> void:
 		return
 	var lab = gm.get_lab_data() if gm.has_method("get_lab_data") else null
 	if lab == null or lab.arena_defense_squad.is_empty():
-		_toast(Loc.t("guild.war_no_squad"))
+		_panel_note(Loc.t("guild.war_no_squad"))
 		return
 	gm.war_defense_run = true
+	gm.arena_run_kind = ""   # война не двигает СП и счётчики арены
 	gm.set_selected_run_mode("survival")
-	close()
-	_toast(Loc.t("guild.war_toast_start"))
+	var scene := get_tree().current_scene
+	if scene != null and scene.has_method("_on_start_run_pressed"):
+		close()
+		scene._on_start_run_pressed()
+	else:
+		_panel_note(Loc.t("guild.war_no_start"))
+
+
+## Заметка внутри панели оверлея (в лабе HUD-группы нет — _toast молчал)
+func _panel_note(text: String) -> void:
+	var note := Label.new()
+	note.text = text
+	note.anchor_left = 0.5
+	note.anchor_right = 0.5
+	note.anchor_top = 1.0
+	note.anchor_bottom = 1.0
+	note.offset_left = -300
+	note.offset_right = 300
+	note.offset_top = -84
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.add_theme_font_override("font", BunkerUI.font_body())
+	note.add_theme_font_size_override("font_size", 14)
+	note.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+	_root.add_child(note)
+	var tw := create_tween()
+	tw.tween_interval(1.8)
+	tw.tween_property(note, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(note.queue_free)
 
 
 func _toast(text: String) -> void:
