@@ -53,6 +53,32 @@ func _load_cover_art():
         кодом (штамп REVERT), поэтому текстовый Title переоформляем."""
         const PACK_PATH := "res://assets/ui/lab/menu_background_2k.png"
         const COVER_PATH := "res://ui/main_menu/bunker_menu.svg"
+        # Задача 39: «ЗОНА ДЫШИТ» - новый фон (ПК 1920x1080 / вертикальная кадка)
+        var bg := "res://assets/ui/menu/menu_bg.png"
+        if DisplayServer.is_touchscreen_available() or get_viewport().get_visible_rect().size.x < get_viewport().get_visible_rect().size.y:
+                var v := "res://assets/ui/menu/menu_bg_v.png"
+                if ResourceLoader.exists(v):
+                        bg = v
+        if ResourceLoader.exists(bg):
+                cover_art.texture = load(bg)
+                title_label.visible = false
+                # Задача 30: фирменное лого поверх фона (нет файла - заголовок-текст)
+                if ResourceLoader.exists("res://assets/ui/brand/logo_wide.png"):
+                        var logo := TextureRect.new()
+                        logo.texture = load("res://assets/ui/brand/logo_wide.png")
+                        logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                        logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                        logo.anchor_left = 0.5
+                        logo.anchor_right = 0.5
+                        logo.anchor_top = 0.06
+                        logo.anchor_bottom = 0.06
+                        logo.offset_left = -300.0
+                        logo.offset_right = 300.0
+                        logo.offset_top = 0.0
+                        logo.offset_bottom = 134.0
+                        logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                        cover_art.add_child(logo)
+                return
         if ResourceLoader.exists(PACK_PATH):
                 cover_art.texture = load(PACK_PATH)
                 title_label.visible = false
@@ -352,8 +378,6 @@ func _on_language_pressed():
 
 # ==================== СТИЛЬ БУНКЕР ====================
 
-var _menu_plates: Dictionary = {}
-
 
 func _apply_bunker_style():
         """Тема и декорации БУНКЕР: рамка, хазард, шапка, штамп, пластины, кнопки."""
@@ -426,24 +450,6 @@ func _apply_bunker_style():
         var stamp := BunkerUI.make_stamp(Loc.t("bunker.access_granted"))
         stamp.position = Vector2(760, 46)
         add_child(stamp)
-
-        # --- Пластины справа сверху ---
-        var plates := HBoxContainer.new()
-        plates.add_theme_constant_override("separation", 10)
-        plates.alignment = BoxContainer.ALIGNMENT_END
-        plates.anchor_left = 1.0
-        plates.anchor_right = 1.0
-        plates.offset_left = -400
-        plates.offset_right = -44
-        plates.offset_top = 34
-        plates.offset_bottom = 100
-        plates.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-        add_child(plates)
-        for pair in [["biomass", "БИОМАССА"], ["rolls", "КРУТКИ"], ["collection", "КОЛЛЕКЦИЯ"]]:
-                var p := BunkerUI.make_plate("0", Loc.t("menu.plate_" + pair[0]))
-                _menu_plates[pair[0]] = p
-                plates.add_child(p)
-        _refresh_plates()
 
         # --- Штамп версии (правый нижний угол) ---
         if get_node_or_null("VersionStamp") == null:
@@ -536,46 +542,6 @@ func _on_codex_pressed():
                 add_child(_codex)
         _codex.open()
 
-
-func _refresh_plates():
-        """Пластины ресурсов из активного сейва (если GameManager доступен)."""
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        var biomass := 0.0
-        var rolls := 0
-        var unlocked := 0
-        if game_manager and game_manager.current_save_data and game_manager.current_save_data.lab_data:
-                var lab = game_manager.current_save_data.lab_data
-                biomass = lab.biomass
-                rolls = lab.gacha_rolls_artifacts
-                var mut: int = lab.gacha_rolls_mutants
-                if mut < 1000000:
-                        rolls += mut
-                unlocked = lab.unlocked_mutants.size() + lab.won_artifacts.size()
-        _set_plate_value("biomass", _fmt_plate(biomass))
-        _set_plate_value("rolls", str(rolls))
-        _set_plate_value("collection", "%d/28" % unlocked)
-
-
-func _set_plate_value(key: String, value: String):
-        if not _menu_plates.has(key):
-                return
-        var p: PanelContainer = _menu_plates[key]
-        var v: VBoxContainer = p.get_child(0)
-        var lv: Label = v.get_child(0)
-        lv.text = value
-
-
-func _fmt_plate(v: float) -> String:
-        var s := str(int(v))
-        var out := ""
-        var c := 0
-        for i in range(s.length() - 1, -1, -1):
-                if c > 0 and c % 3 == 0:
-                        out = " " + out
-                out = s[i] + out
-                c += 1
-        return out
 
 
 # ==================== ДИСКЛЕЙМЕР ФАН-ПРОЕКТА ====================

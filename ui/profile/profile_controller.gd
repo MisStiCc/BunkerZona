@@ -2235,19 +2235,34 @@ func _medal_make_tile(m: Dictionary, claimed: bool, claimable: bool, pr: Vector2
         h.add_theme_constant_override("separation", 12)
         p.add_child(h)
 
-        var icon := Label.new()
-        icon.text = str(m["icon"])
-        icon.add_theme_font_override("font", BunkerUI.font_title())
-        icon.add_theme_font_size_override("font_size", 28)
-        icon.custom_minimum_size = Vector2(64, 0)
-        icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        if claimed:
-                icon.add_theme_color_override("font_color", BunkerUI.GREEN)
-        elif claimable:
-                icon.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+        # Задача 40: штампованная медаль PNG (нет файла - глиф-эмодзи как раньше)
+        var medal_id := str(m["id"])
+        var icon_path := "res://ui/icons/medals/%s.png" % medal_id
+        var icon: Control
+        if ResourceLoader.exists(icon_path):
+                var itex := TextureRect.new()
+                itex.texture = load(icon_path)
+                itex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                itex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                itex.custom_minimum_size = Vector2(64, 64)
+                itex.modulate = Color(1, 1, 1, 1) if claimed else Color(1, 1, 1, 0.35)
+                icon = itex
         else:
-                icon.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+                var ilbl := Label.new()
+                ilbl.text = str(m["icon"])
+                ilbl.add_theme_font_override("font", BunkerUI.font_title())
+                ilbl.add_theme_font_size_override("font_size", 28)
+                ilbl.custom_minimum_size = Vector2(64, 0)
+                ilbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+                ilbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+                icon = ilbl
+        if icon is Label:
+                if claimed:
+                        icon.add_theme_color_override("font_color", BunkerUI.GREEN)
+                elif claimable:
+                        icon.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+                else:
+                        icon.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
         h.add_child(icon)
 
         var vv := VBoxContainer.new()
