@@ -6,15 +6,25 @@ class_name StoreData
 ##
 ## ГЛАВНЫЙ ВЫКЛЮЧАТЕЛЬ. Деговнизация (D17) выполнена 28.10.2026 -
 ## вариант А + «Глухая падь». true = витрина доступна.
-## К РЕЛИЗУ: EMULATE_PURCHASES = false + плагин GodotGooglePlayBilling
-## в Android-пресете + листинг без IP + юр.консультация (Этап 0 D16).
+##
+## П0.1/П0.2 security_audit (03.11.2026): флаги — АВТО-ДЕТЕКТ сборки,
+## «забыть выключить эмуляцию» физически невозможно: редактор/дев-сборка =
+## витрина с эмуляцией, релизный экспорт = витрина закрыта. Когда будет
+## настоящий биллинг (плагин GodotGooglePlayBilling + листинг без IP +
+## юр.консультация — чек-лист Этапа 0 D16), поднять ENABLED для релиза
+## отдельной ручкой здесь же. static var (не const): OS.is_debug_build()
+## не константа времени компиляции.
 
-const ENABLED: bool = true
+## Ручка-оверрайд ТОЛЬКО для локальных тестов (проверить витрину в релизном
+## шаблоне): true = эмуляция в любой сборке. В коммите всегда false.
+const FORCE_EMULATE: bool = false
+
+static var ENABLED: bool = OS.is_debug_build() or FORCE_EMULATE
 
 ## ЭМУЛЯЦИЯ ПОКУПОК (dev): биллинга нет - "оплата" мгновенная и бесплатная,
 ## начисления настоящие (в сейв). Витрина помечена жёлтой плашкой ЭМУЛЯЦИЯ.
-## К релизу ОБЯЗАТЕЛЬНО false.
-const EMULATE_PURCHASES: bool = true
+## В релизе всегда false (авто-детект выше).
+static var EMULATE_PURCHASES: bool = OS.is_debug_build() or FORCE_EMULATE
 
 ## id SKU -> {type: "nc"|"c", price_rub: int, kind, payload}
 ## type: nc = non-consumable (владение навсегда), c = consumable.

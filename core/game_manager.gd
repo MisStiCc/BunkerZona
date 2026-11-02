@@ -928,7 +928,7 @@ func _load_boot_save():
         # При старте подхватываем сохранение активного слота: автосейв или ручной
         var path = SAVE_DIR + SAVE_FILE_PREFIX + str(active_save_slot) + SAVE_FILE_EXT
         if FileAccess.file_exists(path):
-                var save = load(path)
+                var save = _load_encrypted(path)
                 if save and save is SaveData:
                         current_save_data = save
                         _migrate_campaign_progress(save)
@@ -1063,6 +1063,53 @@ func _setup_run_params(params: Dictionary):
         pass # print("Параметры забега установлены: " + str(params))
 
 
+## П1.5 security_audit (03.11.2026): сейвы шифруются (FileAccess с ключом),
+## открытый .tres старых версий читается как раньше и при первом же
+## сохранении переписывается шифрованным. Ключ = соль + OS.get_unique_id()
+## (на десктопе unique_id пуст — ключ вырождается в соль: планка против
+## редактирования блокнотом, полноценная защита — Этап 3, сервер).
+func _save_cipher_key() -> String:
+        return "bunker-zona-save-v1:" + OS.get_unique_id()
+
+
+## Ресурс -> шифрованный файл. Промежуточный .tres нужен ResourceSaver'у
+## (формат выбирается по расширению), после шифровки удаляется.
+func _save_encrypted(res: Resource, path: String) -> bool:
+        var tmp := path.get_basename() + "_cipher" + SAVE_FILE_EXT
+        if ResourceSaver.save(res, tmp) != OK:
+                return false
+        var raw := FileAccess.get_file_as_bytes(tmp)
+        DirAccess.remove_absolute(tmp)
+        if raw.is_empty():
+                return false
+        var f := FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, _save_cipher_key())
+        if f == null:
+                return false
+        f.store_buffer(raw)
+        f.close()
+        return true
+
+
+## Шифрованный сейв -> ресурс; не наш формат (открытый .tres) — прямое
+## чтение (миграция). Опознание расшифровки — префикс текстового ресурса.
+func _load_encrypted(path: String) -> Resource:
+        var f := FileAccess.open_encrypted_with_pass(path, FileAccess.READ, _save_cipher_key())
+        if f != null:
+                var raw := f.get_buffer(f.get_length())
+                f.close()
+                if raw.slice(0, 12) == "[gd_resource".to_ascii_buffer():
+                        var tmp := path.get_basename() + "_cipher" + SAVE_FILE_EXT
+                        var tf := FileAccess.open(tmp, FileAccess.WRITE)
+                        if tf:
+                                tf.store_buffer(raw)
+                                tf.close()
+                                var res := ResourceLoader.load(tmp, "Resource", ResourceLoader.CACHE_MODE_IGNORE)
+                                DirAccess.remove_absolute(tmp)
+                                if res != null:
+                                        return res
+        return load(path)
+
+
 func save_game(slot: int) -> bool:
         if not current_save_data:
                 current_save_data = SaveData.new()
@@ -1071,7 +1118,7 @@ func save_game(slot: int) -> bool:
         current_save_data.save_time = Time.get_datetime_string_from_system()
         
         var path = SAVE_DIR + SAVE_FILE_PREFIX + str(slot) + SAVE_FILE_EXT
-        var error = ResourceSaver.save(current_save_data, path)
+        var error = Error.OK if _save_encrypted(current_save_data, path) else Error.FAILED
         
         if error == OK:
                 game_saved.emit(slot)
@@ -1080,7 +1127,7 @@ func save_game(slot: int) -> bool:
                 
                 if slot != 0:
                         var autopath = SAVE_DIR + SAVE_FILE_PREFIX + "0" + SAVE_FILE_EXT
-                        ResourceSaver.save(current_save_data, autopath)
+                        _save_encrypted(current_save_data, autopath)
                         pass # print("Автосохранение обновлено")
                 
                 return true
@@ -1096,8 +1143,8 @@ func load_game(slot: int) -> bool:
         if not FileAccess.file_exists(path):
                 pass # print("Сохранение не найдено: " + path)
                 return false
-        
-        var save = load(path)
+
+        var save = _load_encrypted(path)
         if save and save is SaveData:
                 current_save_data = save
                 _migrate_campaign_progress(save)
@@ -1138,8 +1185,8 @@ func get_save_info(slot: int) -> Dictionary:
                         "exists": false,
                         "slot": slot
                 }
-        
-        var save = load(path)
+
+        var save = _load_encrypted(path)
         if save and save is SaveData:
                 return {
                         "exists": true,

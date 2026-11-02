@@ -16,7 +16,7 @@
 | snork_anim.glb | Orc | Снорк (snork) | Walk, Run, Punch, Death, Idle, HitReact ... |
 | zombie_anim.glb | Orc Enemy | Зомби (zombie) | Walk, Bite_Front, Death, Idle, Jump |
 | pseudogiant_anim.glb | Yeti | Псевдогигант (pseudogiant) | Walk, Bite_Front, Death, Idle, Dance, Jump |
-| controller_anim.glb | Alien | Контролёр (controller) | Walk, Run, Punch, Death, Idle, HitReact ... |
+| controller_anim.glb | «новый контролер.fbx» — ассет пользователя (лицензия как у исходника); анимации процедурные CC0 (подготовщик, 03.11.2026) | Сновод (controller) | idle, walk, attack, death |
 | poltergeist_anim.glb | Ghost | Полтергейст (poltergeist) | Flying_Idle, Fast_Flying, Headbutt, Death, HitReact |
 
 Страницы паков:
