@@ -2519,6 +2519,11 @@ func _build_gallery_ui():
                 var ev_btn := Button.new()
                 ev_btn.name = "EventButton"
                 ev_btn.text = Loc.t("evt.button")
+                var ev_now := EventsData.current_event(int(Time.get_unix_time_from_system()))
+                var ev_icon_path := "res://assets/ui/events/" + str(ev_now["base"]) + "_icon.png"
+                if ResourceLoader.exists(ev_icon_path):
+                        ev_btn.icon = load(ev_icon_path)
+                        ev_btn.expand_icon = true
                 ev_btn.custom_minimum_size = Vector2(0, 62)
                 ev_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
                 BunkerUI.style_button(ev_btn, "hazard", 18)
@@ -4407,11 +4412,14 @@ func _rebuild_arena_panel():
 
         # D25: rollover сезона (сброс задач/медалей/счётчиков, письмо с
         # наградой за место). Старый рекорд больше не участвует — сезонные волны.
-        ArenaSeason.ensure_season(game_manager.current_save_data)
+        # Сейв — здесь: у статического канона методов сохранения нет.
+        if game_manager and not ArenaSeason.ensure_season(game_manager.current_save_data).is_empty():
+                game_manager.save_to_active_slot()
 
         # Зал славы: сезонные волны vs соперники СЕЗОНА (не пожизненный рекорд)
-        var my_season_wave: int = int(game_manager.current_save_data.lab_data.get(
-                "arena_season_waves", 0)) if game_manager and game_manager.current_save_data else 0
+        var my_season_wave: int = 0
+        if game_manager and game_manager.current_save_data and game_manager.current_save_data.lab_data:
+                my_season_wave = game_manager.current_save_data.lab_data.arena_season_waves
         var board: Array = ArenaSeason.rivals(_arena_season_number() - 7)
         board.append({"name": "СТАЛКЕР (ВЫ)", "power": _arena_player_power(), "wave": my_season_wave})
         board.sort_custom(func(a, b):
@@ -4569,7 +4577,7 @@ func _arena_season_number() -> int:
 ## 9 сезонных медалей по реальным условиям: [название, награда, прогресс, выполнено]
 func _arena_medals(my_place: int) -> Array:
         # D25: медали сезонные — условия от полей СЕЗОНА (сброшены rollover'ом)
-        var rec: int = int(lab_data.arena_season_waves) if "arena_season_waves" in lab_data else 0
+        var rec: int = lab_data.arena_season_waves
         var runs := 0
         if statistics:
                 runs = statistics.total_runs

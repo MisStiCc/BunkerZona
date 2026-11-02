@@ -5,7 +5,8 @@ class_name MailOverlay
 ## ПОЧТА (D25): письма с наградами (итоги сезона арены, будущие начисления).
 ## Письмо: от кого / заголовок / тело / [ЗАБРАТЬ] или ✓ ПОЛУЧЕНО. Забор —
 ## через EventOps._grant_payload-совместимый payload. Пустой ящик — весточка
-## от Проводника. Rollover сезона арены выполняется при открытии.
+## от Проводника. Rollover сезона арены — В АРХИВАХ ArenaSeason (канон),
+## оверлей только дёргает его при открытии и рисует ящик.
 
 var _root: Control
 var _list: VBoxContainer
@@ -20,88 +21,19 @@ func _ready() -> void:
 
 
 ## Запись сезонных волн (зовёт zone_controller из забегов выживания).
-## Статик: не требует инстанса оверлея.
+## Делегирует канону в core — сам UI ничего не считает.
 static func note_season_wave(save, waves: int) -> void:
-	if save == null or save.lab_data == null:
-		return
-	var best: int = int(save.lab_data.get("arena_season_waves", 0))
-	if waves > best:
-		save.lab_data.set("arena_season_waves", waves)
-
-
-## Сезон = ISO-неделя с базой 19.10.2026. Смена сезона -> сброс сезонных
-## полей + письмо с наградой за место (место = сезонные волны vs соперники).
-static func _ensure_season(save) -> void:
-	if save == null or save.lab_data == null:
-		return
-	var base: int = int(Time.get_unix_time_from_datetime_dict(
-		{"year": 2026, "month": 10, "day": 19, "hour": 0, "minute": 0, "second": 0}))
-	var now := int(Time.get_unix_time_from_system())
-	var idx: int = int(floor(maxf(0.0, now - base) / 604800.0))
-	var key := "S%d" % (7 + idx)
-	if str(save.lab_data.get("arena_season_key", "")) == key:
-		return
-	var prev_key: String = str(save.lab_data.get("arena_season_key", ""))
-	save.lab_data.set("arena_season_key", key)
-
-	# сброс сезонных полей (заявки/медали/счётчики побед)
-	save.lab_data.arena_medals_claimed = {}
-	save.lab_data.arena_season_tasks_claimed = {}
-	save.lab_data.arena_wins_challenge = 0
-	save.lab_data.arena_wins_defense = 0
-
-	# первый запуск (нет прошлого ключа) — без письма
-	if prev_key == "":
-		save.save_to_active_slot()
-		return
-
-	# письмо: место = сезонные волны против соперников прошлого сезона
-	var s_waves: int = int(save.lab_data.get("arena_season_waves", 0))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 91000 + idx - 1
-	var defs := [
-		["МЕЧЕНЫЙ", 50], ["СТРЕЛОК", 44], ["ВОЛК", 38], ["ПРИЗРАК", 32],
-		["ЛУЧНИК", 26], ["КЛЫК", 21], ["ДЕГТЯРЁВ", 16], ["БАРМЕН", 12],
-		["ШТЫРЬ", 8], ["КРОТ", 4],
-	]
-	var place: int = 1
-	for d in defs:
-		var rival_wave: int = int(d[1]) + rng.randi_range(-2, 2) + (idx - 7) * 3
-		if rival_wave >= s_waves:
-			place += 1
-	var reward := _place_reward(place)
-	var mail: Array = save.guild_state.get("mail", []) if save.guild_state != null else []
-	mail.insert(0, {
-		"from": "АРЕНА «ВЫБРОС I»",
-		"title_ru": "ИТОГИ СЕЗОНА: %d МЕСТО" % place,
-		"title_en": "SEASON RESULT: PLACE %d" % place,
-		"body_ru": "Лучшая оборона сезона: %d волн. Награда за место — в приложении." % s_waves,
-		"body_en": "Best defense of the season: %d waves. The placement reward is attached." % s_waves,
-		"reward": reward, "claimed": false,
-	})
-	save.guild_state["mail"] = mail.slice(0, 30)
-	save.lab_data.set("arena_season_waves", 0)
-	save.save_to_active_slot()
-
-
-## Награда за место (1-3 жирные, дальше — утешительные)
-static func _place_reward(place: int) -> Dictionary:
-	match place:
-		1: return {"rolls_mut": 20, "sparks": 10, "cos_frame": "frame_champion"}
-		2: return {"rolls_mut": 12, "sparks": 6, "cos_frame": "frame_vice"}
-		3: return {"rolls_mut": 8, "sparks": 4}
-		_:
-			if place <= 5:
-				return {"rolls_mut": 5, "rolls_art": 2}
-			return {"rolls_art": 1, "bio": 20000.0}
+	ArenaSeason.note_season_wave(save, waves)
 
 
 func open() -> void:
-	# rollover сезона арены: смена недели -> сброс сезонных полей +
-	# письмо с наградой за место (вся логика здесь, D25)
+	# rollover сезона арены: единая точка в ArenaSeason.ensure_season
+	# (ключ сезона "S<N>" один на весь проект — вторых схем быть не должно);
+	# сейв — здесь, у канона методов сохранения нет (паттерн GuildSys)
 	var gm = get_tree().get_first_node_in_group("game_manager")
 	if gm and gm.current_save_data != null:
-		_ensure_season(gm.current_save_data)
+		if not ArenaSeason.ensure_season(gm.current_save_data).is_empty():
+			gm.save_to_active_slot()
 	_refresh()
 	_root.visible = true
 

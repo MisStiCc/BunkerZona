@@ -505,6 +505,10 @@ func _apply_bunker_style():
                 var ev_btn := Button.new()
                 ev_btn.name = "EventBanner"
                 ev_btn.text = Loc.t("evt.banner") % str(ev["title_" + ("ru" if Loc.lang == "ru" else "en")])
+                var ev_icon_path := "res://assets/ui/events/" + str(ev["base"]) + "_icon.png"
+                if ResourceLoader.exists(ev_icon_path):
+                        ev_btn.icon = load(ev_icon_path)
+                        ev_btn.expand_icon = true
                 ev_btn.tooltip_text = str(ev["desc_" + ("ru" if Loc.lang == "ru" else "en")])
                 ev_btn.anchor_top = 1.0
                 ev_btn.anchor_bottom = 1.0

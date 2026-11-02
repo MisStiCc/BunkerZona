@@ -17,8 +17,16 @@ var _shards: Label
 var _list: VBoxContainer
 var _shop_list: VBoxContainer
 var _play_btn: Button
+var _banner: TextureRect
 var _event: Dictionary = {}
 var game_manager: Node
+
+
+## Арт ивентов (задача 37): баннеры/иконки/виньетки из assets/ui/events/.
+## Файла нет (не доставлен/не импортирован) — null, UI остаётся процедурным.
+func _art(art_name: String) -> Texture2D:
+	var path := ART_DIR + art_name + ".png"
+	return load(path) if ResourceLoader.exists(path) else null
 
 
 func _ready() -> void:
@@ -103,6 +111,14 @@ func _build() -> void:
 	x_btn.pressed.connect(close)
 	head.add_child(x_btn)
 
+	# Арт-баннер ивента (задача 37): 1920x640, название — строкой выше
+	_banner = TextureRect.new()
+	_banner.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_banner.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_banner.custom_minimum_size = Vector2(0, 128)
+	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(_banner)
+
 	_desc = Label.new()
 	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_desc.add_theme_font_override("font", BunkerUI.font_body())
@@ -122,11 +138,21 @@ func _build() -> void:
 	_score.add_theme_color_override("font_color", BunkerUI.TEXT_BRIGHT)
 	v.add_child(_score)
 
+	var shards_row := HBoxContainer.new()
+	shards_row.add_theme_constant_override("separation", 6)
+	v.add_child(shards_row)
+	var shard_icon := TextureRect.new()
+	shard_icon.custom_minimum_size = Vector2(18, 18)
+	shard_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	shard_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shard_icon.texture = _art("shard_zone")
+	shard_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shards_row.add_child(shard_icon)
 	_shards = Label.new()
 	_shards.add_theme_font_override("font", BunkerUI.font_mono())
 	_shards.add_theme_font_size_override("font_size", 14)
 	_shards.add_theme_color_override("font_color", Color(0.55, 0.85, 0.95))
-	v.add_child(_shards)
+	shards_row.add_child(_shards)
 
 	_play_btn = Button.new()
 	_play_btn.text = Loc.t("evt.play")
@@ -184,17 +210,21 @@ func _refresh() -> void:
 	var es := EventOps.state(game_manager.current_save_data) \
 		if game_manager and game_manager.current_save_data else {}
 	_score.text = Loc.t("evt.score_line") % [int(es.get("score", 0)), int(es.get("best", 0))]
-	_shards.text = Loc.t("evt.shards_line") % int(es.get("shards", 0))
+	# рядом с осколками стоит виньетка-кристалл — ◆ из строки убираем
+	_shards.text = Loc.t("evt.shards_line").replace("◆ ", "") % int(es.get("shards", 0))
+	_banner.texture = _art("ev_" + str(_event["base"]))
+	_banner.visible = _banner.texture != null
 	_play_btn.visible = str(_event["id"]) != "finale"
-	_fill_finale_games(es)
 	_fill_milestones(es)
 	_fill_shop()
+	_fill_finale_games(es)
 
 
-## Финал полугодия: все шесть игр открыты одновременно
+## Финал полугодия: все шесть игр открыты одновременно.
+## Вызывается ПОСЛЕ _fill_milestones — кнопки игр лягут блоком сверху вех.
 func _fill_finale_games(_es: Dictionary) -> void:
-	for c in _list.get_children():
-		pass   # вехи ниже; игры добавим отдельным блоком сверху
+	if str(_event.get("id", "")) != "finale":
+		return
 	var games := [["zharva", "evt.g_zharva"], ["uley", "evt.g_uley"],
 		["labyrinth", "evt.g_labyrinth"], ["chain", "evt.g_chain"],
 		["vault", "evt.g_vault"], ["bolts", "evt.g_bolts"]]
@@ -202,8 +232,11 @@ func _fill_finale_games(_es: Dictionary) -> void:
 	for g in games:
 		var b := Button.new()
 		b.text = Loc.t(str(g[1])) + ("  ▶" if g[0] in built else "  ·  " + Loc.t("evt.soon"))
-		b.custom_minimum_size = Vector2(0, 44)
+		b.custom_minimum_size = Vector2(0, 48)
 		b.add_theme_font_size_override("font_size", 14)
+		b.icon = _art(str(g[0]) + "_icon")
+		if b.icon != null:
+			b.expand_icon = true
 		BunkerUI.style_button(b, "steel", 13)
 		b.disabled = not (g[0] in built)
 		if g[0] in built:
@@ -234,6 +267,7 @@ func _play_click() -> void:
 
 func _fill_milestones(es: Dictionary) -> void:
 	for c in _list.get_children():
+		_list.remove_child(c)
 		c.queue_free()
 	var mult: float = float(_event["mult"]) \
 		if str(es.get("event_id", "")) == str(_event["id"]) else 1.0
@@ -242,6 +276,13 @@ func _fill_milestones(es: Dictionary) -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		_list.add_child(row)
+		# слот-иконка: сундук у готовых к вехе, пустой у прочих (ровная сетка)
+		var ic := TextureRect.new()
+		ic.custom_minimum_size = Vector2(20, 20)
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(ic)
 		var lbl := Label.new()
 		lbl.add_theme_font_override("font", BunkerUI.font_body())
 		lbl.add_theme_font_size_override("font_size", 13)
@@ -255,7 +296,8 @@ func _fill_milestones(es: Dictionary) -> void:
 				lbl.text = "✓  %d — %s" % [goal, _milestone_text(i)]
 				lbl.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
 		elif mile_ready:
-				lbl.text = "✦  %d — %s" % [goal, _milestone_text(i)]
+				ic.texture = _art("milestone_chest")
+				lbl.text = "%d — %s" % [goal, _milestone_text(i)]
 				lbl.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
 				var claim := Button.new()
 				claim.text = Loc.t("evt.claim")
@@ -289,11 +331,13 @@ func _milestone_text(idx: int) -> String:
 
 func _fill_shop() -> void:
 	for c in _shop_list.get_children():
+		_shop_list.remove_child(c)
 		c.queue_free()
 	var es := EventOps.state(game_manager.current_save_data) \
 		if game_manager and game_manager.current_save_data else {}
 	# финал полугодия: распродажа осколков ×0.7
 	var sale: bool = str(_event.get("id", "")) == "finale"
+	var shard_icon: Texture2D = _art("shard_zone")
 	for shop_id in EventsData.SHOP:
 		var item: Dictionary = EventsData.SHOP[shop_id]
 		if sale:
@@ -303,8 +347,15 @@ func _fill_shop() -> void:
 		row.add_theme_constant_override("separation", 8)
 		_shop_list.add_child(row)
 		var name_key := "name_ru" if Loc.lang == "ru" else "name_en"
+		var ic := TextureRect.new()
+		ic.custom_minimum_size = Vector2(16, 16)
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.texture = shard_icon
+		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(ic)
 		var lbl := Label.new()
-		lbl.text = "%s — ◆%d" % [str(item[name_key]), int(item["shards"])]
+		lbl.text = "%s — %d" % [str(item[name_key]), int(item["shards"])]
 		lbl.add_theme_font_override("font", BunkerUI.font_body())
 		lbl.add_theme_font_size_override("font_size", 13)
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL

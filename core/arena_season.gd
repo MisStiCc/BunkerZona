@@ -8,6 +8,11 @@ class_name ArenaSeason
 ## этап (Этап 3) подменит только список членов борда.
 ## Место в рейтинге: лучшие волны СЕЗОНА против соперников недели
 ## (соперники генерируются seed'ом сезона — у всех один сезон-сетап).
+## ДВЕ таблицы соперников (решение владельца 02.11.2026): rivals() —
+## зал славы арены (сетка 30+3/сезон), LETTER_RIVALS — место в письме
+## итогов (фиксированные волны «лиг»). ЕДИНАЯ точка rollover — здесь:
+## ensure_season зовут и лаба (арена), и MailOverlay.open(); ключ сезона
+## один — "S<N>" (N = недели от базы), вторых схем ключей быть не должно.
 
 const SEASON_START_UNIX := 1789670400   # Пн 19.10.2026 00:00 локального (база код-агента)
 const WEEK: int = 604800
@@ -57,52 +62,66 @@ static func rivals(season_idx: int) -> Array:
 
 
 ## Rollover: смена сезона -> письмо с наградой за место + сброс сезонных
-## полей lab_data. Вызывать из лабы при открытии арены/лабы (статика).
+## полей lab_data. Вызывать из лабы при открытии арены/почты (статика).
+## Письмо не приходит на первый запуск и в сезон без оборонённых волн.
+## СЕЙВ — на вызывающих (UI-слой, gm.save_to_active_slot()): у SaveData
+## нет метода сохранения, статика его дёргать не должна (паттерн GuildSys).
+## Возврат: {} — сезона не менялся; {"changed": true} — rollover без письма;
+## {"changed": true, "place": N, "reward": {...}} — rollover с письмом.
 static func ensure_season(save) -> Dictionary:
 	if save == null or save.lab_data == null:
 		return {}
 	var lab = save.lab_data
 	var key := season_key()
-	if str(lab.get("arena_season_key", "")) == key:
+	if lab.arena_season_key == key:
 		return {}
-	# 1) вычислить место ЗА прошедший сезон: сезонные волны vs соперники
-	#    того сезона (если поля нет — первый запуск, без письма)
-	var prev_key := str(lab.get("arena_season_key", ""))
-	lab.set("arena_season_key", key)
-	# сброс сезонных коллекций
+	var prev_key: String = lab.arena_season_key
+	lab.arena_season_key = key
+	# сброс сезонных коллекций (прошлый сезон закрыт)
 	lab.arena_medals_claimed = {}
 	lab.arena_season_tasks_claimed = {}
 	lab.arena_wins_challenge = 0
 	lab.arena_wins_defense = 0
-	if prev_key == "":
-		save.save_to_active_slot()
-		return {}
-	# 2) письмо: место по сезонным волнам против соперников прошлого сезона
-	var season_waves: int = int(lab.get("arena_season_waves", 0))
-	var rivals := rivals(season_idx_from_key(prev_key))
-	var my_wave: int = mini(season_waves, top_wave_of(rivals) + 5)
-	var place: int = 1
-	for r in rivals:
-		if int(r["wave"]) > my_wave:
-			place += 1
+	var waves: int = lab.arena_season_waves
+	lab.arena_season_waves = 0
+	if prev_key == "" or waves <= 0:
+		return {"changed": true}
+	# письмо: место по сезонным волнам против ФИКСИРОВАННОЙ таблицы лиг
+	var place: int = letter_place(season_idx_from_key(prev_key), waves)
 	var reward := place_reward(place)
-	# 3) письмо в ящик
-	var mail: Dictionary = save.get("guild_state", {}).get("mail", {})
-	if save.get("guild_state") != null:
-		var g: Dictionary = save.guild_state
-		var box: Array = g.get("mail", [])
-		box.insert(0, {
-			"from": "АРЕНА «ВЫБРОС I»",
-			"title_ru": "ИТОГИ СЕЗОНА: %d МЕСТО" % place,
-			"title_en": "SEASON RESULT: PLACE %d" % place,
-			"body_ru": "Сезон закрыт с %d волнами лучшей обороны. Награда за место — в приложении." % my_wave,
-			"body_en": "The season closed with %d waves of your best defense. The placement reward is attached." % my_wave,
-			"reward": reward, "claimed": false,
-		})
-		g["mail"] = box.slice(0, 30)
-		lab.set("arena_season_waves", 0)   # сезонные волны — с нуля
-	save.save_to_active_slot()
-	return {"place": place, "reward": reward}
+	var box: Array = save.guild_state.get("mail", [])
+	box.insert(0, {
+		"from": "АРЕНА «ВЫБРОС I»",
+		"title_ru": "ИТОГИ СЕЗОНА: %d МЕСТО" % place,
+		"title_en": "SEASON RESULT: PLACE %d" % place,
+		"body_ru": "Лучшая оборона сезона: %d волн. Награда за место — в приложении." % waves,
+		"body_en": "Best defense of the season: %d waves. The placement reward is attached." % waves,
+		"reward": reward, "claimed": false,
+	})
+	save.guild_state["mail"] = box.slice(0, 30)
+	return {"changed": true, "place": place, "reward": reward}
+
+
+## Фиксированная таблица «лиг» для письма итогов (канон письма, решение
+## владельца): волны соперников стоят на местах (топ-1 = 50) + рамп 3/сезон
+## и джиттер seed'ом сезона. Зал славы считает СВОЮ сетку в rivals().
+const LETTER_RIVALS := [
+	["МЕЧЕНЫЙ", 50], ["СТРЕЛОК", 44], ["ВОЛК", 38], ["ПРИЗРАК", 32],
+	["ЛУЧНИК", 26], ["КЛЫК", 21], ["ДЕГТЯРЁВ", 16], ["БАРМЕН", 12],
+	["ШТЫРЬ", 8], ["КРОТ", 4],
+]
+
+
+## Место в письме: сколько «лиг» перекрыли наши сезонные волны
+static func letter_place(season_idx: int, my_waves: int) -> int:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 91700 + season_idx
+	var place := 1
+	for d in LETTER_RIVALS:
+		var rival_wave: int = int(d[1]) + rng.randi_range(-2, 2) + season_idx * 3
+		if rival_wave >= my_waves:
+			place += 1
+	return place
 
 
 static func season_idx_from_key(key: String) -> int:
@@ -111,13 +130,6 @@ static func season_idx_from_key(key: String) -> int:
 		if c >= "0" and c <= "9":
 			digits += c
 	return int(digits) if digits != "" else season_info()["idx"]
-
-
-static func top_wave_of(rivals: Array) -> int:
-	var top := 10
-	for r in rivals:
-		top = maxi(top, int(r["wave"]))
-	return top
 
 
 ## Награда за место (1-3 жирные, дальше — утешительные)
@@ -132,10 +144,10 @@ static func place_reward(place: int) -> Dictionary:
 			return {"rolls_art": 1, "bio": 20000.0}
 
 
-## Отметить сезонные волны (зывается из учёта забегов выживания/обороны)
+## Отметить сезонные волны (зывается из учёта забегов выживания/обороны;
+## хранится только ЛУЧШАЯ оборона сезона)
 static func note_season_wave(save, waves: int) -> void:
-	if save == null or save.lab_data == null:
+	if save == null or save.lab_data == null or waves <= 0:
 		return
-	var best: int = int(save.lab_data.get("arena_season_waves", 0))
-	if waves > best:
-		save.lab_data.set("arena_season_waves", waves)
+	if waves > save.lab_data.arena_season_waves:
+		save.lab_data.arena_season_waves = waves

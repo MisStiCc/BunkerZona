@@ -72,6 +72,12 @@ const DEV_ROLLS: int = 1000000
 @export var arena_medals_claimed: Dictionary = {}
 @export var arena_season_tasks_claimed: Dictionary = {}
 
+# D25 СЕЗОНЫ АРЕНЫ: ключ текущего сезона ("S<N>", канон — ArenaSeason) и
+# лучшая оборона ТЕКУЩЕГО сезона в волнах (пишется из забегов выживания,
+# сбрасывается rollover'ом; пожизненный рекорд живёт отдельно в statistics)
+@export var arena_season_key: String = ""
+@export var arena_season_waves: int = 0
+
 # Эксклюзивные аномалии Чёрных ящиков (типы из GachaData.EXCLUSIVE_ANOMALIES)
 @export var exclusive_anomalies: Array[String] = []
 

@@ -152,6 +152,9 @@ func _build() -> void:
 func _refresh() -> void:
 	var days_box: VBoxContainer = _root.find_child("Days", true, false)
 	for c in days_box.get_children():
+		# снимаем СРАЗУ: голый queue_free отложен и при повторном
+		# обновлении строки наслаивались (сообщение подготовщика 01.11)
+		days_box.remove_child(c)
 		c.queue_free()
 	var today_ids: Array = BossHuntData.get_today_bosses()
 	for day in BossHuntData.get_week_days():

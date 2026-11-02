@@ -84,6 +84,9 @@ static func current_event(now_unix: int) -> Dictionary:
 		if base == "finale":
 			base = "zharva"
 		var info: Dictionary = EVENTS[base]
+		# форс финала тоже показывает его титул (механика — база Жатвы)
+		if FORCE_EVENT.begins_with("finale"):
+			info = EVENTS["finale"]
 		ev["id"] = FORCE_EVENT
 		ev["base"] = base
 		ev["title_ru"] = str(info["title_ru"])
@@ -98,11 +101,18 @@ static func _calendar_event(now_unix: int) -> Dictionary:
 	var week: int = int(now_unix / 604800.0)  # недель с эпохи (Чт 00:00 UTC — историческое)
 	var slot: int = week % HALF_YEAR_WEEKS
 	var season: int = week / HALF_YEAR_WEEKS
-	var event_key: String = SCHEDULE[slot]
+	# Ивент = ПАРА недель (13 ивентов × 2 = 26): SCHEDULE короткий (13),
+	# индекс — номер ПАРЫ. Голое SCHEDULE[slot] падало out-of-bounds на
+	# неделях 13–25 полугодия (включая финал) — поймано тестом test_mail.
+	var event_key: String = SCHEDULE[slot / EVENT_LENGTH_WEEKS]
 	var base: String = event_key.trim_suffix("2")
 	if base == "finale":
 		base = "zharva"
 	var info: Dictionary = EVENTS.get(base, EVENTS["zharva"])
+	# Неделя финала: титул/описание — свои («ПОЛУГОДИЕ ЗОНЫ»), механика
+	# недели остаётся базой Жатвы (base не трогаем — флаги финала по id)
+	if event_key == "finale":
+		info = EVENTS["finale"]
 	var weeks_left: int = EVENT_LENGTH_WEEKS - slot % EVENT_LENGTH_WEEKS
 	var end_unix: int = (week / EVENT_LENGTH_WEEKS + 1) * EVENT_LENGTH_WEEKS * 604800
 	var days_left: int = int(ceil(float(end_unix - now_unix) / 86400.0))

@@ -20,6 +20,13 @@ const METER_5RUN: float = 100.0
 const GLYPHS := ["🔥", "⚡", "☣", "🌀", "☢", "⏳"]
 const COLORS := [Color("e06040"), Color("e8c840"), Color("70c850"),
 	Color("5090e0"), Color("b0e040"), Color("a070e0")]
+# Арт тайлов (задача 37): 6 аномалий по типу + 3 особых (линия/саркофаг/воронка).
+# Нет файла — фолбэк на прежние глифы.
+const ART_DIR := "res://assets/ui/events/"
+const TILE_ART := ["tile_fire", "tile_bolt", "tile_gas", "tile_vortex",
+	"tile_radiation", "tile_drop"]
+const SPECIAL_ART := {"line": "tile_electra", "bomb": "tile_sarcophagus",
+	"cross": "tile_funnel"}
 
 var _grid: Array = []            # [y][x] -> {t:int, sp:String}
 var _cells: Array = []           # [y][x] -> Panel
@@ -34,6 +41,8 @@ var _busy: bool = false
 var _meter_bar: ProgressBar
 var _info: Label
 var _event: Dictionary
+var _tile_tex: Array = []          # кэш текстур по типу, null = нет арта
+var _special_tex: Dictionary = {}  # кэш текстур особых тайлов
 var game_manager: Node
 
 
@@ -42,9 +51,18 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_event = EventsData.current_event(int(Time.get_unix_time_from_system()))
+	for art_name in TILE_ART:
+		_tile_tex.append(_load_art(art_name))
+	for sp in SPECIAL_ART:
+		_special_tex[sp] = _load_art(SPECIAL_ART[sp])
 	_build()
 	_new_board()
 	_update_info()
+
+
+func _load_art(art_name: String) -> Texture2D:
+	var path := ART_DIR + art_name + ".png"
+	return load(path) if ResourceLoader.exists(path) else null
 
 
 func _build() -> void:
@@ -125,6 +143,7 @@ func _random_cell(x: int, y: int) -> Dictionary:
 
 func _draw_board() -> void:
 	for c in _board.get_children():
+		_board.remove_child(c)
 		c.queue_free()
 	_cells.clear()
 	for y in ROWS:
@@ -148,18 +167,38 @@ func _make_cell(x: int, y: int) -> Panel:
 	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	p.gui_input.connect(_on_cell_input.bind(Vector2i(x, y)))
 
-	var lbl := Label.new()
-	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	lbl.text = GLYPHS[cell["t"]]
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 26)
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	p.add_child(lbl)
-	if str(cell["sp"]) != "":
+	# арт тайла: особый целиком заменяет базовый, рамка остаётся цветом типа
+	# (читаемость матча); нет арта — прежние глифы
+	var sp: String = str(cell["sp"])
+	var tex: Texture2D = _special_tex.get(sp) if sp != "" else null
+	if tex == null:
+		tex = _tile_tex[cell["t"]]
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tr.offset_left = 4
+		tr.offset_top = 4
+		tr.offset_right = -4
+		tr.offset_bottom = -4
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.texture = tex
+		p.add_child(tr)
+	else:
+		var lbl := Label.new()
+		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		lbl.text = GLYPHS[cell["t"]]
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 26)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		p.add_child(lbl)
+	# особый тайл без собственного арта помечаем глифом поверх
+	if sp != "" and not _special_tex.has(sp):
 		var sp_lbl := Label.new()
 		sp_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-		sp_lbl.text = "✦" if cell["sp"] == "line" else "☢" if cell["sp"] == "bomb" else "✚"
+		sp_lbl.text = "✦" if sp == "line" else "☢" if sp == "bomb" else "✚"
 		sp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		sp_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		sp_lbl.add_theme_font_size_override("font_size", 20)
