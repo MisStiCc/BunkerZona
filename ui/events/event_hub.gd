@@ -31,7 +31,7 @@ func _art(art_name: String) -> Texture2D:
 
 func _ready() -> void:
 	game_manager = get_tree().get_first_node_in_group("game_manager")
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
 	_build()
@@ -42,11 +42,13 @@ func open() -> void:
 	if game_manager and game_manager.current_save_data:
 		EventOps.state(game_manager.current_save_data)
 	_refresh()
+	visible = true   # сам оверлей тоже (раньше: _root видим, окно - нет)
 	_root.visible = true
 
 
 func close() -> void:
 	_root.visible = false
+	visible = false   # и сам оверлей
 
 
 func _build() -> void:

@@ -2045,9 +2045,9 @@ func _rebuild_farm_altar():
                 # Копии/корм для рецепта
                 if not req.is_empty():
                         _farm_altar_box.add_child(_make_altar_kv(
-                                "Копии цели",
-                                "%d/%d" % [int(req.get("copies_have", 0)), int(req.get("copies_need", 0))],
-                                Color("e8f5d0") if int(req.get("copies_have", 0)) >= int(req.get("copies_need", 0)) else BunkerUI.HAZARD))
+                                "Копии той же ★",
+                                "%d/%d" % [int(req.get("tier_copies_have", 0)), int(req.get("copies_need", 0))],
+                                Color("e8f5d0") if int(req.get("tier_copies_have", 0)) >= int(req.get("copies_need", 0)) else BunkerUI.HAZARD))
                         _farm_altar_box.add_child(_make_altar_kv(
                                 "Простой корм",
                                 "%d/%d" % [int(req.get("simple_have", 0)), int(req.get("simple_need", 0))],
@@ -2065,8 +2065,16 @@ func _rebuild_farm_altar():
         push.size_flags_vertical = Control.SIZE_EXPAND_FILL
         _farm_altar_box.add_child(push)
 
-        # Кнопки: собрать рецепт (существующий диалог поверх фермы) + кормить
+        # Кнопки: повысить разом (выбор готового) + собрать рецепт + кормить
         if stars < LabData.MAX_STARS:
+                var now_btn := Button.new()
+                now_btn.text = Loc.t("up.boost_now")
+                now_btn.custom_minimum_size = Vector2(0, 58)
+                BunkerUI.style_button(now_btn, "primary", 18, true)
+                now_btn.pressed.connect(_on_boost_now_pressed)
+                now_btn.mouse_entered.connect(_play_hover_sound)
+                _farm_altar_box.add_child(now_btn)
+
                 var up_btn := Button.new()
                 up_btn.text = "СОБРАТЬ РЕЦЕПТ · ★%d" % (stars + 1)
                 up_btn.custom_minimum_size = Vector2(0, 58)
@@ -3013,9 +3021,11 @@ var up_body: VBoxContainer
 # Состояние сбора рецепта
 var _up_target: String = ""
 var _up_copies: int = 0
+var _up_tier: Dictionary = {}   # копийный слот: ЛЮБЫЕ той же ★ (задача 44), тип -> кол-во
 var _up_star_feed: String = ""
 var _up_simple: Dictionary = {}
-var _up_chooser: String = ""  # "" | "star" | "simple"
+var _up_chooser: String = ""  # "" | "star" | "simple" | "tier" | "boost"
+var _boost_cands: Array = []
 
 
 func _build_upgrade_dialog():
@@ -3073,6 +3083,99 @@ func _build_upgrade_dialog():
         panel.add_child(back)
 
 
+## Задача 44: скан "кого можно повысить ПРЯМО СЕЙЧАС" - прогоняем АВТО-заполнение
+## на каждом не-максимальном мутанте, смотрим сойдётся ли рецепт
+func _boost_scan() -> Array:
+        var lab = game_manager.get_lab_data()
+        var out: Array = []
+        var save_target := _up_target
+        var save_copies := _up_copies
+        var save_tier: Dictionary = _up_tier.duplicate(true)
+        var save_feed := _up_star_feed
+        var save_simple: Dictionary = _up_simple.duplicate(true)
+        var save_chooser := _up_chooser
+        for t in lab.unlocked_mutants:
+                var st: int = lab.get_mutant_stars(str(t))
+                if st >= LabData.MAX_STARS:
+                        continue
+                _up_target = str(t)
+                _on_up_auto()
+                var req: Dictionary = game_manager.get_star_requirements(str(t))
+                var full: bool = _up_copies + _up_tier_total() >= int(req.get("copies_need")) \
+                                and (int(req.get("star_have")) >= 1 or not _up_star_feed.is_empty()) \
+                                and int(req.get("simple_have")) + _up_pending_simple_total() >= int(req.get("simple_need"))
+                if full:
+                        out.append(str(t))
+        # Восстановление состояния диалога
+        _up_target = save_target
+        _up_copies = save_copies
+        _up_tier = save_tier
+        _up_star_feed = save_feed
+        _up_simple = save_simple
+        _up_chooser = save_chooser
+        return out
+
+
+func _on_boost_now_pressed():
+        _play_click_sound()
+        var cands: Array = _boost_scan()
+        if cands.is_empty():
+                _show_message(Loc.t("up.boost_none"), 2.0)
+                return
+        if cands.size() == 1:
+                _boost_apply(str(cands[0]))
+                return
+        # Выбор из нескольких готовых
+        _up_chooser = "boost"
+        _boost_cands = cands
+        _up_target = str(cands[0])
+        if not up_panel:
+                _build_upgrade_dialog()
+        up_panel.visible = true
+        _rebuild_upgrade_dialog()
+
+
+## Повысить разом: АВТО-заполнение слабейшими + применение одним нажатием
+func _boost_apply(target: String) -> void:
+        _up_target = target
+        _on_up_auto()
+        var msg: String = game_manager.apply_star_recipe(_up_target, _up_copies, _up_star_feed, _up_simple, _up_tier)
+        _show_message(msg, 2.5)
+        _close_upgrade_dialog()
+        _rebuild_farm_panel()
+        _refresh_ui()
+
+
+## Список кандидатов "повысить разом"
+func _rebuild_boost_chooser():
+        for child in up_body.get_children():
+                child.queue_free()
+        var header := Label.new()
+        header.text = Loc.t("up.boost_pick")
+        header.add_theme_font_override("font", BunkerUI.font_title())
+        header.add_theme_font_size_override("font_size", 16)
+        up_body.add_child(header)
+        for t in _boost_cands:
+                var lab = game_manager.get_lab_data()
+                var st: int = lab.get_mutant_stars(str(t))
+                var row := HBoxContainer.new()
+                row.add_theme_constant_override("separation", 6)
+                row.add_child(_make_icon_rect(str(t), true, 26))
+                var name_label := Label.new()
+                name_label.text = "%s  %s -> %s" % [Loc.type_name(str(t)), LabData.stars_text(st), LabData.stars_text(st + 1)]
+                name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                row.add_child(name_label)
+                var go := Button.new()
+                go.text = Loc.t("up.boost_go")
+                go.pressed.connect(_boost_apply.bind(str(t)))
+                row.add_child(go)
+                up_body.add_child(row)
+        var cancel := Button.new()
+        cancel.text = Loc.t("lab.back")
+        cancel.pressed.connect(_on_up_cancel_chooser)
+        up_body.add_child(cancel)
+
+
 func _on_farm_upgrade(type: String):
         """↑N★ - открыть окно сбора рецепта по этому мутанту (ПОВЕРХ фермы)"""
         _play_click_sound()
@@ -3116,29 +3219,43 @@ func _rebuild_upgrade_dialog():
         var req: Dictionary = game_manager.get_star_requirements(_up_target)
         up_title.text = Loc.t("up.title", {"name": Loc.type_name(_up_target), "n": stars + 1})
 
-        # Режим выбора корма
+        # Режим выбора корма / кандидата повышения
+        if _up_chooser == "boost":
+                _rebuild_boost_chooser()
+                return
         if _up_chooser != "":
                 _rebuild_upgrade_chooser()
                 return
 
-        # --- Слот 1: копии цели ---
+        # --- Слот 1: копии ЛЮБОГО мутанта той же звёздности (задача 44) ---
         var copies_row := HBoxContainer.new()
         copies_row.add_theme_constant_override("separation", 6)
         var copies_label := Label.new()
-        var copies_have: int = int(req.get("copies_have"))
-        copies_label.text = Loc.t("up.copies_slot", {"have": _up_copies, "need": copies_have})
+        var tier_have: int = int(req.get("tier_copies_have"))
+        var tier_committed: int = _up_copies + _up_tier_total()
+        var copies_detail: String = "%s x%d" % [Loc.type_name(_up_target), _up_copies]
+        for t in _up_tier:
+                copies_detail += "   %s x%d" % [Loc.type_name(str(t)), int(_up_tier[t])]
+        copies_label.text = Loc.t("up.copies_slot", {"have": tier_committed, "need": stars + 1}) \
+                + "   (" + Loc.t("up.copies_pool", {"have": tier_have}) + ")   " + copies_detail
         copies_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        copies_label.clip_text = true
         copies_row.add_child(copies_label)
-        if _up_copies < stars + 1:
+        if tier_committed < stars + 1:
                 var add_copies := Button.new()
                 add_copies.text = Loc.t("up.copies_btn", {"n": stars + 1})
-                add_copies.tooltip_text = Loc.t("up.copies_slot", {"have": copies_have, "need": stars + 1})
-                add_copies.pressed.connect(_on_up_add_copies.bind(stars + 1))
+                add_copies.tooltip_text = Loc.t("up.copies_pool", {"have": tier_have})
+                add_copies.pressed.connect(_on_up_pick_tier)
                 copies_row.add_child(add_copies)
-        elif _up_copies > 0:
+        else:
                 var done1 := Label.new()
                 done1.text = Loc.t("up.done_mark")
                 copies_row.add_child(done1)
+        if tier_committed > 0:
+                var reset_c := Button.new()
+                reset_c.text = Loc.t("up.reset")
+                reset_c.pressed.connect(_on_up_reset_tier)
+                copies_row.add_child(reset_c)
         up_body.add_child(copies_row)
 
         # --- Слот 2: звёздный корм ---
@@ -3197,7 +3314,9 @@ func _rebuild_upgrade_dialog():
         ok_btn.text = Loc.t("up.ok")
         ok_btn.custom_minimum_size = Vector2(0, 40)
         var copies_need: int = stars + 1
-        var has_enough: bool = _up_copies >= copies_need and (int(req.get("star_have")) >= 1 or not _up_star_feed.is_empty()) and simple_total >= int(req.get("simple_need"))
+        var has_enough: bool = _up_copies + _up_tier_total() >= copies_need \
+                        and (int(req.get("star_have")) >= 1 or not _up_star_feed.is_empty()) \
+                        and simple_total >= int(req.get("simple_need"))
         ok_btn.disabled = not has_enough
         ok_btn.pressed.connect(_on_up_confirm)
         up_body.add_child(ok_btn)
@@ -3209,11 +3328,24 @@ func _rebuild_upgrade_dialog():
                 up_body.add_child(hint)
 
 
-func _on_up_add_copies(max_copies: int):
+## Сумма чужих копий той же ★, committed в копийный слот
+func _up_tier_total() -> int:
+        var total := 0
+        for t in _up_tier:
+                total += int(_up_tier[t])
+        return total
+
+
+func _on_up_pick_tier():
         _play_click_sound()
-        # Кламп к потребности рецепта: лишние копии не сжигаем
-        var stars: int = game_manager.get_lab_data().get_mutant_stars(_up_target)
-        _up_copies = mini(max_copies, stars + 1)
+        _up_chooser = "tier"
+        _rebuild_upgrade_dialog()
+
+
+func _on_up_reset_tier():
+        _play_click_sound()
+        _up_tier.clear()
+        _up_copies = 0
         _rebuild_upgrade_dialog()
 
 
@@ -3237,8 +3369,8 @@ func _on_up_reset_simple():
 
 func _on_up_confirm():
         _play_click_sound()
-        var msg: String = game_manager.apply_star_recipe(_up_target, _up_copies, _up_star_feed, _up_simple)
-        _show_message(msg, 2.0)
+        var msg: String = game_manager.apply_star_recipe(_up_target, _up_copies, _up_star_feed, _up_simple, _up_tier)
+        _show_message(msg, 2.5)
         _close_upgrade_dialog()
         _rebuild_farm_panel()
         _refresh_ui()
@@ -3250,6 +3382,8 @@ func _rebuild_upgrade_chooser():
         var header := Label.new()
         if _up_chooser == "star":
                 header.text = Loc.t("up.pick_star", {"n": target_stars})
+        elif _up_chooser == "tier":
+                header.text = Loc.t("up.pick_tier", {"n": target_stars})
         else:
                 header.text = Loc.t("up.pick_simple")
         up_body.add_child(header)
@@ -3274,6 +3408,20 @@ func _rebuild_upgrade_chooser():
                         pick.text = Loc.t("up.ok").replace("★ ", "")
                         pick.pressed.connect(_on_up_choose_star.bind(type))
                         row.add_child(pick)
+                elif _up_chooser == "tier":
+                        var t_free: int = lab.get_farm_copies(type)
+                        var c_need: int = target_stars + 1 - _up_copies - _up_tier_total()
+                        for qty in [1, 5]:
+                                if qty <= t_free and qty <= c_need:
+                                        var tq := Button.new()
+                                        tq.text = "+%d" % qty
+                                        tq.pressed.connect(_on_up_choose_tier.bind(type, qty))
+                                        row.add_child(tq)
+                        if t_free > 0 and c_need > 0:
+                                var tmax := Button.new()
+                                tmax.text = Loc.t("up.qty_max")
+                                tmax.pressed.connect(_on_up_choose_tier.bind(type, mini(t_free, c_need)))
+                                row.add_child(tmax)
                 else:
                         var available: int = lab.get_farm_copies(type)
                         var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
@@ -3344,6 +3492,16 @@ func _on_up_choose_star(type: String):
         _rebuild_upgrade_dialog()
 
 
+func _on_up_choose_tier(type: String, qty: int):
+        _play_click_sound()
+        _up_tier[type] = int(_up_tier.get(type, 0)) + qty
+        # Слот полон - вернуться к слотам
+        var stars_t: int = game_manager.get_lab_data().get_mutant_stars(_up_target)
+        if _up_copies + _up_tier_total() >= stars_t + 1:
+                _up_chooser = ""
+        _rebuild_upgrade_dialog()
+
+
 func _on_up_choose_simple(type: String, qty: int):
         _play_click_sound()
         _up_simple[type] = int(_up_simple.get(type, 0)) + qty
@@ -3375,20 +3533,49 @@ func _on_up_auto():
         var stars: int = lab.get_mutant_stars(_up_target)
         var req: Dictionary = game_manager.get_star_requirements(_up_target)
 
-        # 1. Копии цели - ровно потребность (не больше, лишние копии не сжигаем)
-        _up_copies = mini(int(req.get("copies_have")), stars + 1)
+        # 0. Сброс коммитов слота копий
+        _up_tier.clear()
+        _up_copies = 0
 
-        # 2. Звёздный корм: чужие той же звёздности; если их нет - копии самого типа
+        # 1. Копийный слот: ЧУЖИЕ той же ★ слабейшие первыми (задача 44),
+        #    свои копии цели - только резервом, если чужих не хватило
+        var copies_left: int = stars + 1
+        var pool: Array[String] = []
+        for t in lab.unlocked_mutants:
+                if str(t) != _up_target and lab.get_mutant_stars(t) == stars and lab.get_farm_copies(t) > 0:
+                        pool.append(str(t))
+        pool.sort_custom(func(a, b):
+                var fa: int = GachaData.get_fodder_value(a, true)
+                var fb: int = GachaData.get_fodder_value(b, true)
+                if fa != fb:
+                        return fa < fb
+                return a < b)
+        for t in pool:
+                if copies_left <= 0:
+                        break
+                var take: int = mini(lab.get_farm_copies(t), copies_left)
+                if take > 0:
+                        _up_tier[t] = take
+                        copies_left -= take
+        if copies_left > 0:
+                _up_copies = mini(lab.get_farm_copies(_up_target), copies_left)
+                copies_left -= _up_copies
+
+        # 2. Звёздный корм: чужие той же ★ ИЗ ОСТАТКА пула (не занятые слотом копий);
+        #    если пусто - копия цели, если и её нет - любой свободный той же ★
         if int(req.get("star_have")) < 1:
                 var cands: Array[String] = []
                 for t in lab.unlocked_mutants:
-                        if t != _up_target and lab.get_mutant_stars(t) == stars and lab.get_farm_copies(t) > 0:
+                        if t == _up_target or lab.get_mutant_stars(t) != stars or lab.get_farm_copies(t) <= 0:
+                                continue
+                        var used: int = int(_up_tier.get(t, 0))
+                        if lab.get_farm_copies(t) - used > 0:
                                 cands.append(str(t))
                 cands.sort_custom(func(a, b):
-                        var ca: int = lab.get_farm_copies(a)
-                        var cb: int = lab.get_farm_copies(b)
+                        var ca: int = lab.get_farm_copies(a) - int(_up_tier.get(a, 0))
+                        var cb: int = lab.get_farm_copies(b) - int(_up_tier.get(b, 0))
                         if ca != cb:
-                                return ca > cb
+                                return ca < cb   # наименее ценные остатки - в бак
                         return GachaData.get_fodder_value(a, true) < GachaData.get_fodder_value(b, true))
                 if not cands.is_empty():
                         _up_star_feed = cands[0]
@@ -3421,7 +3608,10 @@ func _on_up_auto():
         for t in simple_cands + other_cands:
                 if remaining <= 0:
                         break
-                var take: int = mini(lab.get_farm_copies(t), remaining)
+                var reserved: int = int(_up_tier.get(t, 0))
+                if t == _up_star_feed:
+                        reserved += 1
+                var take: int = mini(lab.get_farm_copies(t) - reserved, remaining)
                 if take > 0:
                         _up_simple[t] = int(_up_simple.get(t, 0)) + take
                         remaining -= take

@@ -14,7 +14,7 @@ var _badge: Panel = null
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
 	_build()
@@ -35,11 +35,13 @@ func open() -> void:
 		if not ArenaSeason.ensure_season(gm.current_save_data).is_empty():
 			gm.save_to_active_slot()
 	_refresh()
+	visible = true   # сам оверлей тоже (раньше: _root видим, окно - нет)
 	_root.visible = true
 
 
 func close() -> void:
 	_root.visible = false
+	visible = false   # и сам оверлей
 
 
 func _build() -> void:

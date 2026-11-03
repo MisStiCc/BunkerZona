@@ -166,13 +166,20 @@ func get_star_requirements(mutant_type: String) -> Dictionary:
         var star_feed_need := 1
         var simple_need: int = GachaData.get_star_feed_cost(stars)
         var copies_have: int = lab.get_farm_copies(mutant_type)
+        # Задача 44 (владелец): в слот копий идёт ЛЮБОЙ мутант той же звёздности,
+        # не только целевой (для эксклюзивов Чёрного ящика 4 своих копий - нереально)
+        var tier_copies: int = copies_have
+        for t in lab.unlocked_mutants:
+                if str(t) != mutant_type and lab.get_mutant_stars(str(t)) == stars:
+                        tier_copies += lab.get_farm_copies(str(t))
         var star_have: int = lab.get_star_feed(mutant_type)
         var simple_have: int = lab.get_star_progress(mutant_type)
-        var has_enough := copies_have >= copies_need and star_have >= star_feed_need and simple_have >= simple_need
+        var has_enough := tier_copies >= copies_need and star_have >= star_feed_need and simple_have >= simple_need
         return {
                 "stars": stars,
                 "max": stars >= LabData.MAX_STARS,
                 "copies_have": copies_have, "copies_need": copies_need,
+                "tier_copies_have": tier_copies,
                 "star_have": star_have, "star_need": star_feed_need,
                 "simple_have": simple_have, "simple_need": simple_need,
                 "ready": has_enough,
@@ -209,14 +216,18 @@ func recycle_copies(batch: Dictionary) -> Dictionary:
 
 ## Применить собранный в диалоге рецепт разом: копии цели + звёздный корм +
 ## словарь простых кормов {тип: количество}. Всё проверяется и списывается здесь.
-func apply_star_recipe(target: String, copies: int, star_feed: String, simple: Dictionary) -> String:
+func apply_star_recipe(target: String, copies: int, star_feed: String, simple: Dictionary, tier_extra: Dictionary = {}) -> String:
         var lab = get_lab_data()
         var req: Dictionary = get_star_requirements(target)
         if bool(req.get("max")):
                 return "Звёзды уже максимальны"
         var copies_need: int = int(req.get("copies_need"))
-        if copies < copies_need:
-                return "Нужно копий цели: %d/%d" % [copies, copies_need]
+        # Слот копий: свои копии цели + ЛЮБЫЕ той же звёздности (задача 44)
+        var tier_sum: int = copies
+        for t in tier_extra:
+                tier_sum += int(tier_extra[t])
+        if tier_sum < copies_need:
+                return "Нужно копий той же ★: %d/%d" % [tier_sum, copies_need]
         if lab.get_star_feed(target) < 1 and star_feed.is_empty():
                 return "Нужен звёздный корм - копия мутанта с %d★" % int(req.get("stars"))
         if lab.get_star_feed(target) < 1 and not star_feed.is_empty() and lab.get_mutant_stars(star_feed) != int(req.get("stars")):
@@ -228,15 +239,34 @@ func apply_star_recipe(target: String, copies: int, star_feed: String, simple: D
                         total += int(simple[t])
                 if total < simple_need:
                         return "Нужно простых кормов: %d/%d" % [total, simple_need]
-        # Бюджет копий цели: слот копий + звёздный корм + простые из себя - не больше запаса
-        var self_needed: int = copies
-        if star_feed == target:
-                self_needed += 1
-        self_needed += int(simple.get(target, 0))
-        if self_needed > lab.get_farm_copies(target):
-                return "Не хватает копий цели: нужно %d, на ферме %d" % [self_needed, lab.get_farm_copies(target)]
+        # Бюджет потребления по типам: план <= запасы фермы (копийный слот
+        # + звёздный корм + простые - всё из одних копий фермы)
+        var planned: Dictionary = {}
+        planned[target] = copies
+        for t in tier_extra:
+                planned[str(t)] = int(planned.get(str(t), 0)) + int(tier_extra[t])
+        if not star_feed.is_empty() and lab.get_star_feed(target) < 1:
+                planned[star_feed] = int(planned.get(star_feed, 0)) + 1
+        for t in simple:
+                planned[str(t)] = int(planned.get(str(t), 0)) + int(simple[t])
+        for t in planned:
+                if int(planned[t]) > lab.get_farm_copies(str(t)):
+                        return "Не хватает копий %s: нужно %d, на ферме %d" % [GachaData.display_name(str(t)), int(planned[t]), lab.get_farm_copies(str(t))]
         
-        # Списываем копии цели
+        # Списываем: ЧУЖИЕ той же ★ первыми (самые слабые - в корм), затем свои цели
+        var extras: Array[String] = []
+        for t in tier_extra:
+                if int(tier_extra[t]) > 0 and str(t) != target:
+                        extras.append(str(t))
+        extras.sort_custom(func(a, b):
+                var fa: int = GachaData.get_fodder_value(a, true)
+                var fb: int = GachaData.get_fodder_value(b, true)
+                if fa != fb:
+                        return fa < fb
+                return a < b)
+        for t in extras:
+                for i in range(int(tier_extra[t])):
+                        lab.consume_farm_copy(t)
         for i in range(copies):
                 lab.consume_farm_copy(target)
         # Звёздный корм (если ещё не заполнен быстрым кормлением)
@@ -268,13 +298,29 @@ func try_upgrade_star(mutant_type: String) -> String:
         var req: Dictionary = get_star_requirements(mutant_type)
         if bool(req.get("max")):
                 return "Звёзды уже максимальны"
-        if int(req.get("copies_have")) < int(req.get("copies_need")):
-                return "Нужно копий: %d/%d" % [int(req.get("copies_have")), int(req.get("copies_need"))]
+        if int(req.get("tier_copies_have")) < int(req.get("copies_need")):
+                return "Нужно копий той же ★: %d/%d" % [int(req.get("tier_copies_have")), int(req.get("copies_need"))]
         if int(req.get("star_have")) < int(req.get("star_need")):
                 return "Нужен звёздный корм: копия мутанта с %d★" % int(req.get("stars"))
         if int(req.get("simple_have")) < int(req.get("simple_need")):
                 return "Нужно простых кормов: %d/%d" % [int(req.get("simple_have")), int(req.get("simple_need"))]
-        for i in range(int(req.get("copies_need"))):
+        # Копийный слот: чужие той же ★ слабейшие первыми, затем свои
+        var left: int = int(req.get("copies_need"))
+        var pool: Array[String] = []
+        for t in lab.unlocked_mutants:
+                if str(t) != mutant_type and lab.get_mutant_stars(str(t)) == int(req.get("stars")) and lab.get_farm_copies(str(t)) > 0:
+                        pool.append(str(t))
+        pool.sort_custom(func(a, b):
+                var fa: int = GachaData.get_fodder_value(a, true)
+                var fb: int = GachaData.get_fodder_value(b, true)
+                if fa != fb:
+                        return fa < fb
+                return a < b)
+        for t in pool:
+                while left > 0 and lab.get_farm_copies(t) > 0:
+                        lab.consume_farm_copy(t)
+                        left -= 1
+        for i in range(left):
                 lab.consume_farm_copy(mutant_type)
         lab.clear_star_progress(mutant_type)
         lab.star_feed_progress.erase(mutant_type)

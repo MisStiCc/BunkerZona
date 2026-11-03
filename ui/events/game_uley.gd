@@ -57,7 +57,7 @@ func _ready() -> void:
 	_game_manager = get_tree().get_first_node_in_group("game_manager")
 	_event = EventsData.current_event(int(Time.get_unix_time_from_system()))
 	_bless_pool = ["dmg", "regen", "jump_r", "rage_free", "speed"].duplicate()
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
 	_setup_room()

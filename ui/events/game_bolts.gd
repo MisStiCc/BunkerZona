@@ -39,7 +39,7 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_game_manager = get_tree().get_first_node_in_group("game_manager")
 	_event = EventsData.current_event(int(Time.get_unix_time_from_system()))
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_chrome()
 	_load_level(_level)

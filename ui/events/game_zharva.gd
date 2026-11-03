@@ -48,7 +48,7 @@ var game_manager: Node
 
 func _ready() -> void:
 	game_manager = get_tree().get_first_node_in_group("game_manager")
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_event = EventsData.current_event(int(Time.get_unix_time_from_system()))
 	for art_name in TILE_ART:
