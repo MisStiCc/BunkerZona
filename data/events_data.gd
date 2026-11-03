@@ -14,6 +14,11 @@ const EVENT_LENGTH_WEEKS: int = 2
 # static (не const): current_event() статическая и читает её
 static var FORCE_EVENT: String = ""   # чек-лист релиза: пусто, ивент по календарю
 
+## ТЕСТ-СТЕНД владельца: в хабе ивентов открыт блок со ВСЕМИ шестью
+## мини-играми независимо от календаря (руками протестировать каждую).
+## К ПОЛИРОВКЕ ПЕРЕД ПУБЛИЧНОЙ ВОЛНОМ: перевернуть в false.
+static var TEST_STAND: bool = true
+
 # 13 слотов полугодия (id мини-игры)
 const SCHEDULE := ["zharva", "uley", "labyrinth", "chain", "zharva2",
 	"vault", "bolts", "uley2", "labyrinth2", "chain2", "vault2", "bolts2",

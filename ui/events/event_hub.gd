@@ -220,6 +220,7 @@ func _refresh() -> void:
 	_fill_milestones(es)
 	_fill_shop()
 	_fill_finale_games(es)
+	_fill_test_stand()
 
 
 ## Финал полугодия: все шесть игр открыты одновременно.
@@ -243,6 +244,30 @@ func _fill_finale_games(_es: Dictionary) -> void:
 		b.disabled = not (g[0] in built)
 		if g[0] in built:
 			b.pressed.connect(_on_finale_play.bind(g[0]))
+		_list.add_child(b)
+
+
+## ТЕСТ-СТЕНД владельца: все шесть мини-игр доступны руками,
+## независимо от календаря (EventsData.TEST_STAND). Счёт идёт в ивент.
+func _fill_test_stand() -> void:
+	if not EventsData.TEST_STAND:
+		return
+	var sep := Label.new()
+	sep.text = "  —  ТЕСТ-СТЕНД: ВСЕ ИГРЫ  —  "
+	sep.add_theme_font_override("font", BunkerUI.font_title())
+	sep.add_theme_font_size_override("font_size", 14)
+	sep.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+	_list.add_child(sep)
+	var games := [["zharva", "evt.g_zharva"], ["uley", "evt.g_uley"],
+		["labyrinth", "evt.g_labyrinth"], ["chain", "evt.g_chain"],
+		["vault", "evt.g_vault"], ["bolts", "evt.g_bolts"]]
+	for g in games:
+		var b := Button.new()
+		b.text = "▶  " + Loc.t(str(g[1]))
+		b.custom_minimum_size = Vector2(0, 44)
+		b.add_theme_font_size_override("font_size", 14)
+		BunkerUI.style_button(b, "steel", 13)
+		b.pressed.connect(_on_finale_play.bind(str(g[0])))
 		_list.add_child(b)
 
 
