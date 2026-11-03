@@ -12,7 +12,7 @@ const EVENT_LENGTH_WEEKS: int = 2
 # Тест-переключатель: принудительный ивент ("uley", "labyrinth", ...).
 # Работает ТОЛЬКО в debug-сборках (OS.is_debug_build) — в релизе игнор.
 # static (не const): current_event() статическая и читает её
-static var FORCE_EVENT: String = "uley"
+static var FORCE_EVENT: String = ""   # чек-лист релиза: пусто, ивент по календарю
 
 # 13 слотов полугодия (id мини-игры)
 const SCHEDULE := ["zharva", "uley", "labyrinth", "chain", "zharva2",
