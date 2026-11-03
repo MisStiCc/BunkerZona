@@ -331,6 +331,143 @@ func try_upgrade_star(mutant_type: String) -> String:
         return "ЗВЕЗДА! %s теперь %d/%d★" % [GachaData.display_name(mutant_type), new_stars, LabData.MAX_STARS]
 
 
+## Задача 44 (владелец): ПОВЫСИТЬ РАЗОМ с ЦЕПОЧКОЙ. Если готового звёздного
+## корма N★ нет - слабейший (N-1)★ доращается до корма (рекурсивно), простые
+## копии идут слабейшие. Возвращает сообщение (ЗВЕЗДА!/ошибку)
+func auto_boost(target: String, depth: int = 4) -> String:
+        var lab = get_lab_data()
+        var req: Dictionary = get_star_requirements(target)
+        if bool(req.get("max")):
+                return "Звёзды уже максимальны"
+        var stars: int = int(req.get("stars"))
+        var copies_need: int = int(req.get("copies_need"))
+        # --- звёздный корм (с цепочкой доращивания) ---
+        var feed := ""
+        if int(req.get("star_have")) >= 1:
+                pass   # бак уже полон
+        else:
+                feed = _free_same_star(target)
+                if feed.is_empty() and depth > 0:
+                        var lower: Array[String] = []
+                        for t in lab.unlocked_mutants:
+                                if str(t) != target and lab.get_mutant_stars(str(t)) == stars - 1 and lab.get_farm_copies(str(t)) > 0:
+                                        lower.append(str(t))
+                        lower.sort_custom(func(a, b):
+                                var fa: int = GachaData.get_fodder_value(a, true)
+                                var fb: int = GachaData.get_fodder_value(b, true)
+                                if fa != fb:
+                                        return fa < fb
+                                return a < b)
+                        for t in lower:
+                                var err := auto_boost(str(t), depth - 1)
+                                if err.begins_with("ЗВЕЗДА"):
+                                        feed = str(t)
+                                        break
+                        if feed.is_empty() and lab.get_farm_copies(target) >= copies_need + 1:
+                                feed = target   # свой резерв в звёздный бак (пул тонкий, свои есть)
+                        if feed.is_empty():
+                                return "Не из чего сделать звёздный корм %d★" % stars
+                elif feed.is_empty() and lab.get_farm_copies(target) >= copies_need + 1:
+                        feed = target   # свой резерв в звёздный бак
+                if feed.is_empty():
+                        return "Нет звёздного корма %d★" % stars
+        # --- копийный слот: чужие той же ★ слабейшие, свои копии цели - резерв ---
+        var tier: Dictionary = {}
+        var left: int = copies_need
+        var pool: Array[String] = []
+        for t in lab.unlocked_mutants:
+                if str(t) != target and lab.get_mutant_stars(str(t)) == stars and lab.get_farm_copies(str(t)) > 0:
+                        pool.append(str(t))
+        pool.sort_custom(func(a, b):
+                var fa: int = GachaData.get_fodder_value(a, true)
+                var fb: int = GachaData.get_fodder_value(b, true)
+                if fa != fb:
+                        return fa < fb
+                var ca: int = lab.get_farm_copies(a)
+                var cb: int = lab.get_farm_copies(b)
+                return ca > cb)
+        for t in pool:
+                if left <= 0:
+                        break
+                var reserve: int = 1 if str(t) == feed else 0
+                var take: int = mini(lab.get_farm_copies(str(t)) - reserve, left)
+                if take > 0:
+                        tier[str(t)] = take
+                        left -= take
+        var own := 0
+        if left > 0:
+                var own_cap: int = lab.get_farm_copies(target) - (1 if feed == target else 0)
+                own = mini(own_cap, left)
+                left -= own
+        if left > 0:
+                return "Не хватает копий той же ★: ещё %d" % left
+        # --- простой корм: 1★ слабейшие (не занятые планом), затем прочие ниже ★ ---
+        var simple: Dictionary = {}
+        var sleft: int = int(req.get("simple_need")) - int(req.get("simple_have"))
+        var s1: Array[String] = []
+        var s2: Array[String] = []
+        for t in lab.unlocked_mutants:
+                if lab.get_farm_copies(str(t)) <= 0:
+                        continue
+                var reserved: int = int(tier.get(str(t), 0))
+                if str(t) == feed:
+                        reserved += 1
+                var free_c: int = lab.get_farm_copies(str(t)) - reserved
+                if free_c <= 0:
+                        continue
+                if lab.get_mutant_stars(str(t)) < stars:
+                        s1.append(str(t))
+        s1.sort_custom(func(a, b):
+                var fa: int = GachaData.get_fodder_value(a, true)
+                var fb: int = GachaData.get_fodder_value(b, true)
+                if fa != fb:
+                        return fa < fb
+                return a < b)
+        for t in s1:
+                if sleft <= 0:
+                        break
+                var reserved: int = int(tier.get(str(t), 0))
+                if str(t) == feed:
+                        reserved += 1
+                var take: int = mini(lab.get_farm_copies(str(t)) - reserved, sleft)
+                if take > 0:
+                        simple[str(t)] = take
+                        sleft -= take
+        if sleft > 0:
+                return "Не хватает простых кормов: ещё %d" % sleft
+        return apply_star_recipe(target, own, feed, simple, tier)
+
+
+## Свободная чужая копия той же звёздности (для звёздного корма), "" - нет
+func _free_same_star(target: String) -> String:
+        var lab = get_lab_data()
+        var stars: int = lab.get_mutant_stars(target)
+        var best := ""
+        var best_val := 1 << 30
+        for t in lab.unlocked_mutants:
+                if str(t) == target or lab.get_mutant_stars(str(t)) != stars:
+                        continue
+                if lab.get_farm_copies(str(t)) <= 0:
+                        continue
+                var val: int = GachaData.get_fodder_value(str(t), true)
+                if val < best_val:
+                        best_val = val
+                        best = str(t)
+        return best
+
+
+## Скан без мутаций: сойдётся ли АВТО-рецепт на клоне сейва
+func can_auto_boost(target: String, depth: int = 4) -> bool:
+        var lab = get_lab_data()
+        if lab == null:
+                return false
+        var clone = lab.duplicate(true)
+        current_save_data.lab_data = clone
+        var err := auto_boost(target, depth)
+        current_save_data.lab_data = lab
+        return err.begins_with("ЗВЕЗДА")
+
+
 ## Начислить крутки гачи МУТАНТОВ
 func grant_mutant_rolls(count: int, _source: String = ""):
         if count <= 0 or not current_save_data or not current_save_data.lab_data:

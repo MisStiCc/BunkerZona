@@ -2523,6 +2523,17 @@ func _build_gallery_ui():
                 mail_btn.mouse_entered.connect(_play_hover_sound)
                 bottom.add_child(mail_btn)
 
+                # СКЛАД (задача владельца): сундуки и расходники
+                var stor_btn := Button.new()
+                stor_btn.name = "StorageButton"
+                stor_btn.text = Loc.t("stor.title")
+                stor_btn.custom_minimum_size = Vector2(0, 62)
+                stor_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                BunkerUI.style_button(stor_btn, "steel", 18)
+                stor_btn.pressed.connect(_on_lab_storage_pressed)
+                stor_btn.mouse_entered.connect(_play_hover_sound)
+                bottom.add_child(stor_btn)
+
                 # ИВЕНТ (D24): циклические события live-ops
                 var ev_btn := Button.new()
                 ev_btn.name = "EventButton"
@@ -3083,36 +3094,17 @@ func _build_upgrade_dialog():
         panel.add_child(back)
 
 
-## Задача 44: скан "кого можно повысить ПРЯМО СЕЙЧАС" - прогоняем АВТО-заполнение
-## на каждом не-максимальном мутанте, смотрим сойдётся ли рецепт
+## Задача 44: скан "кого можно повысить ПРЯМО СЕЙЧАС" - симуляция АВТО
+## на клоне сейва (с цепочкой доращивания корма)
 func _boost_scan() -> Array:
-        var lab = game_manager.get_lab_data()
         var out: Array = []
-        var save_target := _up_target
-        var save_copies := _up_copies
-        var save_tier: Dictionary = _up_tier.duplicate(true)
-        var save_feed := _up_star_feed
-        var save_simple: Dictionary = _up_simple.duplicate(true)
-        var save_chooser := _up_chooser
+        var lab = game_manager.get_lab_data()
         for t in lab.unlocked_mutants:
                 var st: int = lab.get_mutant_stars(str(t))
                 if st >= LabData.MAX_STARS:
                         continue
-                _up_target = str(t)
-                _on_up_auto()
-                var req: Dictionary = game_manager.get_star_requirements(str(t))
-                var full: bool = _up_copies + _up_tier_total() >= int(req.get("copies_need")) \
-                                and (int(req.get("star_have")) >= 1 or not _up_star_feed.is_empty()) \
-                                and int(req.get("simple_have")) + _up_pending_simple_total() >= int(req.get("simple_need"))
-                if full:
+                if game_manager.can_auto_boost(str(t)):
                         out.append(str(t))
-        # Восстановление состояния диалога
-        _up_target = save_target
-        _up_copies = save_copies
-        _up_tier = save_tier
-        _up_star_feed = save_feed
-        _up_simple = save_simple
-        _up_chooser = save_chooser
         return out
 
 
@@ -3135,11 +3127,9 @@ func _on_boost_now_pressed():
         _rebuild_upgrade_dialog()
 
 
-## Повысить разом: АВТО-заполнение слабейшими + применение одним нажатием
+## Повысить разом: цепочка (дорастить корм если надо) + применение
 func _boost_apply(target: String) -> void:
-        _up_target = target
-        _on_up_auto()
-        var msg: String = game_manager.apply_star_recipe(_up_target, _up_copies, _up_star_feed, _up_simple, _up_tier)
+        var msg: String = game_manager.auto_boost(target)
         _show_message(msg, 2.5)
         _close_upgrade_dialog()
         _rebuild_farm_panel()
@@ -5589,6 +5579,7 @@ var _tp_pass: bool = false
 
 # ИВЕНТ (D24): хаб циклических событий
 var _event_hub: EventHub = null
+var _storage_panel: LabStoragePanel = null
 var _mail_overlay: Control = null
 
 
@@ -5598,6 +5589,15 @@ func _on_mail_pressed() -> void:
                 _mail_overlay = MailOverlay.new()
                 add_child(_mail_overlay)
         _mail_overlay.open()
+
+
+func _on_lab_storage_pressed() -> void:
+        _play_click_sound()
+        if _storage_panel == null:
+                _storage_panel = LabStoragePanel.new()
+                _storage_panel.build()
+                add_child(_storage_panel)
+        _storage_panel.open()
 
 
 func _on_event_pressed() -> void:

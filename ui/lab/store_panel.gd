@@ -343,7 +343,10 @@ func _grant_sku(sku: String) -> void:
 			save.owned[sku] = "emulated"
 			note_text = Loc.t("store.got_conv")
 		"excl":
-			note_text = _grant_random_exclusive(gm)
+			# Задача владельца: сундук эксклюзива кладётся на СКЛАД,
+			# открывается там с НАСТОЯЩИМ выбором (повтор = корм на ферму)
+			lab.storage["excl_choice"] = int(lab.storage.get("excl_choice", 0)) + 1
+			note_text = Loc.t("store.excl_stored")
 		_:
 			note_text = sku
 	gm.save_to_active_slot()

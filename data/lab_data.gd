@@ -458,6 +458,8 @@ static func get_star_stat_mult(stars: int, awaken: int = 0) -> float:
 @export var loadout_mutants_p3: Array = []
 @export var loadout_mutants_p4: Array = []
 @export var active_pack: int = 0
+# СКЛАД (задача владельца): предметы - сундуки магазина, будущие расходники
+@export var storage: Dictionary = {}
 
 ## Мутанты активной пачки (0=база, 1..3 = пачки NG+)
 func pack_mutants(pack: int) -> Array:
@@ -637,3 +639,4 @@ func reset():
     loadout_mutants_p2.clear()
     loadout_mutants_p3.clear()
     loadout_mutants_p4.clear()
+    storage.clear()
