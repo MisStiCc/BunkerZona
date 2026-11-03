@@ -227,7 +227,7 @@ func _make_card(sku: String) -> Control:
 ## Иконка товара (набор подготовщика, Задача 40-бис)
 func _icon_for_sku(sku: String, info: Dictionary) -> String:
 	var kind := str(info.get("kind", ""))
-	var base := "res://inbox/_done/currency_icons/"
+	var base := "res://assets/ui/store_icons/"  # инбокс в релизах не живёт (флаг помощника 03.11)
 	if kind == "pass":
 		return base + "icon_ticket.png"
 	if sku == "offer_first":
