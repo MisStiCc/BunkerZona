@@ -57,6 +57,12 @@ var _over: bool = false
 var _input_point: Vector2 = Vector2.ZERO
 var _hp_bar: ProgressBar = null
 var _hint: Label = null
+var _rig_container: Control = null
+var _rig: Node3D = null
+var _anim: AnimationPlayer = null
+var _rig_state: String = "idle"
+var _jumping: bool = false
+var _face_sign: float = 1.0
 var _rage_btn: Button = null
 
 
@@ -118,6 +124,7 @@ func _build() -> void:
 	_player.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_player_pos = Vector2(ROOM_W * 0.5, ROOM_H - 90.0)
 	_arena.add_child(_player)
+	_make_rig_player()
 
 	# HP-бар химеры
 	_hp_bar = ProgressBar.new()
@@ -155,6 +162,128 @@ func _build() -> void:
 		BunkerUI.style_button(_rage_btn, "danger", 16)
 		_rage_btn.toggled.connect(func(on: bool): _rage = on)
 		add_child(_rage_btn)
+
+
+## Живая Химера: 3D-риг в SubViewport-окошке поверх точки игрока
+## (models/animals/chimera_rig_bonus.glb — 7 клипов, pounce/rage из задачи 45).
+## Нет GLB/AnimationPlayer - остаётся арт карточки (фолбэк).
+func _make_rig_player() -> void:
+	const RIG_PATH := "res://models/animals/chimera_rig_bonus.glb"
+	if not ResourceLoader.exists(RIG_PATH):
+		return
+	var ps := load(RIG_PATH) as PackedScene
+	if ps == null:
+		return
+	var rig := ps.instantiate() as Node3D
+	if rig == null:
+		return
+	var svc := SubViewportContainer.new()
+	svc.stretch = true
+	svc.size = Vector2(150, 120)
+	svc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sv := SubViewport.new()
+	sv.transparent_bg = true
+	sv.own_world_3d = true
+	sv.handle_input_locally = false
+	svc.add_child(sv)
+	sv.add_child(rig)
+	var cam := Camera3D.new()
+	cam.position = Vector3(0.6, 4.4, 5.0)
+	cam.look_at_from_position(cam.position, Vector3(0, 1.0, 0), Vector3.UP)
+	sv.add_child(cam)
+	var light := DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-52, 28, 0)
+	light.light_energy = 1.15
+	sv.add_child(light)
+	# масштаб рига по высоте AABB (цель ~2.4 м в кадре)
+	var aabb := _merged_aabb(rig)
+	if aabb.size.y > 0.01:
+		var s := 2.4 / aabb.size.y
+		rig.scale = Vector3(s, s, s)
+	rig.rotation.y = PI
+	svc.position = _player_pos - svc.size * 0.5
+	_arena.add_child(svc)
+	_player.visible = false   # карточка-фолбэк прячется, живёт риг
+	_rig_container = svc
+	_rig = rig
+	var aps := rig.find_children("*", "AnimationPlayer", true, false)
+	if not aps.is_empty():
+		_anim = aps[0] as AnimationPlayer
+		for looped in ["idle", "walk", "gallop", "rage"]:
+			if _anim.has_animation(looped):
+				_anim.get_animation(looped).loop_mode = Animation.LOOP_LINEAR
+		_anim.animation_finished.connect(_on_rig_anim_finished)
+		_anim.play("idle")
+		_rig_state = "idle"
+
+
+func _merged_aabb(node: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for mi in node.find_children("*", "MeshInstance3D", true, false):
+		var ab: AABB = (mi as MeshInstance3D).get_aabb()
+		var xf: Transform3D = (mi as MeshInstance3D).transform
+		var parent = mi.get_parent()
+		while parent != null and parent != node:
+			xf = (parent as Node3D).transform * xf
+			parent = parent.get_parent()
+		var t: AABB = xf * ab
+		out = t if first else out.merge(t)
+		first = false
+	return out
+
+
+func _rig_set(state: String) -> void:
+	if _anim == null or _rig_state == state:
+		return
+	if not _anim.has_animation(state):
+		return
+	_anim.play(state)
+	_rig_state = state
+
+
+func _on_rig_anim_finished(name: StringName) -> void:
+	# одноразовые клипы возвращают в цикл движения
+	if str(name) in ["pounce", "attack", "death"]:
+		_jumping = false
+		_rig_set("gallop" if _moving() else "idle")
+
+
+func _moving() -> bool:
+	var moving := false
+	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP) 			or Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN) 			or Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT) 			or Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+		moving = true
+	elif _input_point != Vector2.ZERO and _player_pos.distance_to(_input_point) > 8.0:
+		moving = true
+	return moving
+
+
+func _update_rig(delta: float) -> void:
+	if _rig_container == null or not is_instance_valid(_rig_container):
+		return
+	_rig_container.position = _player_pos - _rig_container.size * 0.5 + Vector2(0, -10)
+	var want := "idle"
+	if _rage:
+		want = "rage"
+	elif _jumping:
+		want = "pounce"
+	elif _moving():
+		want = "gallop"
+	_rig_set(want)
+	# разворот в сторону движения (мягкий)
+	var dir_sign := 0.0
+	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+		dir_sign = 1.0
+	elif Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+		dir_sign = -1.0
+	elif _input_point.x < _player_pos.x - 4.0:
+		dir_sign = 1.0
+	elif _input_point.x > _player_pos.x + 4.0:
+		dir_sign = -1.0
+	if dir_sign != 0.0:
+		_face_sign = dir_sign
+	var target_yaw := PI + 0.55 * _face_sign
+	_rig.rotation.y = lerp_angle(_rig.rotation.y, target_yaw, 6.0 * delta)
 
 
 func _setup_room() -> void:
@@ -302,6 +431,7 @@ func _process(delta: float) -> void:
 	_player_pos.x = clampf(_player_pos.x, 34.0, ROOM_W - 34.0)
 	_player_pos.y = clampf(_player_pos.y, 34.0, ROOM_H - 34.0)
 	_player.position = _player_pos - _player.size * 0.5
+	_update_rig(delta)
 
 	# благословение-реген (1% max HP/с)
 	if _bless.has("regen") and _hp > 0.0:
@@ -464,6 +594,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _do_jump() -> void:
 	_jump_cd = JUMP_CD * (0.6 if _bless.has("jump_cd") else 1.0)
+	_jumping = true
+	_rig_set("pounce")
 	var target := _input_point
 	var radius: float = JUMP_R * (1.4 if _bless.has("jump_r") else 1.0)
 	var dmg_mult: float = (RAGE_MULT if _rage else 1.0) * (1.25 if _bless.has("dmg") else 1.0)
@@ -649,6 +781,8 @@ func _finish(win: bool) -> void:
 	if _over and not win:
 		return
 	_over = true
+	if not win and _anim != null and _anim.has_animation("death"):
+		_anim.play("death")   # оседание рига под панелью итогов
 	if win:
 		_score += 500
 	var shards := 0
