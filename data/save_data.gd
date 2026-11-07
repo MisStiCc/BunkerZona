@@ -31,6 +31,8 @@ class_name SaveData
 # D24 Циклические события (live-ops): {season, event_id, score, best,
 # shards, claimed:[], bought:{}} — миграция: отсутствует = пусто.
 @export var event_state: Dictionary = {}
+# D26 онбординг новичка: обучающий диалог лабы показан один раз
+@export var onboarding_done: bool = false
 # Режим сложности кампании: easy / normal / hard (CampaignData)
 @export var campaign_mode: String = "normal"
 

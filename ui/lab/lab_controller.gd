@@ -79,6 +79,7 @@ var _run_mode_button: Button
 
 func _ready():
         # print("lab_controller: _ready started")
+        add_to_group("lab")
         
         _load_cover_art()
         
@@ -90,6 +91,10 @@ func _ready():
         _apply_static_texts()
         _refresh_ui()
         _setup_campaign_selector()
+        # D26 онбординг новичка: один раз (флаг в сейве)
+        if game_manager and game_manager.current_save_data != null                         and not bool(game_manager.current_save_data.onboarding_done):
+                var onb := OnboardingOverlay.new()
+                add_child(onb)
         _refresh_campaign_ui()
         _build_shop_tabs()
         _build_star_ui()

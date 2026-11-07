@@ -834,6 +834,11 @@ func _initialize_run():
                 # Применяем бонусы из лаборатории
                 _apply_lab_bonuses()
 
+                # ХРАНИТЕЛЬ (задача 42): страж-свидетель парит у Монолита на
+                # каждом 10-м этаже башни; клип idle крутится циклом
+                if int(run_params.get("tower_floor", 0)) > 0                                 and TowerData.get_floor_type(int(run_params.get("tower_floor"))) == "keeper":
+                                _spawn_keeper_witness()
+
                 # Звёздность коллекции: спавнящиеся мутанты получают свои звёзды
                 if spawn_manager and run_params.has("mutant_stars"):
                                 spawn_manager.set_mutant_stars(run_params["mutant_stars"])
@@ -2495,6 +2500,33 @@ func finish_run(success: bool):
                 if gm_door and gm_door.has_method("_play_door_sound"):
                                 gm_door._play_door_sound(true)
                 get_tree().change_scene_to_file("res://scenes/lab/lab.tscn")
+
+
+## Хранитель Башни (задача 42): видимая страж-модель у Монолита на
+## 10-х этажах. idle-клип гоняется циклом; нет модели/клипа - тихий выход
+func _spawn_keeper_witness() -> void:
+        var mono := get_tree().get_first_node_in_group("monolith")
+        if mono == null:
+                return
+        var model_path := "res://models/keeper/keeper_anim.glb"
+        if not ResourceLoader.exists(model_path):
+                return
+        var scene := load(model_path)
+        if scene == null:
+                return
+        var keeper: Node3D = (scene as PackedScene).instantiate()
+        add_child(keeper)
+        var pos: Vector3 = mono.global_position + Vector3(16.0, 0.0, 6.0)
+        keeper.global_position = Vector3(pos.x, mono.global_position.y + 1.0, pos.z)
+        keeper.look_at(mono.global_position + Vector3(0.0, 2.0, 0.0), Vector3.UP)
+        var players := keeper.find_children("*", "AnimationPlayer", true, false)
+        if players.is_empty():
+                return
+        var ap: AnimationPlayer = players[0]
+        if ap.has_animation("idle"):
+                var anim: Animation = ap.get_animation("idle")
+                anim.loop_mode = Animation.LOOP_LINEAR
+                ap.play("idle")
 
 
 ## Мягкое гашение эффекта Выброса при закрытии забега (вместо обрыва)

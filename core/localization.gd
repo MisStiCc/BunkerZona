@@ -33,6 +33,8 @@ const STRINGS := {
         "lab.info_header": {"ru": "ИНФОРМАЦИЯ О ЗАБЕГЕ", "en": "RUN INFORMATION"},
         "lab.biomass_prefix": {"ru": "Биомасса: ", "en": "Biomass: "},
         "lab.start_run": {"ru": "НАЧАТЬ НОВЫЙ ЗАБЕГ", "en": "START NEW RUN"},
+        "onb.who": {"ru": "ГОЛОС ЗОНЫ · ОПЕРАТОР", "en": "VOICE OF THE ZONE · OPERATOR"},
+        "onb.next": {"ru": "ПОНЯТНО", "en": "GOT IT"},
         "lab.day": {"ru": "День {n}", "en": "Day {n}"},
         "lab.anomalies": {"ru": "АНОМАЛИИ", "en": "ANOMALIES"},
         "lab.mutants": {"ru": "МУТАНТЫ", "en": "MUTANTS"},
