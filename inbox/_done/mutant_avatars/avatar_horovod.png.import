@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bwcywy5pvytnb"
-path="res://.godot/imported/avatar_horovod.png-130c12d0a06b060fc80c9959d2f6294b.ctex"
+path="res://.godot/imported/avatar_horovod.png-34aec6d5a4d43045bd521bdad6394a83.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/mutant_avatars/avatar_horovod.png"
-dest_files=["res://.godot/imported/avatar_horovod.png-130c12d0a06b060fc80c9959d2f6294b.ctex"]
+source_file="res://inbox/_done/mutant_avatars/avatar_horovod.png"
+dest_files=["res://.godot/imported/avatar_horovod.png-34aec6d5a4d43045bd521bdad6394a83.ctex"]
 
 [params]
 

@@ -29,8 +29,11 @@ func _ready() -> void:
 	col.position.y = 2.5
 	add_child(col)
 
-	# Модель обелиска (задача 35, процедурная CC0); нет файла - цилиндр-фолбэк
-	var model_path := "res://models/echo_obelisk.glb"
+	# Модель обелиска с клипами (задача 45): idle-пульс рун циклом.
+	# Нет анимированной - статичная з.35; нет и её - цилиндр-фолбэк
+	var model_path := "res://models/echo_obelisk_anim.glb"
+	if not ResourceLoader.exists(model_path):
+			model_path = "res://models/echo_obelisk.glb"
 	if ResourceLoader.exists(model_path):
 		_model = load(model_path).instantiate()
 		add_child(_model)
@@ -49,6 +52,14 @@ func _ready() -> void:
 		_body.material_override = mat
 		_body.position.y = 2.5
 		add_child(_body)
+
+	# idle-пульс рун циклом (задача 45)
+	for p in (_model if _model else self).find_children("*", "AnimationPlayer", true, false):
+			var ap: AnimationPlayer = p
+			if ap.has_animation("idle"):
+					var anim: Animation = ap.get_animation("idle")
+					anim.loop_mode = Animation.LOOP_LINEAR
+					ap.play("idle")
 
 	_hp_label = Label3D.new()
 	_hp_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -104,8 +115,16 @@ func _fall() -> void:
 					var dimmed := sm.duplicate() as StandardMaterial3D
 					dimmed.emission_energy_multiplier = 0.05
 					mi.set_surface_override_material(si, dimmed)
-	var tw := create_tween()
-	tw.tween_property(self, "scale", Vector3(0.4, 0.1, 0.4), 0.8).set_trans(Tween.TRANS_QUAD)
+	# Анимированное падение (задача 45): клип death вместо скейл-твина
+	var played := false
+	for p in (_model if _model else self).find_children("*", "AnimationPlayer", true, false):
+			var ap: AnimationPlayer = p
+			if ap.has_animation("death"):
+					ap.play("death")
+					played = true
+	if not played:
+			var tw := create_tween()
+			tw.tween_property(self, "scale", Vector3(0.4, 0.1, 0.4), 0.8).set_trans(Tween.TRANS_QUAD)
 	fallen.emit(self)
 
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b16kcdivo80dt"
-path="res://.godot/imported/role_dmg.png-d60b0267ceda694c2c6ea7d1bdef9b0f.ctex"
+path="res://.godot/imported/role_dmg.png-aa286978cdb812107ca38b6e85fcf452.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/pack_role_badges/role_dmg.png"
-dest_files=["res://.godot/imported/role_dmg.png-d60b0267ceda694c2c6ea7d1bdef9b0f.ctex"]
+source_file="res://inbox/_done/pack_role_badges/role_dmg.png"
+dest_files=["res://.godot/imported/role_dmg.png-aa286978cdb812107ca38b6e85fcf452.ctex"]
 
 [params]
 

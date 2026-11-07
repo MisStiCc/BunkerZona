@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bcqx01h5ajv64"
-path="res://.godot/imported/rzhavnik.png-3b06e4fe7f852974e763cf824a97cdd7.ctex"
+path="res://.godot/imported/rzhavnik.png-76bd86aa2ae9374926a70e6b4bd116f8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/mutant_hud_icons_8/mutant/rzhavnik.png"
-dest_files=["res://.godot/imported/rzhavnik.png-3b06e4fe7f852974e763cf824a97cdd7.ctex"]
+source_file="res://inbox/_done/mutant_hud_icons_8/mutant/rzhavnik.png"
+dest_files=["res://.godot/imported/rzhavnik.png-76bd86aa2ae9374926a70e6b4bd116f8.ctex"]
 
 [params]
 

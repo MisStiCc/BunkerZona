@@ -275,9 +275,16 @@ func _draw_slab(rect: Rect2, tier_idx: int, base_y: float) -> void:
                         a0 += _t * 1.1          # кольцо выбранной стелы вращается
                 draw_arc(ring_c, ring_r, a0, a0 + TAU / segs * 0.55, 6, ring_col, 2.0)
         var num: String = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][tier_idx]
-        draw_string(BunkerUI.font_title(), Vector2(ring_c.x - ring_r, ring_c.y + 8),
-                num, HORIZONTAL_ALIGNMENT_CENTER, ring_r * 2.0, 16,
-                COL_GOLD_HI if (is_sel and unlocked) else (COL_NAME if unlocked else COL_FAINT))
+        var ticon_p: String = "res://assets/ui/icons/tiers/tier_%d.png" % (tier_idx + 1)
+        if ResourceLoader.exists(ticon_p):
+                var ticon: Texture2D = load(ticon_p)
+                var tsz: float = ring_r * 1.5
+                var tcol := Color(1, 1, 1, 1.0) if (is_sel and unlocked) else (Color(1, 1, 1, 0.75) if unlocked else Color(1, 1, 1, 0.3))
+                draw_texture_rect(ticon, Rect2(ring_c.x - tsz * 0.5, ring_c.y - tsz * 0.5, tsz, tsz), false, tcol)
+        else:
+                draw_string(BunkerUI.font_title(), Vector2(ring_c.x - ring_r, ring_c.y + 8),
+                        num, HORIZONTAL_ALIGNMENT_CENTER, ring_r * 2.0, 16,
+                        COL_GOLD_HI if (is_sel and unlocked) else (COL_NAME if unlocked else COL_FAINT))
 
         # ----- Символы награды над плитой (Hades-стиль: что внутри до клика) -----
         var boss: String = str(tier_bosses[tier_idx]) if tier_idx < tier_bosses.size() else "—"

@@ -58,6 +58,8 @@ var _shop_artifacts_pending: Array[String] = []
 var _gacha_rewards_log: Array[String] = []
 # Фаза подготовки: сталкеры не спавнятся, пока игрок не нажмёт СТАРТ
 var is_prep_phase: bool = true
+# D28 мутации Зоны: активные правила текущего забега
+var _active_mutations: Array = []
 # D20 мультипачка: каждая непустая пачка ведёт СВОЙ бой, друг за дружкой;
 # проигрыш любой = поражение забега, за каждую доп. пачку награда +50%
 var _pack_battles: Array = []       # непустые пачки: [[типы...], ...]
@@ -839,6 +841,38 @@ func _initialize_run():
                 # каждом 10-м этаже башни; клип idle крутится циклом
                 if int(run_params.get("tower_floor", 0)) > 0                                 and TowerData.get_floor_type(int(run_params.get("tower_floor"))) == "keeper":
                                 _spawn_keeper_witness()
+
+                # КАРАВАН-БОСС (задача 44): командная машина каравана на краю
+                # Зоны на боссовых уровнях кампании (10/20/.../100)
+                var lvl_k := int(run_params.get("campaign_level", 0))
+                if lvl_k > 0 and CampaignData.BOSSES.has(lvl_k)                                 and str(run_params.get("run_mode", "campaign")) == "campaign":
+                                var model_id := "karavan_gruz"
+                                if lvl_k >= 70:
+                                                model_id = "karavan_tsar"
+                                elif lvl_k >= 40:
+                                                model_id = "karavan_bronekolonna"
+                                _spawn_karavan_visual(model_id)
+
+                # D28 МУТАЦИИ ЗОНЫ (NG+): детерминированные правила цикла
+                if ZoneMutations.is_active(run_params):
+                                _active_mutations = ZoneMutations.active_for_cycle(int(run_params.get("campaign_cycle", 1)))
+                                var mut_names: Array = []
+                                for m in _active_mutations:
+                                                var info: Dictionary = ZoneMutations.MUTATIONS.get(str(m), {})
+                                                mut_names.append(str(info.get("ru", m)))
+                                var hud_m2 = get_tree().get_first_node_in_group("hud")
+                                if hud_m2 and hud_m2.has_method("show_event_note"):
+                                                hud_m2.show_event_note({
+                                                                "title_ru": "МУТАЦИИ ЗОНЫ (цикл %d)" % int(run_params.get("campaign_cycle", 1)),
+                                                                "title_en": "ZONE MUTATIONS (cycle %d)" % int(run_params.get("campaign_cycle", 1)),
+                                                                "desc_ru": "; ".join(mut_names),
+                                                                "desc_en": "; ".join(mut_names),
+                                                })
+                                # крючки: спринтеры (скорость), холод (реген энергии)
+                                if spawn_manager and _active_mutations.has("m_sprint"):
+                                                spawn_manager.set_campaign_scaling(1.0, 1.0, 1.2)
+                                if resource_manager and _active_mutations.has("m_cold"):
+                                                resource_manager.energy_regen_rate *= 0.85
 
                 # Звёздность коллекции: спавнящиеся мутанты получают свои звёзды
                 if spawn_manager and run_params.has("mutant_stars"):
@@ -2529,6 +2563,31 @@ func finish_run(success: bool):
                 if gm_door and gm_door.has_method("_play_door_sound"):
                                 gm_door._play_door_sound(true)
                 get_tree().change_scene_to_file("res://scenes/lab/lab.tscn")
+
+
+## Караван-босс (задача 44): визуальная командная машина на боссовых
+## уровнях кампании, у края Зоны. idle-цикл.
+func _spawn_karavan_visual(model_id: String) -> void:
+        var model_path := "res://models/animals/%s_anim.glb" % model_id
+        if not ResourceLoader.exists(model_path):
+                return
+        var scene := load(model_path)
+        if scene == null:
+                return
+        var karavan: Node3D = (scene as PackedScene).instantiate()
+        add_child(karavan)
+        var ang := randf() * TAU
+        var pos := Vector3(cos(ang), 0.0, sin(ang)) * 115.0
+        karavan.global_position = pos
+        karavan.look_at(Vector3(0.0, pos.y, 0.0), Vector3.UP)
+        var players := karavan.find_children("*", "AnimationPlayer", true, false)
+        if players.is_empty():
+                return
+        var ap: AnimationPlayer = players[0]
+        if ap.has_animation("idle"):
+                var anim: Animation = ap.get_animation("idle")
+                anim.loop_mode = Animation.LOOP_LINEAR
+                ap.play("idle")
 
 
 ## Хранитель Башни (задача 42): видимая страж-модель у Монолита на

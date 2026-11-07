@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cjcvxdemf3odp"
-path="res://.godot/imported/avatar_iskropluy.png-86bda1e047bbf16a46cb4040a7eded2e.ctex"
+path="res://.godot/imported/avatar_iskropluy.png-6d3c99d8fcd4f562ba9ac4560d9d9d34.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/mutant_avatars/avatar_iskropluy.png"
-dest_files=["res://.godot/imported/avatar_iskropluy.png-86bda1e047bbf16a46cb4040a7eded2e.ctex"]
+source_file="res://inbox/_done/mutant_avatars/avatar_iskropluy.png"
+dest_files=["res://.godot/imported/avatar_iskropluy.png-6d3c99d8fcd4f562ba9ac4560d9d9d34.ctex"]
 
 [params]
 

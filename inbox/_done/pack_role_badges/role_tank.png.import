@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://da70vw42uuxf1"
-path="res://.godot/imported/role_tank.png-8444cf322e62cd9f912cd75997f3b840.ctex"
+path="res://.godot/imported/role_tank.png-4fc4f9f175a075d1f3cf9fbe586bdbb2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/pack_role_badges/role_tank.png"
-dest_files=["res://.godot/imported/role_tank.png-8444cf322e62cd9f912cd75997f3b840.ctex"]
+source_file="res://inbox/_done/pack_role_badges/role_tank.png"
+dest_files=["res://.godot/imported/role_tank.png-4fc4f9f175a075d1f3cf9fbe586bdbb2.ctex"]
 
 [params]
 

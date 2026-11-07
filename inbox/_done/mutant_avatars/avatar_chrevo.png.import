@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bsl7gb8f62l1r"
-path="res://.godot/imported/avatar_chrevo.png-7094f64f4801f4d21d1d543439a73269.ctex"
+path="res://.godot/imported/avatar_chrevo.png-3e986106e8eec7472049ef47b63a40b8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/mutant_avatars/avatar_chrevo.png"
-dest_files=["res://.godot/imported/avatar_chrevo.png-7094f64f4801f4d21d1d543439a73269.ctex"]
+source_file="res://inbox/_done/mutant_avatars/avatar_chrevo.png"
+dest_files=["res://.godot/imported/avatar_chrevo.png-3e986106e8eec7472049ef47b63a40b8.ctex"]
 
 [params]
 
