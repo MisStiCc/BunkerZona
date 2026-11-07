@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c8q83lcjgeh4d"
-path="res://.godot/imported/kremen.png-5e52859ba4beba085f03f007ff27b921.ctex"
+path="res://.godot/imported/kremen.png-446117d3ab700b2f0c7682fded08decd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/cards/kremen.png"
-dest_files=["res://.godot/imported/kremen.png-5e52859ba4beba085f03f007ff27b921.ctex"]
+source_file="res://inbox/_done/new_mutants/cards/kremen.png"
+dest_files=["res://.godot/imported/kremen.png-446117d3ab700b2f0c7682fded08decd.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://k76mc2qn3t88"
-path="res://.godot/imported/mayak_raw.png-9f7e46f25d0370f4e6b9e888426cca7d.ctex"
+path="res://.godot/imported/mayak_raw.png-45a5d1294dedcaa11160f5c6056887db.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/cards_raw/mayak_raw.png"
-dest_files=["res://.godot/imported/mayak_raw.png-9f7e46f25d0370f4e6b9e888426cca7d.ctex"]
+source_file="res://inbox/_done/new_mutants/cards_raw/mayak_raw.png"
+dest_files=["res://.godot/imported/mayak_raw.png-45a5d1294dedcaa11160f5c6056887db.ctex"]
 
 [params]
 

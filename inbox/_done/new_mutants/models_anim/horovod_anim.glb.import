@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b1cni04a8mqxb"
-path="res://.godot/imported/horovod_anim.glb-2f98bd3e41511ddc94038c8d80f38978.scn"
+path="res://.godot/imported/horovod_anim.glb-5d978cade75bd353b157a96a90493c02.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/horovod_anim.glb"
-dest_files=["res://.godot/imported/horovod_anim.glb-2f98bd3e41511ddc94038c8d80f38978.scn"]
+source_file="res://inbox/_done/new_mutants/models_anim/horovod_anim.glb"
+dest_files=["res://.godot/imported/horovod_anim.glb-5d978cade75bd353b157a96a90493c02.scn"]
 
 [params]
 

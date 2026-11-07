@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c385h1rekk02n"
-path="res://.godot/imported/sporonosets_idle.png-d49ba03909fb26f5bad74c1f09e2e6ba.ctex"
+path="res://.godot/imported/sporonosets_idle.png-8719026e68e23747a2507956ac960470.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/preview/sporonosets_idle.png"
-dest_files=["res://.godot/imported/sporonosets_idle.png-d49ba03909fb26f5bad74c1f09e2e6ba.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/preview/sporonosets_idle.png"
+dest_files=["res://.godot/imported/sporonosets_idle.png-8719026e68e23747a2507956ac960470.ctex"]
 
 [params]
 

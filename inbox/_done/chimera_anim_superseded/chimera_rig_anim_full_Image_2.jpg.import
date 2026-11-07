@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://7ed267bvo764"
-path="res://.godot/imported/chimera_rig_anim_full_Image_2.jpg-9bae00a9d4a4da1757ca4a954d037609.ctex"
+path="res://.godot/imported/chimera_rig_anim_full_Image_2.jpg-fe309aa77e71833dc52a034689266b76.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/chimera_anim/chimera_rig_anim_full_Image_2.jpg"
-dest_files=["res://.godot/imported/chimera_rig_anim_full_Image_2.jpg-9bae00a9d4a4da1757ca4a954d037609.ctex"]
+source_file="res://inbox/_done/chimera_anim_superseded/chimera_rig_anim_full_Image_2.jpg"
+dest_files=["res://.godot/imported/chimera_rig_anim_full_Image_2.jpg-fe309aa77e71833dc52a034689266b76.ctex"]
 
 [params]
 

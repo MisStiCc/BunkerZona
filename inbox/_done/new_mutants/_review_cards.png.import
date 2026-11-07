@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c4xf62mcis33p"
-path="res://.godot/imported/_review_cards.png-1b3741bcf694a6bd242a97eb7e03c052.ctex"
+path="res://.godot/imported/_review_cards.png-18351c6311c9fb5a6288a56021f62f41.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/_review_cards.png"
-dest_files=["res://.godot/imported/_review_cards.png-1b3741bcf694a6bd242a97eb7e03c052.ctex"]
+source_file="res://inbox/_done/new_mutants/_review_cards.png"
+dest_files=["res://.godot/imported/_review_cards.png-18351c6311c9fb5a6288a56021f62f41.ctex"]
 
 [params]
 

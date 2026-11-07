@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://nivuqb86rr8e"
-path="res://.godot/imported/iskropluy_anim.glb-e2a87b27b84fe8b0c256d7e6cc163cd6.scn"
+path="res://.godot/imported/iskropluy_anim.glb-3022490fbed410d4edf4cef2f9d3fd52.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/iskropluy_anim.glb"
-dest_files=["res://.godot/imported/iskropluy_anim.glb-e2a87b27b84fe8b0c256d7e6cc163cd6.scn"]
+source_file="res://inbox/_done/new_mutants/models_anim/iskropluy_anim.glb"
+dest_files=["res://.godot/imported/iskropluy_anim.glb-3022490fbed410d4edf4cef2f9d3fd52.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dp2cjigwsnvau"
-path="res://.godot/imported/chimera_rig_anim.glb-2dbe09c1c6c0dab2db867922240c5f78.scn"
+path="res://.godot/imported/chimera_rig_anim.glb-8cb4cff1bb30da1707582fd9d411ffee.scn"
 
 [deps]
 
-source_file="res://inbox/chimera_anim/chimera_rig_anim.glb"
-dest_files=["res://.godot/imported/chimera_rig_anim.glb-2dbe09c1c6c0dab2db867922240c5f78.scn"]
+source_file="res://inbox/_done/chimera_anim_superseded/chimera_rig_anim.glb"
+dest_files=["res://.godot/imported/chimera_rig_anim.glb-8cb4cff1bb30da1707582fd9d411ffee.scn"]
 
 [params]
 

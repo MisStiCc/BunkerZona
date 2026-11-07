@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b4a1g72tvjfg1"
-path="res://.godot/imported/sporonosets_anim_Image_0.jpg-368984c4c8b1ffa629912a103bf686d0.ctex"
+path="res://.godot/imported/sporonosets_anim_Image_0.jpg-e6140c45b7d826955f067fd64913f754.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/sporonosets_anim_Image_0.jpg"
-dest_files=["res://.godot/imported/sporonosets_anim_Image_0.jpg-368984c4c8b1ffa629912a103bf686d0.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/sporonosets_anim_Image_0.jpg"
+dest_files=["res://.godot/imported/sporonosets_anim_Image_0.jpg-e6140c45b7d826955f067fd64913f754.ctex"]
 
 [params]
 

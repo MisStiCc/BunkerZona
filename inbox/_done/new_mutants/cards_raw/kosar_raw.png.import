@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnby4r10fnfnu"
-path="res://.godot/imported/kosar_raw.png-0769c5f8bea87f6d02804f5d378b9e0c.ctex"
+path="res://.godot/imported/kosar_raw.png-1686b6fb2501da6b6ec1a171d33775ca.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/cards_raw/kosar_raw.png"
-dest_files=["res://.godot/imported/kosar_raw.png-0769c5f8bea87f6d02804f5d378b9e0c.ctex"]
+source_file="res://inbox/_done/new_mutants/cards_raw/kosar_raw.png"
+dest_files=["res://.godot/imported/kosar_raw.png-1686b6fb2501da6b6ec1a171d33775ca.ctex"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://byfa8ww55epw5"
-path="res://.godot/imported/chrevo.fbx-27dd098231ad98e2531dadc34aa91053.scn"
+path="res://.godot/imported/chrevo.fbx-d332ff0e97aeca02a78a34111349da07.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/chrevo/chrevo.fbx"
-dest_files=["res://.godot/imported/chrevo.fbx-27dd098231ad98e2531dadc34aa91053.scn"]
+source_file="res://inbox/_done/new_mutants/models/chrevo/chrevo.fbx"
+dest_files=["res://.godot/imported/chrevo.fbx-d332ff0e97aeca02a78a34111349da07.scn"]
 
 [params]
 

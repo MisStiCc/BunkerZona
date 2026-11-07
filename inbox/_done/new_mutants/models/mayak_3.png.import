@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cjdcwaj5gnu4r"
-path="res://.godot/imported/mayak_3.png-e48162f335c1ce83b9d44aea2e4800ec.ctex"
+path="res://.godot/imported/mayak_3.png-47d7de73390c594586dbc80d74be10ec.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/mayak_3.png"
-dest_files=["res://.godot/imported/mayak_3.png-e48162f335c1ce83b9d44aea2e4800ec.ctex"]
+source_file="res://inbox/_done/new_mutants/models/mayak_3.png"
+dest_files=["res://.godot/imported/mayak_3.png-47d7de73390c594586dbc80d74be10ec.ctex"]
 
 [params]
 

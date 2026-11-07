@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cx0tjk0oot5fd"
-path="res://.godot/imported/kosar_1.png-2227b5aec80d5808648446c5e31546b0.ctex"
+path="res://.godot/imported/kosar_1.png-0e7c7bcb3f9ee26ce5960a5ef4f15edb.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/kosar/kosar_1.png"
-dest_files=["res://.godot/imported/kosar_1.png-2227b5aec80d5808648446c5e31546b0.ctex"]
+source_file="res://inbox/_done/new_mutants/models/kosar/kosar_1.png"
+dest_files=["res://.godot/imported/kosar_1.png-0e7c7bcb3f9ee26ce5960a5ef4f15edb.ctex"]
 
 [params]
 

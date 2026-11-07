@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b2d5a6nocbtne"
-path="res://.godot/imported/kremen_anim_Image_2.jpg-55fc4234072107816bb921b7cc8a1bc1.ctex"
+path="res://.godot/imported/kremen_anim_Image_2.jpg-2f387c27b39f2dda79d1662de25c903a.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/kremen_anim_Image_2.jpg"
-dest_files=["res://.godot/imported/kremen_anim_Image_2.jpg-55fc4234072107816bb921b7cc8a1bc1.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/kremen_anim_Image_2.jpg"
+dest_files=["res://.godot/imported/kremen_anim_Image_2.jpg-2f387c27b39f2dda79d1662de25c903a.ctex"]
 
 [params]
 

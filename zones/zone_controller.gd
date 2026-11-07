@@ -567,6 +567,7 @@ func _connect_to_hud():
                 if hud:
                                 hud.anomaly_requested.connect(_on_hud_anomaly_requested)
                                 hud.mutant_requested.connect(_on_hud_mutant_requested)
+                                _maybe_spawn_onboarding(hud)
                                 if hud.has_signal("start_run_requested"):
                                                 hud.start_run_requested.connect(start_run)
                                 if hud.has_signal("trader_requested"):
@@ -1687,6 +1688,34 @@ func _on_wave_started(wave_number: int, count: int):
 ## Интро-баннер этажа Башни (Приложение Б церемонии): слэм без затемнения,
 ## рык на Хранителе; скип любым кликом/Enter. Арт из CeremonyData, нет файла -
 ## текстовая заглушка в цвет акцента.
+## D26 онбординг: шаги забега (аномалия/мутант/СТАРТ/пережить волны)
+func _maybe_spawn_onboarding(hud: Node) -> void:
+        var gm = get_tree().get_first_node_in_group("game_manager")
+        if gm == null or gm.current_save_data == null:
+                return
+        if bool(gm.current_save_data.onboarding_done):
+                return
+        var onb := OnboardingOverlay.new()
+        onb.host_kind = "run"
+        add_child(onb)
+        # завершение шагов по боевым сигналам
+        Signals.anomaly_created.connect(func(_a, _t, _p, _d): onb.complete_step("anomaly"))
+        Signals.mutant_spawned.connect(func(_m, _t, _p, _c): onb.complete_step("mutant"))
+        # старт: кнопка СТАРТ зажигает wave_started - шаг start закрыт первой волной
+        if spawn_manager:
+                spawn_manager.wave_started.connect(func(_w, _n):
+                        onb.complete_step("start")
+                        onb.complete_step("anomaly")
+                        onb.complete_step("mutant"), CONNECT_ONE_SHOT)
+        # пережить три волны: счётчик по волнам + закрытие забега
+        var waves_seen := {"n": 0}
+        if spawn_manager:
+                spawn_manager.wave_started.connect(func(_w, _n):
+                        waves_seen["n"] += 1
+                        if waves_seen["n"] >= 3:
+                                onb.complete_step("survive"))
+
+
 func _show_floor_intro_banner(floor_type: String):
                 var layer := CanvasLayer.new()
                 layer.layer = 9  # церемония - 10, HUD выше

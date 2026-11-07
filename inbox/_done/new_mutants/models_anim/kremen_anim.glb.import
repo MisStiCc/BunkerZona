@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b08qa6hit6tp8"
-path="res://.godot/imported/kremen_anim.glb-914242725f802ce363444627668e1517.scn"
+path="res://.godot/imported/kremen_anim.glb-f0b02c5373307418bd4069cba66ce46a.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/kremen_anim.glb"
-dest_files=["res://.godot/imported/kremen_anim.glb-914242725f802ce363444627668e1517.scn"]
+source_file="res://inbox/_done/new_mutants/models_anim/kremen_anim.glb"
+dest_files=["res://.godot/imported/kremen_anim.glb-f0b02c5373307418bd4069cba66ce46a.scn"]
 
 [params]
 

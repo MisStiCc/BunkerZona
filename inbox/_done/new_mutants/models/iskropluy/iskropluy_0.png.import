@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b5gveok72d32h"
-path="res://.godot/imported/iskropluy_0.png-7de50cee1ddb7fab9b9e15a806c9c6ae.ctex"
+path="res://.godot/imported/iskropluy_0.png-1f9619516923d3a76fc06d06fa0bc438.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/iskropluy/iskropluy_0.png"
-dest_files=["res://.godot/imported/iskropluy_0.png-7de50cee1ddb7fab9b9e15a806c9c6ae.ctex"]
+source_file="res://inbox/_done/new_mutants/models/iskropluy/iskropluy_0.png"
+dest_files=["res://.godot/imported/iskropluy_0.png-1f9619516923d3a76fc06d06fa0bc438.ctex"]
 
 [params]
 

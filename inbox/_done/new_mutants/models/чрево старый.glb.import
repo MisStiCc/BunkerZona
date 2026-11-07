@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://c7ekxi6ejg4g1"
-path="res://.godot/imported/чрево старый.glb-365342b83694f9f3a3f52b09c0f8e36c.scn"
+path="res://.godot/imported/чрево старый.glb-55e7e88a5f61b71dd8a0b40df14f61d1.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/чрево старый.glb"
-dest_files=["res://.godot/imported/чрево старый.glb-365342b83694f9f3a3f52b09c0f8e36c.scn"]
+source_file="res://inbox/_done/new_mutants/models/чрево старый.glb"
+dest_files=["res://.godot/imported/чрево старый.glb-55e7e88a5f61b71dd8a0b40df14f61d1.scn"]
 
 [params]
 

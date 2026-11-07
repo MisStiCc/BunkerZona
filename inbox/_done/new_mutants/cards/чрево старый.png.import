@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c4pa8kqut80e8"
-path="res://.godot/imported/чрево старый.png-f53b8705c4826ee8b7832a5c9ae0ba53.ctex"
+path="res://.godot/imported/чрево старый.png-18d3d80cafed80bbf1006e5aa66fbb9d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/cards/чрево старый.png"
-dest_files=["res://.godot/imported/чрево старый.png-f53b8705c4826ee8b7832a5c9ae0ba53.ctex"]
+source_file="res://inbox/_done/new_mutants/cards/чрево старый.png"
+dest_files=["res://.godot/imported/чрево старый.png-18d3d80cafed80bbf1006e5aa66fbb9d.ctex"]
 
 [params]
 

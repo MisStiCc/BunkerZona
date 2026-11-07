@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b00me00y8248l"
-path="res://.godot/imported/rzhavnik_idle.png-a904fab7b503e116b44055e8d51af79c.ctex"
+path="res://.godot/imported/rzhavnik_idle.png-9697c6eb1676f5e2b23a30ba3dfd02d2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/preview/rzhavnik_idle.png"
-dest_files=["res://.godot/imported/rzhavnik_idle.png-a904fab7b503e116b44055e8d51af79c.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/preview/rzhavnik_idle.png"
+dest_files=["res://.godot/imported/rzhavnik_idle.png-9697c6eb1676f5e2b23a30ba3dfd02d2.ctex"]
 
 [params]
 

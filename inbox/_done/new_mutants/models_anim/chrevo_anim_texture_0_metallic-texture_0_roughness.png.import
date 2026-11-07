@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ejhhcrhmfrtc"
-path="res://.godot/imported/chrevo_anim_texture_0_metallic-texture_0_roughness.png-659437f5bfa81d40f0ee7442c7393e46.ctex"
+path="res://.godot/imported/chrevo_anim_texture_0_metallic-texture_0_roughness.png-ddd09a5ae59e6ba0fc6eaaad41ef7dd3.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/chrevo_anim_texture_0_metallic-texture_0_roughness.png"
-dest_files=["res://.godot/imported/chrevo_anim_texture_0_metallic-texture_0_roughness.png-659437f5bfa81d40f0ee7442c7393e46.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/chrevo_anim_texture_0_metallic-texture_0_roughness.png"
+dest_files=["res://.godot/imported/chrevo_anim_texture_0_metallic-texture_0_roughness.png-ddd09a5ae59e6ba0fc6eaaad41ef7dd3.ctex"]
 
 [params]
 

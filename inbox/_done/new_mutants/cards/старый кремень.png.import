@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cmrqjgsop1vyk"
-path="res://.godot/imported/старый кремень.png-2dfc7f9d36f6e8a03686737923d821f8.ctex"
+path="res://.godot/imported/старый кремень.png-f59756f8faae7efab49820f7eaf7a9df.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/cards/старый кремень.png"
-dest_files=["res://.godot/imported/старый кремень.png-2dfc7f9d36f6e8a03686737923d821f8.ctex"]
+source_file="res://inbox/_done/new_mutants/cards/старый кремень.png"
+dest_files=["res://.godot/imported/старый кремень.png-f59756f8faae7efab49820f7eaf7a9df.ctex"]
 
 [params]
 

@@ -91,9 +91,10 @@ func _ready():
         _apply_static_texts()
         _refresh_ui()
         _setup_campaign_selector()
-        # D26 онбординг новичка: один раз (флаг в сейве)
+        # D26 онбординг новичка: лаба показывает welcome/finish
         if game_manager and game_manager.current_save_data != null                         and not bool(game_manager.current_save_data.onboarding_done):
                 var onb := OnboardingOverlay.new()
+                onb.host_kind = "lab"
                 add_child(onb)
         _refresh_campaign_ui()
         _build_shop_tabs()
@@ -579,6 +580,15 @@ func _on_campaign_mode_pressed():
 # ==================== ОБРАБОТЧИКИ ====================
 
 func _on_start_run_pressed():
+        # D26: шаг welcome завершён - забег начался (рамка уехала в подготовку)
+        var onb_w = get_tree().get_first_node_in_group("onboarding")
+        if onb_w == null:
+                for ch in get_children():
+                        if ch is OnboardingOverlay:
+                                onb_w = ch
+                                break
+        if onb_w != null and onb_w._step_id == "welcome":
+                onb_w.complete_step("welcome")
         _play_click_sound()
         # v0.27.0: перед выходом - брифинг Проводника; запуск из поп-апа
         _briefing_open()

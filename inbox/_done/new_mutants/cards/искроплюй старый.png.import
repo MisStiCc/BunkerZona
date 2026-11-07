@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cmnfbe07caul7"
-path="res://.godot/imported/искроплюй старый.png-ec80ae7307a0a8386bf24b51bfaf95b9.ctex"
+path="res://.godot/imported/искроплюй старый.png-bdad0df95e3587f7e51ad8cf4b7d9465.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/cards/искроплюй старый.png"
-dest_files=["res://.godot/imported/искроплюй старый.png-ec80ae7307a0a8386bf24b51bfaf95b9.ctex"]
+source_file="res://inbox/_done/new_mutants/cards/искроплюй старый.png"
+dest_files=["res://.godot/imported/искроплюй старый.png-bdad0df95e3587f7e51ad8cf4b7d9465.ctex"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b2xkcm5hs15of"
-path="res://.godot/imported/kremen.fbx-bb7867757b0addaac17442d87c5ac06b.scn"
+path="res://.godot/imported/kremen.fbx-033996255cb2225415e2ae4c5bd94e8c.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/kremen.fbx"
-dest_files=["res://.godot/imported/kremen.fbx-bb7867757b0addaac17442d87c5ac06b.scn"]
+source_file="res://inbox/_done/new_mutants/models/kremen.fbx"
+dest_files=["res://.godot/imported/kremen.fbx-033996255cb2225415e2ae4c5bd94e8c.scn"]
 
 [params]
 

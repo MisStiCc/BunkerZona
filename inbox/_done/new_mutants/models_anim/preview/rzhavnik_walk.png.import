@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://brm44eudc52rp"
-path="res://.godot/imported/rzhavnik_walk.png-f89aa116356782e09dc8f6869437ad6c.ctex"
+path="res://.godot/imported/rzhavnik_walk.png-27b616027e96fabb5c37a9655e98ec4a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/preview/rzhavnik_walk.png"
-dest_files=["res://.godot/imported/rzhavnik_walk.png-f89aa116356782e09dc8f6869437ad6c.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/preview/rzhavnik_walk.png"
+dest_files=["res://.godot/imported/rzhavnik_walk.png-27b616027e96fabb5c37a9655e98ec4a.ctex"]
 
 [params]
 

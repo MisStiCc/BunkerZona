@@ -188,6 +188,15 @@ func _build_header() -> void:
         med_btn.mouse_entered.connect(_play_hover_sound)
         head.add_child(med_btn)
         _medal_btn = med_btn
+
+        # D26: повтор обучения (спека) - сброс флага, лаба покажет заново
+        var onb_btn := Button.new()
+        onb_btn.text = Loc.t("onb.repeat")
+        onb_btn.custom_minimum_size = Vector2(150, 56)
+        BunkerUI.style_button(onb_btn, "steel", 14)
+        onb_btn.pressed.connect(_onboarding_reset)
+        onb_btn.mouse_entered.connect(_play_hover_sound)
+        head.add_child(onb_btn)
         var mdot := Panel.new()
         mdot.anchor_left = 1.0
         mdot.anchor_right = 1.0
@@ -2354,6 +2363,17 @@ func _medal_claim(id: String) -> void:
         _show_toast(Loc.t("medals.done_msg", {"title": str(res["title"]), "what": _medal_reward_text(res["reward"])}))
         _medals_rebuild()
         _refresh_medal_dot()
+
+
+## D26: сброс онбординга - лаба при следующем входе покажет обучение заново
+func _onboarding_reset() -> void:
+        _play_click_sound()
+        if _save != null:
+                _save.onboarding_done = false
+                _save.onboarding_step = ""
+        if _gm and _gm.has_method("save_to_active_slot"):
+                _gm.save_to_active_slot()
+        _show_toast(Loc.t("onb.repeat_done"))
 
 
 func _medals_open() -> void:

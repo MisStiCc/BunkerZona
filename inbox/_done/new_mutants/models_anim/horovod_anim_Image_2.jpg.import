@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clr4136nm1p0s"
-path="res://.godot/imported/horovod_anim_Image_2.jpg-1c75188501c3fa5878398b2adbac815b.ctex"
+path="res://.godot/imported/horovod_anim_Image_2.jpg-a0c122c7542f5c4b9f0ebac25a127f21.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/horovod_anim_Image_2.jpg"
-dest_files=["res://.godot/imported/horovod_anim_Image_2.jpg-1c75188501c3fa5878398b2adbac815b.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/horovod_anim_Image_2.jpg"
+dest_files=["res://.godot/imported/horovod_anim_Image_2.jpg-a0c122c7542f5c4b9f0ebac25a127f21.ctex"]
 
 [params]
 

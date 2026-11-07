@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c1xuvht7k84ae"
-path="res://.godot/imported/rzhavnik_2.png-ae705d1b19c1d72770d5a5d95e96576c.ctex"
+path="res://.godot/imported/rzhavnik_2.png-96351f30b3411debd397a8378e509e8d.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/rzhavnik/rzhavnik_2.png"
-dest_files=["res://.godot/imported/rzhavnik_2.png-ae705d1b19c1d72770d5a5d95e96576c.ctex"]
+source_file="res://inbox/_done/new_mutants/models/rzhavnik/rzhavnik_2.png"
+dest_files=["res://.godot/imported/rzhavnik_2.png-96351f30b3411debd397a8378e509e8d.ctex"]
 
 [params]
 

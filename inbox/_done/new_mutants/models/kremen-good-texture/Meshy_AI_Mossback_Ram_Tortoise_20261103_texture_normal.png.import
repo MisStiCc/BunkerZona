@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c4x05c0wnm3br"
-path="res://.godot/imported/Meshy_AI_Mossback_Ram_Tortoise_20261103_texture_normal.png-2e9669668ffc15f2cd1a6be2d7d61f0d.ctex"
+path="res://.godot/imported/Meshy_AI_Mossback_Ram_Tortoise_20261103_texture_normal.png-49d39f58cb57bd8a4a23efc71f85ff33.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/kremen-good-texture/Meshy_AI_Mossback_Ram_Tortoise_20261103_texture_normal.png"
-dest_files=["res://.godot/imported/Meshy_AI_Mossback_Ram_Tortoise_20261103_texture_normal.png-2e9669668ffc15f2cd1a6be2d7d61f0d.ctex"]
+source_file="res://inbox/_done/new_mutants/models/kremen-good-texture/Meshy_AI_Mossback_Ram_Tortoise_20261103_texture_normal.png"
+dest_files=["res://.godot/imported/Meshy_AI_Mossback_Ram_Tortoise_20261103_texture_normal.png-49d39f58cb57bd8a4a23efc71f85ff33.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c3vcqb1in0wtx"
-path="res://.godot/imported/chrevo_walk.png-c6a43bf09e25223e9b0cadbc342eb2e7.ctex"
+path="res://.godot/imported/chrevo_walk.png-de69bcf2578d06bdb266187b5b7282f4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/preview/chrevo_walk.png"
-dest_files=["res://.godot/imported/chrevo_walk.png-c6a43bf09e25223e9b0cadbc342eb2e7.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/preview/chrevo_walk.png"
+dest_files=["res://.godot/imported/chrevo_walk.png-de69bcf2578d06bdb266187b5b7282f4.ctex"]
 
 [params]
 

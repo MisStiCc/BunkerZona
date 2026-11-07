@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b6xp2mcq788gb"
-path="res://.godot/imported/kosar_anim.glb-3a2847b35da32da49c9bd6ce061fe09d.scn"
+path="res://.godot/imported/kosar_anim.glb-1b0b8e8aafcb5f2d56b31bca92ab6e5f.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/kosar_anim.glb"
-dest_files=["res://.godot/imported/kosar_anim.glb-3a2847b35da32da49c9bd6ce061fe09d.scn"]
+source_file="res://inbox/_done/new_mutants/models_anim/kosar_anim.glb"
+dest_files=["res://.godot/imported/kosar_anim.glb-1b0b8e8aafcb5f2d56b31bca92ab6e5f.scn"]
 
 [params]
 

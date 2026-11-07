@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://drjmj13pmv86g"
-path="res://.godot/imported/sporonosets_anim.glb-943d4156356a7a2d9edc2479b6258522.scn"
+path="res://.godot/imported/sporonosets_anim.glb-5da11bb6a99eedeb4ceef3965e10622a.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/sporonosets_anim.glb"
-dest_files=["res://.godot/imported/sporonosets_anim.glb-943d4156356a7a2d9edc2479b6258522.scn"]
+source_file="res://inbox/_done/new_mutants/models_anim/sporonosets_anim.glb"
+dest_files=["res://.godot/imported/sporonosets_anim.glb-5da11bb6a99eedeb4ceef3965e10622a.scn"]
 
 [params]
 

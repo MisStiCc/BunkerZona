@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://8l267gskujs3"
-path="res://.godot/imported/rzhavnik_anim.glb-268f366dc05164bba9b29e2a912c06f2.scn"
+path="res://.godot/imported/rzhavnik_anim.glb-5844466261c23170daca3e1cb34d0ed1.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/rzhavnik_anim.glb"
-dest_files=["res://.godot/imported/rzhavnik_anim.glb-268f366dc05164bba9b29e2a912c06f2.scn"]
+source_file="res://inbox/_done/new_mutants/models_anim/rzhavnik_anim.glb"
+dest_files=["res://.godot/imported/rzhavnik_anim.glb-5844466261c23170daca3e1cb34d0ed1.scn"]
 
 [params]
 

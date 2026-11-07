@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ji42s6m2lq75"
-path="res://.godot/imported/mayak_anim_texture_pbr_20250901_normal.png-54f5d46b66223789312e4b0695718c2a.ctex"
+path="res://.godot/imported/mayak_anim_texture_pbr_20250901_normal.png-e1344e4603e01dd4df5e41eef1fc8e48.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/mayak_anim_texture_pbr_20250901_normal.png"
-dest_files=["res://.godot/imported/mayak_anim_texture_pbr_20250901_normal.png-54f5d46b66223789312e4b0695718c2a.ctex"]
+source_file="res://inbox/_done/new_mutants/models_anim/mayak_anim_texture_pbr_20250901_normal.png"
+dest_files=["res://.godot/imported/mayak_anim_texture_pbr_20250901_normal.png-e1344e4603e01dd4df5e41eef1fc8e48.ctex"]
 
 [params]
 

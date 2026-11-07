@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b7jw3rj1bes0n"
-path="res://.godot/imported/mayak_anim.glb-93862e8e1be30a5b76298657530b6b67.scn"
+path="res://.godot/imported/mayak_anim.glb-f0ccd64fa2c37267ecae2c0eaf8da324.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models_anim/mayak_anim.glb"
-dest_files=["res://.godot/imported/mayak_anim.glb-93862e8e1be30a5b76298657530b6b67.scn"]
+source_file="res://inbox/_done/new_mutants/models_anim/mayak_anim.glb"
+dest_files=["res://.godot/imported/mayak_anim.glb-f0ccd64fa2c37267ecae2c0eaf8da324.scn"]
 
 [params]
 

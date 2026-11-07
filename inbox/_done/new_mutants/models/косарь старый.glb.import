@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cqe3book32vit"
-path="res://.godot/imported/косарь старый.glb-dba26504d836fbd5eac91f3400d8922e.scn"
+path="res://.godot/imported/косарь старый.glb-0e34e4186f75582afa147cb800352843.scn"
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/косарь старый.glb"
-dest_files=["res://.godot/imported/косарь старый.glb-dba26504d836fbd5eac91f3400d8922e.scn"]
+source_file="res://inbox/_done/new_mutants/models/косарь старый.glb"
+dest_files=["res://.godot/imported/косарь старый.glb-0e34e4186f75582afa147cb800352843.scn"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://caf5eancp87bd"
-path="res://.godot/imported/Meshy_AI_Ghostly_Figures_Ritual_3D_20261103_image-to-3d-texture_normal.png-c62ffa57a97efa85b1c28f0aecc27416.ctex"
+path="res://.godot/imported/Meshy_AI_Ghostly_Figures_Ritual_3D_20261103_image-to-3d-texture_normal.png-ab12b6f8d33a85723e86ab1d811876ea.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inbox/new_mutants/models/horovod/Meshy_AI_Ghostly_Figures_Ritual_3D_20261103_image-to-3d-texture_normal.png"
-dest_files=["res://.godot/imported/Meshy_AI_Ghostly_Figures_Ritual_3D_20261103_image-to-3d-texture_normal.png-c62ffa57a97efa85b1c28f0aecc27416.ctex"]
+source_file="res://inbox/_done/new_mutants/models/horovod/Meshy_AI_Ghostly_Figures_Ritual_3D_20261103_image-to-3d-texture_normal.png"
+dest_files=["res://.godot/imported/Meshy_AI_Ghostly_Figures_Ritual_3D_20261103_image-to-3d-texture_normal.png-ab12b6f8d33a85723e86ab1d811876ea.ctex"]
 
 [params]
 
