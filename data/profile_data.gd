@@ -97,6 +97,10 @@ static func is_avatar_unlocked(av: Dictionary, lab) -> bool:
 
 ## Иконка аватара: PNG художника в приоритете, SVG-фоллбек; серая для закрытых.
 static func get_avatar_icon(av: Dictionary, unlocked: bool) -> String:
+        # Поставки помощника: портретные аватарки 8 оригиналов (крупный план)
+        var av_path := "res://assets/ui/avatars/avatar_%s.png" % str(av.id)
+        if ResourceLoader.exists(av_path):
+                return av_path
         return GachaData.card_icon_path(str(av.id), bool(av.is_mutant), not unlocked)
 
 

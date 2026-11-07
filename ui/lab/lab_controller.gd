@@ -2803,6 +2803,7 @@ var detail_panel: Control
 var detail_image: TextureRect
 var detail_name: Label
 var detail_meta: Label
+var detail_badge: TextureRect
 var detail_desc: Label
 
 
@@ -2857,11 +2858,21 @@ func _build_card_detail():
         panel.add_child(detail_name)
 
         detail_meta = Label.new()
-        detail_meta.position = Vector2(20, 364)
-        detail_meta.size = Vector2(520, 22)
+        detail_meta.position = Vector2(60, 364)
+        detail_meta.size = Vector2(440, 22)
         detail_meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         detail_meta.add_theme_font_size_override("font_size", 12)
         panel.add_child(detail_meta)
+
+        # Бейдж роли (пак pack_role_badges): ТАНК/ЛЕЧ/ДД/БАФ - только у видов
+        # с ролью из этих четырёх; УРОН/КОНТР - без бейджа (глифов нет)
+        detail_badge = TextureRect.new()
+        detail_badge.position = Vector2(24, 358)
+        detail_badge.size = Vector2(30, 30)
+        detail_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        detail_badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        detail_badge.visible = false
+        panel.add_child(detail_badge)
 
         detail_desc = Label.new()
         detail_desc.position = Vector2(40, 396)
@@ -2922,6 +2933,17 @@ func _show_card_detail(type: String, is_mutant: bool, unlocked: bool):
                         desc_txt = fb
                 else:
                         desc_txt = Loc.t("role.line", {"n": Loc.type_name(type), "r": MutantRoles.role_tag(type)})
+        # Бейдж роли рядом с метой (k remetну: файлы role_tank/heal/dmg/buff)
+        var badge_map := {"ТАНК": "tank", "ЛЕЧ": "heal", "ДД": "dmg", "БАФ": "buff"}
+        var role_tag: String = MutantRoles.role_tag(type) if is_mutant else ""
+        var badge_file: String = str(badge_map.get(role_tag, ""))
+        if is_mutant and not badge_file.is_empty():
+                var bp := "res://assets/ui/icons/roles/role_%s.png" % badge_file
+                if ResourceLoader.exists(bp):
+                        detail_badge.texture = load(bp)
+                        detail_badge.visible = true
+        else:
+                detail_badge.visible = false
         detail_desc.text = desc_txt
         if is_mutant:
                 detail_meta.text += "  ·  " + Loc.t("role.line_short", {"r": MutantRoles.role_tag(type)})
