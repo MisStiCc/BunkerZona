@@ -103,6 +103,16 @@ func _build() -> void:
 	x_btn.pressed.connect(close)
 	head.add_child(x_btn)
 
+	# Баннер ящика (поставка mail_pack): под шапкой; файла нет — без него
+	if ResourceLoader.exists("res://assets/ui/mail/mail_banner.png"):
+		var m_banner := TextureRect.new()
+		m_banner.texture = load("res://assets/ui/mail/mail_banner.png")
+		m_banner.custom_minimum_size = Vector2(0, 72)
+		m_banner.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		m_banner.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		m_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(m_banner)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -120,6 +130,9 @@ func open_badge(badge: Panel) -> void:
 
 func _refresh() -> void:
 	for c in _list.get_children():
+		# снимаем СРАЗУ: голый queue_free отложен — при повторном открытии
+		# карточки наслаивались (урок hunt_calendar, сообщение подготовщика)
+		_list.remove_child(c)
 		c.queue_free()
 	var gm = get_tree().get_first_node_in_group("game_manager")
 	var mail: Array = []
@@ -153,20 +166,51 @@ func _make_mail_card(idx: int, m: Dictionary) -> Control:
 	v.add_theme_constant_override("separation", 4)
 	card.add_child(v)
 
-	var from := Label.new()
-	from.text = "✉ %s" % str(m.get("from", "Зона"))
-	from.add_theme_font_override("font", BunkerUI.font_mono())
-	from.add_theme_font_size_override("font_size", 11)
-	from.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-	v.add_child(from)
+	# строка «от кого»: конверт-иконка (поставка mail_pack), нет файла — глиф
+	var from_row := HBoxContainer.new()
+	from_row.add_theme_constant_override("separation", 5)
+	v.add_child(from_row)
+	var env_path := "res://assets/ui/mail/mail_envelope.png"
+	if ResourceLoader.exists(env_path):
+		var env := TextureRect.new()
+		env.texture = load(env_path)
+		env.custom_minimum_size = Vector2(16, 16)
+		env.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		env.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		env.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		from_row.add_child(env)
+		var from := Label.new()
+		from.text = str(m.get("from", "Зона"))
+		_style_from_label(from)
+		from_row.add_child(from)
+	else:
+		var from := Label.new()
+		from.text = "✉ %s" % str(m.get("from", "Зона"))
+		_style_from_label(from)
+		from_row.add_child(from)
 
+	# заголовок + красный бейдж «!» у непрочитанного с вложением
+	var t_row := HBoxContainer.new()
+	t_row.add_theme_constant_override("separation", 6)
+	v.add_child(t_row)
+	var reward0: Dictionary = m.get("reward", {})
+	var unread: bool = not reward0.is_empty() and not bool(m.get("claimed", false))
+	if unread and ResourceLoader.exists("res://assets/ui/mail/mail_unread_badge.png"):
+		var badge := TextureRect.new()
+		badge.texture = load("res://assets/ui/mail/mail_unread_badge.png")
+		badge.custom_minimum_size = Vector2(18, 18)
+		badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		t_row.add_child(badge)
 	var t := Label.new()
 	t.text = str(m.get("title_" + lang, m.get("title_ru", "")))
 	t.add_theme_font_override("font", BunkerUI.font_title())
 	t.add_theme_font_size_override("font_size", 15)
 	t.add_theme_color_override("font_color", BunkerUI.TEXT_BRIGHT)
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(t)
+	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	t_row.add_child(t)
 
 	var b := Label.new()
 	b.text = str(m.get("body_" + lang, m.get("body_ru", "")))
@@ -186,6 +230,50 @@ func _make_mail_card(idx: int, m: Dictionary) -> Control:
 		done.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
 		v.add_child(done)
 	else:
+		# ряд иконок вложений по ключам награды (поставка mail_pack);
+		# файла иконки нет — слот не рисуется
+		var attach := HBoxContainer.new()
+		attach.add_theme_constant_override("separation", 10)
+		var attach_map := {
+			"rolls_mut": ["attach_rolls_mut", "%d" % int(reward.get("rolls_mut", 0))],
+			"rolls_art": ["attach_rolls_art", "%d" % int(reward.get("rolls_art", 0))],
+			"sparks": ["attach_sparks", "%d" % int(reward.get("sparks", 0))],
+			"bio": ["attach_bio", "%dк" % int(float(reward.get("bio", 0.0)) / 1000.0)],
+		}
+		for akey in attach_map:
+			if not reward.has(akey):
+				continue
+			var ap := "res://assets/ui/mail/%s.png" % str(attach_map[akey][0])
+			if not ResourceLoader.exists(ap):
+				continue
+			var slot := HBoxContainer.new()
+			slot.add_theme_constant_override("separation", 3)
+			var ic := TextureRect.new()
+			ic.texture = load(ap)
+			ic.custom_minimum_size = Vector2(26, 26)
+			ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			slot.add_child(ic)
+			var amt := Label.new()
+			amt.text = str(attach_map[akey][1])
+			amt.add_theme_font_override("font", BunkerUI.font_mono())
+			amt.add_theme_font_size_override("font_size", 11)
+			amt.add_theme_color_override("font_color", BunkerUI.TEXT_BRIGHT)
+			slot.add_child(amt)
+			attach.add_child(slot)
+		for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
+			if reward.has(cos_key) and ResourceLoader.exists("res://assets/ui/mail/attach_cosmetic.png"):
+				var ci := TextureRect.new()
+				ci.texture = load("res://assets/ui/mail/attach_cosmetic.png")
+				ci.custom_minimum_size = Vector2(26, 26)
+				ci.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				ci.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				ci.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				attach.add_child(ci)
+				break
+		if attach.get_child_count() > 0:
+			v.add_child(attach)
 		var btn := Button.new()
 		btn.text = Loc.t("mail.claim")
 		btn.custom_minimum_size = Vector2(0, 44)
@@ -193,6 +281,13 @@ func _make_mail_card(idx: int, m: Dictionary) -> Control:
 		btn.pressed.connect(_on_claim.bind(idx))
 		v.add_child(btn)
 	return card
+
+
+## Общий стиль строки «от кого» (иконка и глиф-фолбэк выглядят одинаково)
+func _style_from_label(l: Label) -> void:
+	l.add_theme_font_override("font", BunkerUI.font_mono())
+	l.add_theme_font_size_override("font_size", 11)
+	l.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
 
 
 func _on_claim(idx: int) -> void:

@@ -40,6 +40,20 @@ func close() -> void:
 		_root.visible = false
 
 
+## Иконка скилла по id (поставка hunt_skill_icons); файла нет — null
+static func skill_icon(sid: String) -> Texture2D:
+	var p := "res://assets/ui/skills/skill_%s.png" % sid
+	return load(p) if ResourceLoader.exists(p) else null
+
+
+## Хотя бы у одного скилла списка есть иконка? (иначе — старый текст с глифами)
+static func _skills_have_icons(skills: Array) -> bool:
+	for sk in skills:
+		if skill_icon(str(sk.get("id", ""))) != null:
+			return true
+	return false
+
+
 ## Портрет босса одним контролом (календарь/гильдия/баннер); нет файла -
 ## заглушка с первой буквой имени (паттерн карт гачи)
 static func portrait(boss_id: String, size: float) -> Control:
@@ -199,7 +213,10 @@ func _day_before_today(day: Dictionary) -> bool:
 
 func _make_boss_row(boss_id: String, is_today: bool, dimmed: bool) -> Control:
 	var b: Dictionary = BossHuntData.BOSSES.get(boss_id, {})
-	var row := Panel.new()
+	# PanelContainer, НЕ Panel: голый Panel минимального размера не имеет —
+	# VBox стековал дни по высоте лейбла, а портреты/текст рисовались
+	# поверх соседних строк (баг-отчёт владельца 07.11)
+	var row := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.07, 0.09, 0.06, 0.95)
 	sb.set_corner_radius_all(8)
@@ -252,18 +269,50 @@ func _make_boss_row(boss_id: String, is_today: bool, dimmed: bool) -> Control:
 	info.add_child(stats)
 
 	var skills: Array = b.get("skills", [])
-	var parts: Array = []
-	for sk in skills:
-		var sid := str(sk.get("id", ""))
-		var glyph: String = str(SKILL_GLYPH.get(sid, "•"))
-		parts.append("%s %s" % [glyph, Loc.t("huntcal.skill_" + sid)])
-	if not parts.is_empty():
-		var sk_label := Label.new()
-		sk_label.text = "   ".join(parts)
-		sk_label.add_theme_font_size_override("font_size", 12)
-		sk_label.add_theme_color_override("font_color", COL_DIM)
-		sk_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		info.add_child(sk_label)
+	if not skills.is_empty() and _skills_have_icons(skills):
+		# чипы с иконками (поставка hunt_skill_icons): октагон-иконка + имя
+		var flow := HFlowContainer.new()
+		flow.add_theme_constant_override("h_separation", 12)
+		flow.add_theme_constant_override("v_separation", 4)
+		for sk in skills:
+			var sid := str(sk.get("id", ""))
+			var chip := HBoxContainer.new()
+			chip.add_theme_constant_override("separation", 4)
+			var ic := skill_icon(sid)
+			if ic != null:
+				var tr := TextureRect.new()
+				tr.texture = ic
+				tr.custom_minimum_size = Vector2(20, 20)
+				tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				chip.add_child(tr)
+			else:
+				var gl := Label.new()
+				gl.text = str(SKILL_GLYPH.get(sid, "•"))
+				gl.add_theme_font_size_override("font_size", 12)
+				gl.add_theme_color_override("font_color", COL_DIM)
+				chip.add_child(gl)
+			var sname := Label.new()
+			sname.text = Loc.t("huntcal.skill_" + sid)
+			sname.add_theme_font_size_override("font_size", 12)
+			sname.add_theme_color_override("font_color", COL_DIM)
+			chip.add_child(sname)
+			flow.add_child(chip)
+		info.add_child(flow)
+	else:
+		var parts: Array = []
+		for sk in skills:
+			var sid := str(sk.get("id", ""))
+			var glyph: String = str(SKILL_GLYPH.get(sid, "•"))
+			parts.append("%s %s" % [glyph, Loc.t("huntcal.skill_" + sid)])
+		if not parts.is_empty():
+			var sk_label := Label.new()
+			sk_label.text = "   ".join(parts)
+			sk_label.add_theme_font_size_override("font_size", 12)
+			sk_label.add_theme_color_override("font_color", COL_DIM)
+			sk_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			info.add_child(sk_label)
 	if dimmed:
 		row.modulate = Color(1, 1, 1, 0.55)
 	return row

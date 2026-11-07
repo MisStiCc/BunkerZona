@@ -1007,6 +1007,21 @@ func _sv_fr(wave: float) -> float:
         return 0.75 + 0.22 * (1.0 - exp(-(wave - 12.0) / 18.0))
 
 ## ---------- КАМПАНИЯ: «Карта Зоны» ----------
+var _bicons: Dictionary = {}   # имя -> Texture2D|null (поставка journey_map_art, лениво)
+
+
+## Бикон по центру точки; файла нет — false (вызывающий рисует старый маркер)
+func _bicon_center(bname: String, c: Vector2, px: float, tint := Color.WHITE) -> bool:
+        if not _bicons.has(bname):
+                var bp := "res://assets/ui/journey/bicon_%s.png" % bname
+                _bicons[bname] = load(bp) if ResourceLoader.exists(bp, "Texture2D") else null
+        var tex: Texture2D = _bicons[bname]
+        if tex == null:
+                return false
+        draw_texture_rect(tex, Rect2(c - Vector2(px, px) * 0.5, Vector2(px, px)), false, tint)
+        return true
+
+
 func _draw_map_campaign(w: float, h: float, mono: Font, sc: float, slide: float) -> void:
         if _cm_pts.is_empty():
                 var built: Array = _map_build(CM_WP)
@@ -1060,7 +1075,10 @@ func _draw_map_campaign(w: float, h: float, mono: Font, sc: float, slide: float)
                 var num := str(lv)
                 draw_string(mono, Vector2(c.x + 9.0 * s, c.y + 18.0 * s), num,
                         HORIZONTAL_ALIGNMENT_LEFT, -1, nfs, Color(col.r, col.g, col.b, 0.9))
-                _diamond(c, 7.5 * s, col)
+                # бикон каравана (journey_map_art): пройден — полный, впереди —
+                # приглушён; нет файла — ромб как был
+                if not _bicon_center("boss", c, 24.0 * s, Color(1, 1, 1, 1.0 if passed_b else 0.55)):
+                        _diamond(c, 7.5 * s, col)
 
         # --- биконы глав (старты: 1, 11, ... 91) ---
         var starts: Array = [1, 11, 21, 31, 41, 51, 61, 71, 81, 91]
@@ -1073,7 +1091,10 @@ func _draw_map_campaign(w: float, h: float, mono: Font, sc: float, slide: float)
                 var col: Color = COL_PASSED if passed_b else COL_DIM
                 var hgt: float = 30.0 * s
                 draw_line(Vector2(bx, by), Vector2(bx, by - hgt), Color(col.r, col.g, col.b, 0.75), 2.0 * s)
-                _diamond(Vector2(bx, by - hgt), 5.5 * s, col)
+                # бикон главы: нет файла — ромб
+                if not _bicon_center("location", Vector2(bx, by - hgt), 20.0 * s,
+                                Color(1, 1, 1, 1.0 if passed_b else 0.55)):
+                        _diamond(Vector2(bx, by - hgt), 5.5 * s, col)
                 var nm: String = _chapter_name(lv)
                 if nm.length() > 20:
                         nm = nm.substr(0, 19) + "..."
@@ -1141,9 +1162,11 @@ func _draw_map_campaign(w: float, h: float, mono: Font, sc: float, slide: float)
                 var aa: float = 0.5 * (1.0 - rr / 52.0) * (0.6 + 0.4 * pulse)
                 draw_arc(Vector2(px, py), rr * s, 0.0, TAU, 40,
                         Color(COL_KEEPER.r, COL_KEEPER.g, COL_KEEPER.b, aa), 2.0 * s)
-        draw_circle(Vector2(px, py), 11.0 * s, Color(0.26, 0.2, 0.05, 1.0))
-        draw_arc(Vector2(px, py), 11.0 * s, 0.0, TAU, 40, Color(1.0, 0.84, 0.47, 1.0), 2.5 * s)
-        draw_circle(Vector2(px - 3.0 * s, py - 3.5 * s), 3.0 * s, Color(1, 1, 1, 0.35))
+        # маркер игрока (бикон «ВЫ»): нет файла — кружок с кольцом
+        if not _bicon_center("you", Vector2(px, py), 28.0 * s):
+                draw_circle(Vector2(px, py), 11.0 * s, Color(0.26, 0.2, 0.05, 1.0))
+                draw_arc(Vector2(px, py), 11.0 * s, 0.0, TAU, 40, Color(1.0, 0.84, 0.47, 1.0), 2.5 * s)
+                draw_circle(Vector2(px - 3.0 * s, py - 3.5 * s), 3.0 * s, Color(1, 1, 1, 0.35))
         var lbl: String = "ВЫ · УР. %d" % current
         _map_plate(px + 16.0 * s, py + 6.0 * s, lbl, Color(1.0, 0.89, 0.55), maxi(10, int(12.0 * s)), mono)
 

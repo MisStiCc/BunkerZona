@@ -20,6 +20,7 @@ const ART := {
 	"banner_cleared": "banner_floor_cleared.png",
 	"banner_floor_up": "banner_floor_up.png",
 	"banner_break": "banner_break.png",
+	"banner_gate": "banner_gate.png",
 	"banner_keeper": "banner_keeper.png",
 	"banner_victory": "banner_victory.png",
 	"banner_defeat": "banner_defeat.png",

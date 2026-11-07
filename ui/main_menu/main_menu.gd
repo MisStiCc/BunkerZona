@@ -395,6 +395,21 @@ func _apply_bunker_style():
                 vbox.offset_top = -330
                 vbox.offset_bottom = 330
 
+                # Иконки кнопок (поставка menu_button_icons): файла нет —
+                # кнопка остаётся текстовой
+                var btn_icons := {
+                        "NewGameButton": "menu_new", "LoadButton": "menu_load",
+                        "SettingsButton": "menu_settings", "QuitButton": "menu_quit"}
+                for bname in btn_icons:
+                        var mb: Button = vbox.get_node_or_null("Buttons/" + str(bname))
+                        if mb == null:
+                                continue
+                        var mip := "res://assets/ui/menu/%s.png" % str(btn_icons[bname])
+                        if ResourceLoader.exists(mip):
+                                mb.icon = load(mip)
+                                mb.expand_icon = true
+                                mb.add_theme_constant_override("icon_max_width", 34)
+
                 # Title (крупная шапка)
                 title_label.visible = true
                 title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT

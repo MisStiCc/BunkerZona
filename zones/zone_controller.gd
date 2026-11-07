@@ -1645,11 +1645,15 @@ func _on_wave_started(wave_number: int, count: int):
                 pass # print("Волна " + str(wave_number) + " началась, сталкеров: " + str(count))
 
                 # Интро-баннер особого этажа Башни (Приложение Б спеки церемонии):
-                # Прорыв/Хранитель на старте 1-й волны, слэм + рык, скип мгновенный
+                # Прорыв/Хранитель на старте 1-й волны, слэм + рык, скип мгновенный.
+                # Старт яруса (11/21/...): баннер «ВРАТА ЯРУСА» (звук уже был)
                 if wave_number == 1 and run_params.get("run_mode", "") == "tower":
                                 var intro_type := TowerData.get_floor_type(int(run_params.get("tower_floor", 1)))
                                 if intro_type == "break" or intro_type == "keeper":
                                                 _show_floor_intro_banner(intro_type)
+                                elif intro_type == "normal" and int(run_params.get("tower_floor", 1)) > 1 \
+                                                and int(run_params.get("tower_floor", 1)) % 10 == 1:
+                                                _show_floor_intro_banner("gate")
 
                 # D9: волна пошла - врата на миникарте гаснут
                 if spawn_manager and spawn_manager.gate_mode:
@@ -1695,7 +1699,8 @@ func _show_floor_intro_banner(floor_type: String):
                 banner.pivot_offset = banner.size * 0.5
                 root.add_child(banner)
 
-                var art_key := "banner_keeper" if floor_type == "keeper" else "banner_break"
+                var art_key := "banner_keeper" if floor_type == "keeper" \
+                                else ("banner_gate" if floor_type == "gate" else "banner_break")
                 var accent := Color(0.62, 0.16, 0.12) if floor_type == "keeper" else Color(0.8, 0.5, 0.15)
                 var art: Texture2D = null
                 var art_path := CeremonyData.ART_DIR + String(CeremonyData.ART.get(art_key, ""))
@@ -1729,6 +1734,8 @@ func _show_floor_intro_banner(floor_type: String):
                                 var tier: Dictionary = TowerData.get_tier(int(run_params.get("tower_floor", 1)))
                                 title.text = Loc.t("tower_ceremony.keeper_intro",
                                                 {"name": String(tier.get("boss", ""))})
+                elif floor_type == "gate":
+                                title.text = Loc.t("tower_ceremony.gate_intro")
                 else:
                                 title.text = Loc.t("tower_ceremony.break_tag")
                 banner.add_child(title)

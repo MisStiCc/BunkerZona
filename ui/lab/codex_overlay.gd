@@ -84,6 +84,21 @@ func _build() -> void:
 	panel.add_theme_stylebox_override("panel", sb)
 	_root.add_child(panel)
 
+	# Фон страницы (поставка codex_pack): линейка строк/корешок под текстом,
+	# файла нет — панель как была. Лежит ПОД VBox (добавлен раньше).
+	if ResourceLoader.exists("res://assets/ui/lab/codex_page_bg.png"):
+		var page_bg := TextureRect.new()
+		page_bg.texture = load("res://assets/ui/lab/codex_page_bg.png")
+		page_bg.stretch_mode = TextureRect.STRETCH_SCALE
+		page_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		page_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		page_bg.offset_left = 6
+		page_bg.offset_right = -6
+		page_bg.offset_top = 6
+		page_bg.offset_bottom = -6
+		page_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(page_bg)
+
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.offset_left = 16
@@ -93,13 +108,26 @@ func _build() -> void:
 	v.add_theme_constant_override("separation", 8)
 	panel.add_child(v)
 
+	# Шапка: книга + заголовок (иконка из codex_pack, нет файла — текст)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	head.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(head)
+	if ResourceLoader.exists("res://assets/ui/lab/codex_book.png"):
+		var book := TextureRect.new()
+		book.texture = load("res://assets/ui/lab/codex_book.png")
+		book.custom_minimum_size = Vector2(34, 34)
+		book.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		book.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		book.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		head.add_child(book)
 	var title := Label.new()
 	title.text = Loc.t("codex.title")
 	title.add_theme_font_override("font", BunkerUI.font_title())
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", BunkerUI.GREEN)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(title)
+	head.add_child(title)
 
 	_tabs_box = HBoxContainer.new()
 	_tabs_box.add_theme_constant_override("separation", 6)

@@ -5,8 +5,11 @@ class_name GameUley
 ## «УЛЕЙ» (D24): top-down экшен — ты Химера. 5 комнат: волны сталкеров
 ## (новички/ветераны/мастера), медики бегут к будке вызова (не дай позвать
 ## подкрепление), в 5-й — Бункер-командир со щитом. Прыжок-АОЕ по клику,
-## ярость на зажатии (3× урон, HP тает). Между комнатами — выбор из двух
-## благословений Зоны. HP не восстанавливается. Счёт -> осколки (/150).
+## ярость на зажатии ПКМ (3× урон, HP тает). Между комнатами — выбор из
+## двух благословений Зоны. HP не восстанавливается. Счёт -> осколки (/150).
+##
+## ВАЖНО (баг-фикс ввода): _arena.mouse_filter = IGNORE — иначе Control
+## арены съедает клики, и прыжок/ярость не работают на ПК.
 
 const ROOM_W: float = 1080.0
 const ROOM_H: float = 640.0
@@ -39,6 +42,7 @@ var _no_dmg_t: float = 0.0
 var _jump_cd: float = 0.0
 var _rage: bool = false
 var _arena: Control
+var _arena_base: Vector2 = Vector2.ZERO
 var _player: Control
 var _player_pos: Vector2
 var _enemies: Array = []          # [{node, type, hp, pos}]
@@ -51,12 +55,15 @@ var _bless_pool: Array = []
 var _bless: Dictionary = {}       # {dmg, regen, jump_r, rage_free, jump_cd, speed}
 var _over: bool = false
 var _input_point: Vector2 = Vector2.ZERO
+var _hp_bar: ProgressBar = null
+var _hint: Label = null
+var _rage_btn: Button = null
 
 
 func _ready() -> void:
 	_game_manager = get_tree().get_first_node_in_group("game_manager")
 	_event = EventsData.current_event(int(Time.get_unix_time_from_system()))
-	_bless_pool = ["dmg", "regen", "jump_r", "rage_free", "speed"].duplicate()
+	_bless_pool = ["dmg", "regen", "jump_r", "rage_free", "speed", "jump_cd"].duplicate()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
@@ -72,14 +79,22 @@ func _build() -> void:
 
 	var vp := get_viewport().get_visible_rect().size
 	_arena = Control.new()
-	_arena.position = (vp - Vector2(ROOM_W, ROOM_H)) * 0.5
-	_arena.position.y = maxf(_arena.position.y, 90.0)
+	# Адаптивный масштаб: на больших экранах арена 1080x640 тонула в чёрных
+	# полях (баг-отчёт владельца 07.11); телефоны в ландшафте выигрывают так же
+	var ascale: float = clampf(minf(vp.x / float(ROOM_W), vp.y / float(ROOM_H)) * 0.94, 0.5, 1.7)
+	_arena.scale = Vector2(ascale, ascale)
+	_arena.position = (vp - Vector2(ROOM_W, ROOM_H) * ascale) * 0.5
+	_arena.position.y = maxf(_arena.position.y, 110.0)
+	_arena_base = _arena.position
 	_arena.size = Vector2(ROOM_W, ROOM_H)
 	_arena.clip_contents = true
+	# ИНПУТ-ФИКС: без IGNORE арена съедает клики — прыжок/ярость мертвы на ПК
+	_arena.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_arena)
 	var floor_rect := ColorRect.new()
 	floor_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	floor_rect.color = Color(0.09, 0.10, 0.08)
+	floor_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_arena.add_child(floor_rect)
 
 	var head := Label.new()
@@ -104,22 +119,42 @@ func _build() -> void:
 	_player_pos = Vector2(ROOM_W * 0.5, ROOM_H - 90.0)
 	_arena.add_child(_player)
 
+	# HP-бар химеры
+	_hp_bar = ProgressBar.new()
+	_hp_bar.position = Vector2(20, 74)
+	_hp_bar.size = Vector2(280, 16)
+	_hp_bar.max_value = _hp_max
+	_hp_bar.show_percentage = false
+	add_child(_hp_bar)
+
+	# подсказка управления (видна в первой комнате); автоперенос — текст
+	# для тача длинный, без него уезжал за экран
+	_hint = Label.new()
+	_hint.text = Loc.t("uley.hint")
+	_hint.position = Vector2(20, 96)
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint.size = Vector2(vp.x - 40.0, 60.0)
+	_hint.add_theme_font_override("font", BunkerUI.font_body())
+	_hint.add_theme_font_size_override("font_size", 12)
+	_hint.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+	add_child(_hint)
+
 	# тач: кнопка ярости (ПК — правая кнопка мыши)
 	if DisplayServer.is_touchscreen_available():
-		var rage_btn := Button.new()
-		rage_btn.text = Loc.t("uley.rage")
-		rage_btn.anchor_left = 1.0
-		rage_btn.anchor_right = 1.0
-		rage_btn.anchor_top = 1.0
-		rage_btn.anchor_bottom = 1.0
-		rage_btn.offset_left = -130
-		rage_btn.offset_right = -26
-		rage_btn.offset_top = -120
-		rage_btn.offset_bottom = -30
-		rage_btn.toggle_mode = true
-		BunkerUI.style_button(rage_btn, "danger", 16)
-		rage_btn.toggled.connect(func(on: bool): _rage = on)
-		add_child(rage_btn)
+		_rage_btn = Button.new()
+		_rage_btn.text = Loc.t("uley.rage")
+		_rage_btn.anchor_left = 1.0
+		_rage_btn.anchor_right = 1.0
+		_rage_btn.anchor_top = 1.0
+		_rage_btn.anchor_bottom = 1.0
+		_rage_btn.offset_left = -130
+		_rage_btn.offset_right = -26
+		_rage_btn.offset_top = -120
+		_rage_btn.offset_bottom = -30
+		_rage_btn.toggle_mode = true
+		BunkerUI.style_button(_rage_btn, "danger", 16)
+		_rage_btn.toggled.connect(func(on: bool): _rage = on)
+		add_child(_rage_btn)
 
 
 func _setup_room() -> void:
@@ -146,6 +181,8 @@ func _setup_room() -> void:
 			_spawn_enemy(str(pair[0]))
 	if _room == ROOMS:
 		_spawn_boss()
+	if _hint:
+		_hint.visible = _room == 1
 	_update_hud()
 
 
@@ -198,6 +235,31 @@ func _make_dot(pos: Vector2, r: float, col: Color, glyph: String) -> Control:
 	return wrap
 
 
+## Всплывающая цифра/текст над точкой (урон, награда за килл)
+func _popup(pos: Vector2, text: String, col: Color) -> void:
+	if _skipped_or_gone():
+		return
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.position = pos + Vector2(randf_range(-14.0, 14.0), -34.0)
+	lbl.add_theme_font_override("font", BunkerUI.font_mono())
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", col)
+	lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_arena.add_child(lbl)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(lbl, "position:y", lbl.position.y - 40.0, 0.55)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.55).set_delay(0.1)
+	tw.chain().tween_callback(lbl.queue_free)
+
+
+func _skipped_or_gone() -> bool:
+	return _over or not is_instance_valid(_arena)
+
+
 func _alive_enemies() -> int:
 	var n := 0
 	for e in _enemies:
@@ -241,7 +303,12 @@ func _process(delta: float) -> void:
 	_player_pos.y = clampf(_player_pos.y, 34.0, ROOM_H - 34.0)
 	_player.position = _player_pos - _player.size * 0.5
 
-	# ярость
+	# благословение-реген (1% max HP/с)
+	if _bless.has("regen") and _hp > 0.0:
+		_hp = minf(_hp + _hp_max * 0.01 * delta, _hp_max)
+
+	# ярость: визуал + цена
+	_player.modulate = Color(1.6, 0.55, 0.55) if _rage else Color.WHITE
 	if _rage:
 		if not _bless.has("rage_free"):
 			_hp -= RAGE_COST * delta
@@ -267,7 +334,6 @@ func _process(delta: float) -> void:
 				e["shield_t"] = 6.0
 		if e["type"] == "medic":
 			# медик бежит к будке; добежал — зовёт подкрепление и отходит
-			# (кулдаун, чтобы поток новичков не был бесконечным)
 			e["call_cd"] = float(e.get("call_cd", 0.0)) - delta
 			var to_call: Vector2 = _caller_pos - epos
 			if _caller_hp <= 0.0:
@@ -288,6 +354,27 @@ func _process(delta: float) -> void:
 		e["pos"] = epos
 		e["node"].position = epos - e["node"].size * 0.5
 
+	# расталкивание: враги не стекуются в одну точку у химеры (баг-отчёт
+	# владельца 07.11 — «почему друг на друге все»); O(n²) при ≤13 тел — копейки
+	for i in _enemies.size():
+		var ea: Dictionary = _enemies[i]
+		if float(ea["hp"]) <= 0.0:
+			continue
+		for j in range(i + 1, _enemies.size()):
+			var eb: Dictionary = _enemies[j]
+			if float(eb["hp"]) <= 0.0:
+				continue
+			var dvec: Vector2 = eb["pos"] - ea["pos"]
+			var mind: float = float(ENEMY_DEFS.get(ea["type"], {}).get("r", 16.0)) \
+					+ float(ENEMY_DEFS.get(eb["type"], {}).get("r", 16.0))
+			var dl: float = dvec.length()
+			if dl > 0.001 and dl < mind:
+				var push: Vector2 = dvec / dl * (mind - dl) * 0.5
+				ea["pos"] = ea["pos"] - push
+				eb["pos"] = eb["pos"] + push
+				ea["node"].position = ea["pos"] - ea["node"].size * 0.5
+				eb["node"].position = eb["pos"] - eb["node"].size * 0.5
+
 	# автоукус химеры по касанию
 	for e in _enemies:
 		if float(e["hp"]) <= 0.0:
@@ -305,6 +392,7 @@ func _process(delta: float) -> void:
 		if _caller_hp <= 0.0:
 			_caller.visible = false
 			_score += 100
+			_popup(_caller_pos, "+100", Color("ffd94d"))
 	_kill_check()
 	_update_hud()
 	if _hp <= 0.0:
@@ -314,30 +402,60 @@ func _process(delta: float) -> void:
 func _gui_input(ev: InputEvent) -> void:
 	if _over:
 		return
-	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-		_input_point = _arena_pos(ev.position)
-		if _jump_cd <= 0.0:
-			_do_jump()
-	elif ev is InputEventMouseMotion:
-		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-			_input_point = _arena_pos(ev.position)
-	elif ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_LEFT and not ev.pressed:
-		_rage = false
-	elif ev is InputEventScreenTouch:
-		if ev.pressed:
+	if ev is InputEventMouseButton:
+		if ev.button_index == MOUSE_BUTTON_LEFT and ev.pressed:
 			_input_point = _arena_pos(ev.position)
 			if _jump_cd <= 0.0:
 				_do_jump()
-		else:
-			_rage = false
+		elif ev.button_index == MOUSE_BUTTON_RIGHT:
+			_rage = ev.pressed   # ярость: зажатие ПКМ (над ареной — теперь доходит)
+		elif ev.button_index == MOUSE_BUTTON_LEFT and not ev.pressed:
+			# на таче эмулированный LMB-release от пальца движения ярость
+			# (кнопку) не трогает; на ПК сброс оставлен как был
+			if not DisplayServer.is_touchscreen_available() \
+					and not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+				_rage = false
+	elif ev is InputEventMouseMotion:
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			_input_point = _arena_pos(ev.position)
+
+
+## Тач-ввод ЧЕРЕЗ _input, минуя GUI-роутинг: на Android события до _gui_input
+## не доезжали (баг-отчёт владельца 07.11 — «химера всё ещё не управляема»).
+## _input получает ВСЁ до Control-фильтров, от mouse_filter не зависит.
+## ПК (мышь) остаётся в _gui_input; на таче ярость — только кнопка ЯРОСТЬ,
+## её тапы отсекаются по прямоугольнику и до игрока не доходят.
+func _input(event: InputEvent) -> void:
+	if _over or not DisplayServer.is_touchscreen_available():
+		return
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			if _over_ui(event.position):
+				return
+			_input_point = _arena_pos(event.position)
+			if _jump_cd <= 0.0:
+				_do_jump()
+		# отпускание ярость НЕ гасит — она в кнопке
+	elif event is InputEventScreenDrag:
+		if not _over_ui(event.position):
+			_input_point = _arena_pos(event.position)
+
+
+## Тап пришёл на кнопку ЯРОСТЬ (или другой UI) — движению не отдаём
+func _over_ui(screen_pos: Vector2) -> bool:
+	if _rage_btn != null and is_instance_valid(_rage_btn) \
+			and _rage_btn.get_global_rect().has_point(screen_pos):
+		return true
+	return false
 
 
 func _arena_pos(screen_pos: Vector2) -> Vector2:
-	return screen_pos - _arena.position
+	# арена может быть масштабирована под экран (адаптив ниже)
+	return (screen_pos - _arena.position) / _arena.scale.x
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# ярость: зажатие на игроке (ПК) / длинный тап
+	# страховка: ярость ПКМ, если событие ушло мимо GUI
 	if _over:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
@@ -354,30 +472,62 @@ func _do_jump() -> void:
 	if delta.length() > 260.0:
 		target = _player_pos + delta.normalized() * 260.0
 	var tw := create_tween()
-	tw.tween_property(_player, "position", target - _player.size * 0.5, 0.14)
-	tw.tween_callback(func():
+	# дуга: подпрыг (масштаб вверх) + перемещение
+	_player.scale = Vector2(1.3, 1.3)
+	tw.set_parallel(true)
+	tw.tween_property(_player, "position", target - _player.size * 0.5, 0.16)
+	tw.tween_property(_player, "scale", Vector2.ONE, 0.16)
+	tw.chain().tween_callback(func():
 		_player_pos = target
-		# кольцо АОЕ
-		var ring := _make_dot(target - Vector2(radius, radius), radius,
-			Color(1.0, 0.62, 0.1, 0.85), "")
+		# расширяющееся кольцо АОЕ
+		var ring := _make_dot(target, radius, Color(1.0, 0.62, 0.1, 0.85), "")
 		var tw2 := create_tween()
-		tw2.tween_property(ring, "modulate:a", 0.0, 0.3)
-		tw2.tween_callback(ring.queue_free)
+		tw2.set_parallel(true)
+		tw2.tween_property(ring, "scale", Vector2(1.0, 1.0), 0.22) \
+			.from(Vector2(0.25, 0.25))
+		tw2.tween_property(ring, "modulate:a", 0.0, 0.26)
+		tw2.chain().tween_callback(ring.queue_free)
+		_shake_arena(4.0)
+		var sm = get_tree().get_first_node_in_group("sound_manager")
+		if sm and sm.has_method("play_sound"):
+			sm.play_sound("anomaly_hit", 0.5, randf_range(0.9, 1.1))
 		if _caller_hp > 0.0 and target.distance_to(_caller_pos) <= radius + 22.0:
 			_caller_hp -= JUMP_DMG * dmg_mult
 			if _caller_hp <= 0.0:
 				_caller.visible = false
 				_score += 100
+				_popup(_caller_pos, "+100", Color("ffd94d"))
+		var hit_any := false
 		for e in _enemies:
 			if float(e["hp"]) <= 0.0:
 				continue
 			if e["pos"].distance_to(target) <= radius:
+				hit_any = true
 				var dmg: float = JUMP_DMG * dmg_mult
 				if e["type"] == "boss" and float(e.get("shield", 0.0)) > 0.0:
 					e["shield"] = float(e["shield"]) - dmg
 				else:
 					e["hp"] = float(e["hp"]) - dmg
+				_popup(e["pos"], "%d" % int(dmg), Color(1.0, 0.85, 0.4))
+				# вспышка попадания
+				if is_instance_valid(e["node"]):
+					e["node"].modulate = Color(2.0, 2.0, 2.0)
+					var tf := create_tween()
+					tf.tween_property(e["node"], "modulate", Color.WHITE, 0.15)
+		if hit_any:
+			var sm2 = get_tree().get_first_node_in_group("sound_manager")
+			if sm2 and sm2.has_method("play_sound"):
+				sm2.play_sound("anomaly_hit", 0.4, randf_range(1.0, 1.15))
 		_kill_check())
+
+
+## Тряска арены (возврат в базу гарантирован)
+func _shake_arena(px: float) -> void:
+	var tw := create_tween()
+	tw.set_loops(3)
+	tw.tween_property(_arena, "position", _arena_base + Vector2(px, 0), 0.03)
+	tw.tween_property(_arena, "position", _arena_base - Vector2(px, 0), 0.03)
+	tw.chain().tween_property(_arena, "position", _arena_base, 0.03)
 
 
 func _kill_check() -> void:
@@ -387,7 +537,9 @@ func _kill_check() -> void:
 			e["node"].visible = false
 			var def: Dictionary = ENEMY_DEFS.get(e["type"], {})
 			var mult := 2.0 if _no_dmg_t > 8.0 else 1.0
-			_score += int(def.get("score", 10)) * int(mult)
+			var pts := int(def.get("score", 10)) * int(mult)
+			_score += pts
+			_popup(e["pos"], "+%d" % pts, Color("ffd94d"))
 		if float(e["hp"]) > 0.0:
 			alive += 1
 	if alive == 0:
@@ -396,6 +548,11 @@ func _kill_check() -> void:
 
 func _room_cleared() -> void:
 	_score += int(200.0 / maxf(1.0, float(_room)))   # бонус за быстроту комнаты
+	var sm = get_tree().get_first_node_in_group("sound_manager")
+	if sm and sm.has_method("play_sound"):
+		sm.play_sound("gates_open", 0.7)
+	_popup(Vector2(ROOM_W * 0.5, ROOM_H * 0.5),
+		Loc.t("uley.room_clear") % _room, BunkerUI.GREEN)
 	if _room >= ROOMS:
 		_finish(true)
 		return
@@ -472,9 +629,11 @@ func _update_hud() -> void:
 		_hud2_lbl.add_theme_font_size_override("font_size", 13)
 		_hud2_lbl.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
 		add_child(_hud2_lbl)
+	if _hp_bar:
+		_hp_bar.value = maxf(_hp, 0.0)
 	var lang := "ru" if Loc.lang == "ru" else "en"
-	_hud_lbl.text = "%s %d/%d   ·   HP %.0f   ·   %s %d" % [
-		Loc.t("uley.room"), _room, ROOMS, maxf(_hp, 0.0), Loc.t("zharva.score"), _score]
+	_hud_lbl.text = "%s %d/%d   ·   %s %d" % [
+		Loc.t("uley.room"), _room, ROOMS, Loc.t("zharva.score"), _score]
 	var enemy_alive := 0
 	for e in _enemies:
 		if float(e["hp"]) > 0.0:
@@ -482,7 +641,8 @@ func _update_hud() -> void:
 	_hud2_lbl.text = "%s %d   ·   ⛏ %s: %.0f" % [
 		Loc.t("uley.enemies"), enemy_alive,
 		Loc.t("uley.caller"), maxf(_caller_hp, 0.0) if _caller_hp > 0.0 else 0.0]
-	_hud2_lbl.text += "   ·   ⚡ %s" % Loc.t("uley.rage_on") if _rage else ""
+	if _rage:
+		_hud2_lbl.text += "   ·   ⚡ " + Loc.t("uley.rage_on")
 
 
 func _finish(win: bool) -> void:

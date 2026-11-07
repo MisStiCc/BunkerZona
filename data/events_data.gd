@@ -16,8 +16,9 @@ static var FORCE_EVENT: String = ""   # чек-лист релиза: пусто
 
 ## ТЕСТ-СТЕНД владельца: в хабе ивентов открыт блок со ВСЕМИ шестью
 ## мини-играми независимо от календаря (руками протестировать каждую).
-## К ПОЛИРОВКЕ ПЕРЕД ПУБЛИЧНОЙ ВОЛНОМ: перевернуть в false.
-static var TEST_STAND: bool = true
+## Только в dev-сборках (OS.is_debug_build) — тот же паттерн, что у
+## FORCE_EVENT и П0: в релизный АПК тест-стенд попасть не может.
+static var TEST_STAND: bool = OS.is_debug_build()
 
 # 13 слотов полугодия (id мини-игры)
 const SCHEDULE := ["zharva", "uley", "labyrinth", "chain", "zharva2",

@@ -39,6 +39,23 @@ func _ready():
     panel_name = "ResultPanel"
     continue_button.pressed.connect(_on_continue_pressed)
     _build_rows_scroll()
+    _build_banner()
+
+
+## Шапка-баннер ИТОГОВ (поставка results_pack): над заголовком; файла нет —
+## шапка как была
+func _build_banner() -> void:
+    var p := "res://assets/ui/ceremony/banner_results.png"
+    if not ResourceLoader.exists(p):
+        return
+    var b := TextureRect.new()
+    b.texture = load(p)
+    b.custom_minimum_size = Vector2(0, 72)
+    b.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+    b.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    vbox.add_child(b)
+    vbox.move_child(b, 0)
 
 
 ## Свайп-скролл для рядов: StatsLabel + ArtifactsLabel переезжают внутрь,

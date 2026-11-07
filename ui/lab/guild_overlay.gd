@@ -359,13 +359,27 @@ func _page_shop(body: Control) -> void:
 	v.add_theme_constant_override("separation", 6)
 	body.add_child(v)
 	var tokens := int(g.get("tokens", 0))
+	# жетон-иконка (поставка results_pack): в ряд с числом, нет файла — текст
+	var tk_row := HBoxContainer.new()
+	tk_row.add_theme_constant_override("separation", 6)
+	tk_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(tk_row)
+	var tk_icon_path := "res://assets/ui/currency/icon_tokens.png"
+	if ResourceLoader.exists(tk_icon_path):
+		var tk_icon := TextureRect.new()
+		tk_icon.texture = load(tk_icon_path)
+		tk_icon.custom_minimum_size = Vector2(24, 24)
+		tk_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tk_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tk_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tk_row.add_child(tk_icon)
 	var tk := Label.new()
 	tk.text = Loc.t("guild.tokens", {"n": tokens})
 	tk.add_theme_font_override("font", BunkerUI.font_title())
 	tk.add_theme_font_size_override("font_size", 18)
 	tk.add_theme_color_override("font_color", COL_GOLD)
 	tk.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(tk)
+	tk_row.add_child(tk)
 	# Оформление: карточки товаров с иконкой, ценой в жетонах, кнопкой
 	var icon_types := {
 		"rolls_mut_5": ["mut_dog_mutant", true], "rolls_art_5": ["art_spark_artifact", false],

@@ -16,6 +16,8 @@ var _score: Label
 var _shards: Label
 var _list: VBoxContainer
 var _shop_list: VBoxContainer
+var _mile_page: Control
+var _shop_page: Control
 var _play_btn: Button
 var _banner: TextureRect
 var _event: Dictionary = {}
@@ -184,24 +186,37 @@ func _build() -> void:
 	pages.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(pages)
 
+	# Страницы в скроллах: вехи (10) + игры финала (6) + тест-стенд (7) не
+	# влезают в панель и торчали за окно поверх нижнего ряда лабы
+	# (баг-отчёт владельца 07.11). Тач-скролл — SwipeHelper, как везде.
+	var mile_scroll := ScrollContainer.new()
+	mile_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_mile_page = SwipeHelper.attach(mile_scroll, false)
+	_mile_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pages.add_child(_mile_page)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 4)
-	pages.add_child(_list)
+	mile_scroll.add_child(_list)
 
+	var shop_scroll := ScrollContainer.new()
+	shop_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_shop_page = SwipeHelper.attach(shop_scroll, false)
+	_shop_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pages.add_child(_shop_page)
+	_shop_page.visible = false
 	_shop_list = VBoxContainer.new()
 	_shop_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_shop_list.add_theme_constant_override("separation", 4)
-	_shop_list.visible = false
-	pages.add_child(_shop_list)
+	shop_scroll.add_child(_shop_list)
 
 	var toggle := func(on: Button, page: Control):
-		for p in [_list, _shop_list]:
+		for p in [_mile_page, _shop_page]:
 			p.visible = p == page
 		for b in [mile_tab, shop_tab]:
 			b.set_pressed_no_signal(b == on)
-	mile_tab.pressed.connect(func(): toggle.call(mile_tab, _list))
-	shop_tab.pressed.connect(func(): toggle.call(shop_tab, _shop_list))
+	mile_tab.pressed.connect(func(): toggle.call(mile_tab, _mile_page))
+	shop_tab.pressed.connect(func(): toggle.call(shop_tab, _shop_page))
 
 
 func _refresh() -> void:

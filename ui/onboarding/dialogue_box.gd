@@ -31,6 +31,7 @@ var _text_label: Label
 var _next_label: Label
 var _portrait: PanelContainer
 var _portrait_letter: Label
+var _portrait_tex: TextureRect
 var _plate: PanelContainer
 
 
@@ -55,17 +56,33 @@ func _build() -> void:
         add_child(_dim)
 
         _plate = PanelContainer.new()
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.05, 0.07, 0.045, 0.97)
-        sb.border_color = Color("3a4a3a")
-        sb.set_border_width_all(2)
-        sb.corner_radius_top_left = 14
-        sb.corner_radius_top_right = 14
-        sb.content_margin_left = 18.0
-        sb.content_margin_right = 18.0
-        sb.content_margin_top = 14.0
-        sb.content_margin_bottom = 12.0
-        _plate.add_theme_stylebox_override("panel", sb)
+        # Фон диалога (поставка onboarding_pack): 9-slice текстура, нет файла —
+        # прежняя плоская панель
+        var bg_p := "res://assets/ui/onboarding/dialog_bg.png"
+        if ResourceLoader.exists(bg_p):
+                var tsb := StyleBoxTexture.new()
+                tsb.texture = load(bg_p)
+                tsb.texture_margin_left = 18.0
+                tsb.texture_margin_right = 18.0
+                tsb.texture_margin_top = 18.0
+                tsb.texture_margin_bottom = 18.0
+                tsb.content_margin_left = 18.0
+                tsb.content_margin_right = 18.0
+                tsb.content_margin_top = 14.0
+                tsb.content_margin_bottom = 12.0
+                _plate.add_theme_stylebox_override("panel", tsb)
+        else:
+                var sb := StyleBoxFlat.new()
+                sb.bg_color = Color(0.05, 0.07, 0.045, 0.97)
+                sb.border_color = Color("3a4a3a")
+                sb.set_border_width_all(2)
+                sb.corner_radius_top_left = 14
+                sb.corner_radius_top_right = 14
+                sb.content_margin_left = 18.0
+                sb.content_margin_right = 18.0
+                sb.content_margin_top = 14.0
+                sb.content_margin_bottom = 12.0
+                _plate.add_theme_stylebox_override("panel", sb)
         _plate.anchor_left = 0.0
         _plate.anchor_right = 1.0
         _plate.anchor_top = 1.0
@@ -104,6 +121,18 @@ func _build() -> void:
         _portrait_letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         _portrait_letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
         _portrait.add_child(_portrait_letter)
+        # Портрет спикера (поставка onboarding_map... onboarding_pack): поверх
+        # буквы, показывается только тем, у кого портрет есть (ГОЛОС ЗОНЫ)
+        _portrait_tex = TextureRect.new()
+        _portrait_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        _portrait_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+        _portrait_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+        _portrait_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        _portrait_tex.visible = false
+        _portrait.add_child(_portrait_tex)
+        var mon_p := "res://assets/ui/onboarding/portrait_monolith.png"
+        if ResourceLoader.exists(mon_p):
+                _portrait_tex.texture = load(mon_p)
 
         var vb := VBoxContainer.new()
         vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -128,8 +157,20 @@ func _build() -> void:
         foot.add_theme_constant_override("separation", 12)
         vb.add_child(foot)
 
+        # стрелка «далее» (поставка onboarding_pack): есть файл — иконка +
+        # текст, нет — старый глиф ▼
+        var arrow_p := "res://assets/ui/onboarding/arrow_hint.png"
+        var has_arrow: bool = ResourceLoader.exists(arrow_p)
+        if has_arrow:
+                var ar := TextureRect.new()
+                ar.texture = load(arrow_p)
+                ar.custom_minimum_size = Vector2(18, 18)
+                ar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                ar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                ar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                foot.add_child(ar)
         _next_label = Label.new()
-        _next_label.text = "▼  ДАЛЕЕ"
+        _next_label.text = "ДАЛЕЕ" if has_arrow else "▼  ДАЛЕЕ"
         _next_label.add_theme_font_override("font", BunkerUI.font_body())
         _next_label.add_theme_font_size_override("font_size", 16)
         _next_label.add_theme_color_override("font_color", BunkerUI.GREEN)
@@ -162,6 +203,11 @@ func _advance() -> void:
         var col: Color = WHO_COLOR.get(who, BunkerUI.TEXT_LIGHT)
         _name_label.text = who
         _name_label.add_theme_color_override("font_color", col)
+        # портрет наставника (onboarding_pack): только у «ГОЛОСА ЗОНЫ»,
+        # остальным — первая буква
+        var show_tex: bool = who == "ГОЛОС ЗОНЫ" and _portrait_tex.texture != null
+        _portrait_tex.visible = show_tex
+        _portrait_letter.visible = not show_tex
         _portrait_letter.text = who.substr(0, 1)
         _portrait_letter.add_theme_color_override("font_color", col)
         var psb: StyleBoxFlat = _portrait.get_theme_stylebox("panel")

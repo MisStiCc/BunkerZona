@@ -1454,7 +1454,7 @@ func _build_farm_ui():
         spacer0.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         head.add_child(spacer0)
 
-        var sparks_plate := BunkerUI.make_plate("0", Loc.t("farm.sparks"), 130.0)
+        var sparks_plate := BunkerUI.make_plate("0", Loc.t("farm.sparks"), 130.0, "res://assets/ui/currency/icon_sparks.png")
         sparks_plate.name = "SparksPlate"
         head.add_child(sparks_plate)
         var bio_plate := BunkerUI.make_plate("0", "БИО", 150.0, "res://assets/ui/currency/icon_biomass.png")
@@ -2519,6 +2519,12 @@ func _build_gallery_ui():
                 mail_btn.custom_minimum_size = Vector2(0, 62)
                 mail_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
                 BunkerUI.style_button(mail_btn, "steel", 18)
+                # конверт (поставка mail_pack): файла нет — кнопка текстовая
+                var mail_icon := "res://assets/ui/mail/mail_envelope.png"
+                if ResourceLoader.exists(mail_icon):
+                        mail_btn.icon = load(mail_icon)
+                        mail_btn.expand_icon = true
+                        mail_btn.add_theme_constant_override("icon_max_width", 30)
                 mail_btn.pressed.connect(_on_mail_pressed)
                 mail_btn.mouse_entered.connect(_play_hover_sound)
                 bottom.add_child(mail_btn)

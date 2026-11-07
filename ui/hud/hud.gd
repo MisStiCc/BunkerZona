@@ -1028,24 +1028,49 @@ func update_daynight(text: String, icon: String, color: Color) -> void:
 
 ## Радиационный фон Припяти (RadiationData, D3): строка «☢ N мкЗв/ч» под
 ## часами, цвет и тултип - по зоне. Вызывает ZoneController только на Припяти.
+## Иконка (поставка hud_status_icons): есть файл — ряд «иконка + текст»,
+## нет — старый глиф ☢ в строке.
 var radiation_label: Label
+var _radiation_row: HBoxContainer = null
 
 func show_radiation(zone_id: String) -> void:
                 var info: Dictionary = RadiationData.get_zone_info(zone_id)
                 if radiation_label == null:
-                                radiation_label = Label.new()
-                                radiation_label.name = "RadiationLabel"
-                                radiation_label.position = Vector2(6, 76)
+                                var icon_p := "res://assets/ui/status/status_radiation.png"
+                                var holder: Control = null
+                                if ResourceLoader.exists(icon_p):
+                                                _radiation_row = HBoxContainer.new()
+                                                _radiation_row.name = "RadiationLabel"
+                                                _radiation_row.add_theme_constant_override("separation", 4)
+                                                var ric := TextureRect.new()
+                                                ric.name = "RadiationIcon"
+                                                ric.texture = load(icon_p)
+                                                ric.custom_minimum_size = Vector2(14, 14)
+                                                ric.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                                                ric.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                                                ric.mouse_filter = Control.MOUSE_FILTER_IGNORE
+                                                _radiation_row.add_child(ric)
+                                                radiation_label = Label.new()
+                                                _radiation_row.add_child(radiation_label)
+                                                holder = _radiation_row
+                                else:
+                                                radiation_label = Label.new()
+                                                holder = radiation_label
+                                                holder.name = "RadiationLabel"
+                                holder.position = Vector2(6, 76)
                                 radiation_label.add_theme_font_size_override("font_size", 10)
                                 var res := get_node_or_null("Resources")
                                 if res:
-                                                res.add_child(radiation_label)
+                                                res.add_child(holder)
                                 else:
-                                                add_child(radiation_label)
-                radiation_label.text = "☢ %.0f мкЗв/ч" % float(info["bg"])
+                                                add_child(holder)
+                var zone_col: Color = RadiationData.HUD_COLORS.get(zone_id, Color.WHITE)
+                radiation_label.text = ("☢ " if _radiation_row == null else "") \
+                                + "%.0f мкЗв/ч" % float(info["bg"])
                 radiation_label.tooltip_text = str(info["title_ru" if Loc.lang == "ru" else "title_en"])
-                radiation_label.add_theme_color_override("font_color",
-                                RadiationData.HUD_COLORS.get(zone_id, Color.WHITE))
+                radiation_label.add_theme_color_override("font_color", zone_col)
+                if _radiation_row != null and _radiation_row.get_child_count() > 0:
+                                _radiation_row.get_child(0).modulate = zone_col
 
 # ==================== ТОРГОВЕЦ ЗАБЕГА (v0.28.0) ====================
 

@@ -117,6 +117,17 @@ func _build() -> void:
 	v.add_theme_constant_override("separation", 10)
 	panel.add_child(v)
 
+	# Баннер церемонии (поставка ceremony_banners_2): над титулом, файла нет —
+	# титул как был
+	if ResourceLoader.exists("res://assets/ui/ceremony/banner_season_close.png"):
+		var s_banner := TextureRect.new()
+		s_banner.texture = load("res://assets/ui/ceremony/banner_season_close.png")
+		s_banner.custom_minimum_size = Vector2(0, 96)
+		s_banner.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		s_banner.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		s_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(s_banner)
+
 	var title := Label.new()
 	title.name = "Title"
 	title.text = ""
