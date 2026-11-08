@@ -5638,8 +5638,8 @@ func _on_lab_storage_pressed() -> void:
         _play_click_sound()
         if _storage_panel == null:
                 _storage_panel = LabStoragePanel.new()
-                _storage_panel.build()
                 add_child(_storage_panel)
+                _storage_panel.build()   # build после add_child: get_viewport живёт в дереве
         _storage_panel.open()
 
 
