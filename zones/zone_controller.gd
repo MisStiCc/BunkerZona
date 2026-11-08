@@ -427,8 +427,9 @@ func _on_wave_break_started(wave_number: int, break_duration: float):
                                 var next_wave: int = wave_number + 1
                                 var hud_break = get_tree().get_first_node_in_group("hud")
                                 if hud_break:
-                                                hud_break.show_wave_gates(_active_gate_points(next_wave))
-                                                if hud_break.has_method("show_gate_warning"):
+                                                if not has_mutation("m_silent"):
+                                                                hud_break.show_wave_gates(_active_gate_points(next_wave))
+                                                if not has_mutation("m_silent") and hud_break.has_method("show_gate_warning"):
                                                                 hud_break.show_gate_warning(next_wave, SurvivalData.gate_directions(next_wave))
 
 
@@ -2563,6 +2564,13 @@ func finish_run(success: bool):
                 if gm_door and gm_door.has_method("_play_door_sound"):
                                 gm_door._play_door_sound(true)
                 get_tree().change_scene_to_file("res://scenes/lab/lab.tscn")
+
+
+## Караван-босс (задача 44): визуальная командная машина на боссовых
+## уровнях кампании, у края Зоны. idle-цикл.
+## D28: активна ли мутация (крючки сталкеров/аномалий/HUD)
+func has_mutation(id: String) -> bool:
+        return _active_mutations.has(id)
 
 
 ## Караван-босс (задача 44): визуальная командная машина на боссовых

@@ -124,6 +124,12 @@ func _play_footstep():
 
 
 func _physics_process(delta):
+	# D28 АУРА МОНОЛИТА: носитель артефакта в 60 м регенит 3 ХП/с
+	if carry_component and carry_component.has_artifact():
+		var mono := get_tree().get_first_node_in_group("monolith")
+		if mono and global_position.distance_to(mono.global_position) < 60.0:
+			heal(3.0 * delta)
+
 	# D20 (Ледень): заморозка - стоим, ничего не делаем
 	if Time.get_ticks_msec() < int(get_meta("frozen_until", 0)):
 		velocity = Vector3.ZERO
@@ -359,6 +365,13 @@ func promote_elite():
 
 func take_damage(amount: float, source: Node = null):
 	"""Получение урона"""
+	# D28 ПАНЦИРИ: стартовый щит 25% ХП снимается первым уроном
+	if has_meta("mutation_shield"):
+		var shield: int = int(get_meta("mutation_shield"))
+		remove_meta("mutation_shield")
+		if shield >= amount:
+			return
+		amount -= shield
 	if health_component:
 		health_component.take_damage(amount, source)
 	else:

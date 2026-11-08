@@ -90,28 +90,27 @@ func drop_artifact() -> bool:
     # Сбрасываем состояние
     if carried_artifact.has_method("set_collected"):
         carried_artifact.set_collected(false)
-    
+
+    # D28 ДВОЙНОЙ КЛАД: мутация роняет ВТОРОЙ такой же артефакт-корм
+    var zc = stalker.get_tree().get_first_node_in_group("zone_controller")
+    if zc != null and zc.has_mutation("m_dual_art"):
+        var twin = carried_artifact.duplicate()
+        stalker.get_tree().current_scene.add_child(twin)
+        twin.global_position = world_pos + Vector3(1.5, 0, 0.8)
+        if twin.has_method("set_collected"):
+            twin.set_collected(false)
+        if twin.has_method("set_picked_up"):
+            twin.set_picked_up(false)
+
     artifact_dropped.emit(carried_artifact)
     pass # (лог отключён)
-    
+
     carried_artifact = null
     is_carrying = false
-    
+
     return true
 
 
-func steal_artifact() -> bool:
-    if not is_carrying or not is_instance_valid(carried_artifact):
-        return false
-    
-    # "Кража" - артефакт исчезает (уносится за пределы карты)
-    artifact_stolen.emit(carried_artifact)
-    
-    carried_artifact.queue_free()
-    carried_artifact = null
-    is_carrying = false
-    
-    return true
 
 
 func try_drop_on_damage() -> bool:

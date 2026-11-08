@@ -249,6 +249,12 @@ func _start_wave():
         _spawn_reward_mutants()
 
         var stalkers_to_spawn = _calculate_stalker_count()
+        # D28 мутации: рой (+15%) и элита (каждый 5-й - мастер)
+        var mut_swarm := _has_mutation("m_swarm")
+        var mut_elite := _has_mutation("m_elite")
+        if mut_swarm:
+                stalkers_to_spawn = int(ceil(stalkers_to_spawn * 1.15))
+        var elite_every := 5 if mut_elite else 0
         # D20 ЭХО: волновой пул растёт с числом доп. рубежей
         var fronts: Array[Vector3] = []
         var zc_echo = get_tree().get_first_node_in_group("zone_controller")
@@ -260,8 +266,10 @@ func _start_wave():
         # print("Волна " + str(current_wave) + " начата, сталкеров: " + str(stalkers_to_spawn))
 
         var spawned = 0
+        var spawned_total: int = _stalkers_killed + spawned
         for i in range(stalkers_to_spawn):
-                if _spawn_stalker():
+                var forced_master := mut_elite and ((spawned_total + i + 1) % elite_every == 0)
+                if _spawn_stalker(forced_master):
                         spawned += 1
                 await get_tree().create_timer(0.3).timeout
 
@@ -320,6 +328,14 @@ func _spawn_reward_mutants():
                         # print("SpawnManager: наградный мутант вступил в бой: ", type)
 
 
+## D28: активна ли мутация (кэш из zone_controller)
+func _has_mutation(id: String) -> bool:
+        var zc = get_tree().get_first_node_in_group("zone_controller")
+        if zc and zc.get("_active_mutations") != null:
+                return zc._active_mutations.has(id)
+        return false
+
+
 func _calculate_stalker_count() -> int:
         var base = randi_range(min_stalkers_per_wave, max_stalkers_per_wave)
         if crowd_bonus != 0:
@@ -362,8 +378,11 @@ func _spawn_stalker_at(pos: Vector3) -> bool:
         return true
 
 
-func _spawn_stalker() -> bool:
+func _spawn_stalker(forced_master: bool = false) -> bool:
         var scene = _get_stalker_scene_by_difficulty()
+        # D28 ЭЛИТА: каждый N-й - мастер независимо от сложности
+        if forced_master and stalker_scenes.has("master"):
+                scene = stalker_scenes.get("master")
         if not scene:
                 # print("Нет сцены для сталкера")
                 return false
@@ -412,6 +431,10 @@ func _spawn_stalker() -> bool:
                                 stalker.escaped_map.connect(_on_stalker_escaped)
         
         active_stalkers.append(stalker)
+        
+        # D28 ПАНЦИРИ: стартовый щит 25% макс ХП (снимается первым уроном)
+        if _has_mutation("m_shield") and stalker.has_method("set_meta"):
+                stalker.set_meta("mutation_shield", int(stalker.max_health * 0.25) if "max_health" in stalker else 25)
         
         var stalker_type = "novice"
         if scene == stalker_scenes.get("veteran"):
@@ -563,6 +586,8 @@ func _on_stalker_died(stalker: Node):
         if stalker.has_method("get_stalker_type"):
                 var stalker_type = stalker.get_stalker_type()
                 return_value = stalker_biomass_returns.get(stalker_type, 8.0)
+        if _has_mutation("m_greed"):
+                return_value *= 0.8
         
         _stalkers_killed += 1
         
