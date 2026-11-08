@@ -27,6 +27,19 @@ Enums="*res://core/enums.gd"
 Loc="*res://core/localization.gd"
 Prog="*res://core/progression.gd"
 
+[debug]
+
+gdscript/warnings/integer_division=0
+gdscript/warnings/narrowing_conversion=0
+gdscript/warnings/unused_variable=0
+gdscript/warnings/shadowed_variable=0
+gdscript/warnings/shadowed_variable_base_class=0
+gdscript/warnings/shadowed_global_identifier=0
+gdscript/warnings/unused_parameter=0
+gdscript/warnings/standalone_ternary=0
+gdscript/warnings/incompatible_ternary=0
+gdscript/warnings/unreachable_code=0
+
 [display]
 
 window/size/viewport_width=1920
@@ -83,7 +96,3 @@ textures/vram_compression/import_etc2_astc=true
 textures/default_filters/anisotropic_filtering_level=4
 anti_aliasing/quality/msaa_3d=2
 anti_aliasing/quality/msaa_3d.mobile=1
-
-[debug]
-debug/gdscript/warnings/integer_division=0
-debug/gdscript/warnings/narrowing_conversion=0

@@ -403,7 +403,7 @@ func _intersect(a: Array, b: Array) -> Vector2i:
 	return Vector2i(-1, -1)
 
 
-func _gravity_and_refill(specials: Array) -> void:
+func _gravity_and_refill(_specials: Array) -> void:
 	# падение: в каждом столбце собрать снизу вверх не-пустые
 	for x in COLS:
 		var write := ROWS - 1

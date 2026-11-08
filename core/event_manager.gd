@@ -105,7 +105,7 @@ static func shop_buy(save, shop_id: String) -> Dictionary:
 
 
 ## Начислить payload через существующие системы (гача одна — правило проекта)
-static func _grant_payload(save, payload: Dictionary) -> void:
+static func _grant_payload(_save, payload: Dictionary) -> void:
 	if payload.is_empty():
 		return
 	var tree := Engine.get_main_loop() as SceneTree

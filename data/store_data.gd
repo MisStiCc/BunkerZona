@@ -44,18 +44,21 @@ const PRODUCTS := {
 	"conv_autofill": {"type": "nc", "price_rub": 99, "kind": "conv", "autofill": true},
 }
 
-## Фиксированные премии пропуска (ключевые ступени; чередования - генератором)
+## Фиксированные премии пропуска (ключевые ступени; чередования - генератором).
+## Правило баланса: премиум ступени всегда жирнее бесплатного сундука над ним -
+## полоса «★ ПРЕМИУМ» не имеет права выглядеть беднее (ревизия 09.11.2026).
 const PASS_PREMIUM := {
-	5: {"cos_frame": "frame_season"},
-	10: {"rolls_mut": 4, "cos_avatar": "avatar_season"},
-	20: {"rolls_art": 5, "cos_title": "title_season"},
-	30: {"rolls_mut": 10, "cos_set": "season_full"},
+	5: {"cos_frame": "frame_season", "rolls_mut": 3, "bio": 20000.0},
+	10: {"cos_avatar": "avatar_season", "rolls_mut": 5, "rolls_art": 3},
+	20: {"cos_title": "title_season", "rolls_art": 6, "bio": 50000.0},
+	30: {"cos_set": "season_full", "rolls_mut": 12, "rolls_art": 8, "bio": 150000.0},
 }
-# Шаг чередования для рядов 1-9 / 11-19 / 21-29: цикл из трёх наград
+# Шаг чередования для рядов 1-9 / 11-19 / 21-29: цикл из трёх наград.
+# Крутки всегда в паре с биомассой: голые «★мут ×2» выглядели беднее сундука.
 const PASS_ALT_STEP := [
-	{"rolls_mut": 2},
-	{"rolls_art": 2},
-	{"bio": 20000.0},
+	{"rolls_mut": 2, "bio": 20000.0},
+	{"rolls_art": 2, "bio": 20000.0},
+	{"rolls_mut": 1, "rolls_art": 1, "bio": 35000.0},
 ]
 
 ## Граница торга: ЭТО НЕ ПРОДАЁМ НИКОГДА
@@ -76,11 +79,13 @@ static func pass_active(cycle: int, owned: Dictionary) -> bool:
 
 
 ## Премиум-награда ступени: фиксированные ключевые + чередование рядов.
+## Чередования растут к концу сезона (полоса x1.0 -> x1.5 -> x2.0 - как у
+## сундуков +50%) и x1.25 за цикл трека: премиум не отстаёт от циклов.
 ## Возвращает словарь payload ({} - ступень без премиума быть не может:
-## премиум на КАЖДОЙ из 30 ступеней).
-static func premium_reward(tier: int, _cycle: int) -> Dictionary:
+## премиум на КАЖДОЙ из 30 ступеней). duplicate() - константы заморожены.
+static func premium_reward(tier: int, cycle: int = 1) -> Dictionary:
 	if PASS_PREMIUM.has(tier):
-		return PASS_PREMIUM[tier]
+		return PASS_PREMIUM[tier].duplicate()
 	var band: int
 	if tier <= 9:
 		band = 0
@@ -89,7 +94,15 @@ static func premium_reward(tier: int, _cycle: int) -> Dictionary:
 	else:
 		band = 2
 	var idx: int = (tier - 1 + band) % PASS_ALT_STEP.size()
-	return PASS_ALT_STEP[idx]
+	var prem: Dictionary = PASS_ALT_STEP[idx].duplicate()
+	var mult: float = (1.0 + 0.5 * float(band)) * (1.0 + 0.25 * float(maxi(int(cycle), 1) - 1))
+	if prem.has("bio"):
+		prem["bio"] = float(prem["bio"]) * mult
+	if prem.has("rolls_mut"):
+		prem["rolls_mut"] = int(ceil(float(prem["rolls_mut"]) * mult))
+	if prem.has("rolls_art"):
+		prem["rolls_art"] = int(ceil(float(prem["rolls_art"]) * mult))
+	return prem
 
 
 ## Премиум ступени пройден, но ещё не забран (трек/кнопка ЗАБРАТЬ ВСЁ)

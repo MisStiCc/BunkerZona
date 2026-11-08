@@ -405,7 +405,6 @@ func auto_boost(target: String, depth: int = 4) -> String:
         var simple: Dictionary = {}
         var sleft: int = int(req.get("simple_need")) - int(req.get("simple_have"))
         var s1: Array[String] = []
-        var s2: Array[String] = []
         for t in lab.unlocked_mutants:
                 if lab.get_farm_copies(str(t)) <= 0:
                         continue

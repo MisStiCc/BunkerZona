@@ -150,7 +150,7 @@ static func _calendar_event(now_unix: int) -> Dictionary:
 	# недели остаётся базой Жатвы (base не трогаем — флаги финала по id)
 	if event_key == "finale":
 		info = EVENTS["finale"]
-	var weeks_left: int = EVENT_LENGTH_WEEKS - slot % EVENT_LENGTH_WEEKS  # нужен для desc
+	var _weeks_left: int = EVENT_LENGTH_WEEKS - slot % EVENT_LENGTH_WEEKS  # нужен для desc
 	var end_unix: int = (week / EVENT_LENGTH_WEEKS + 1) * EVENT_LENGTH_WEEKS * 604800
 	var days_left: int = int(ceil(float(end_unix - now_unix) / 86400.0))
 	var mult: float = 1.0

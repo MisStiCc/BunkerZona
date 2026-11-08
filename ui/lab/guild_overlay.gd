@@ -359,6 +359,15 @@ func _page_shop(body: Control) -> void:
 	v.add_theme_constant_override("separation", 6)
 	body.add_child(v)
 	var tokens := int(g.get("tokens", 0))
+	# 13 карточек в панель не влезают - товары в скролл (как чат/обзор)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	v.add_child(SwipeHelper.attach(scroll, false))
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 6)
+	scroll.add_child(list)
 	# жетон-иконка (поставка results_pack): в ряд с числом, нет файла — текст
 	var tk_row := HBoxContainer.new()
 	tk_row.add_theme_constant_override("separation", 6)
@@ -380,10 +389,18 @@ func _page_shop(body: Control) -> void:
 	tk.add_theme_color_override("font_color", COL_GOLD)
 	tk.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tk_row.add_child(tk)
-	# Оформление: карточки товаров с иконкой, ценой в жетонах, кнопкой
+	# Оформление: карточки товаров с иконкой, ценой в жетонах, кнопкой.
+	# ВНИМАНИЕ: card_icon_path ждёт ТИП без префикса ("dog_mutant" ->
+	# mut_dog_mutant.png); готовое имя файла с префиксом даёт мёртвый путь
+	# и пустую иконку - старые 4 позиции так и не рисовались.
 	var icon_types := {
-		"rolls_mut_5": ["mut_dog_mutant", true], "rolls_art_5": ["art_spark_artifact", false],
-		"bio_100k": ["mut_flesh", true], "star_feed_1": ["art_clock_artifact", false],
+		"rolls_mut_3": ["dog_mutant", true], "rolls_mut_5": ["snork_mutant", true],
+		"rolls_mut_12": ["chimera", true], "rolls_art_3": ["spark_artifact", false],
+		"rolls_art_5": ["graviton_artifact", false], "rolls_art_12": ["void_artifact", false],
+		"bio_50k": ["flesh", true], "bio_100k": ["zombie", true],
+		"bio_500k": ["pseudogiant", true], "star_feed_1": ["clock_artifact", false],
+		"star_feed_3": ["hourglass_artifact", false], "star_feed_5": ["energy_artifact", false],
+		"excl_choice": ["controller_mutant", true],
 	}
 	for sku in GuildData.SHOP:
 		var info: Dictionary = GuildData.SHOP[sku]
@@ -426,8 +443,8 @@ func _page_shop(body: Control) -> void:
 		buy.disabled = int(g.get("tokens", 0)) < int(info.get("price", 0))
 		buy.pressed.connect(_buy.bind(str(sku)))
 		row.add_child(buy)
-		v.add_child(card)
-	_note(v, Loc.t("guild.shop_note"))
+		list.add_child(card)
+	_note(list, Loc.t("guild.shop_note"))
 
 
 func _buy(sku: String) -> void:
@@ -449,6 +466,12 @@ func _buy(sku: String) -> void:
 			gm.get_lab_data().biomass += float(info["bio"])
 		if int(info.get("star_feed", 0)) > 0 and gm.get_lab_data():
 			gm.get_lab_data().awaken_sparks += int(info["star_feed"])
+		if int(info.get("excl", 0)) > 0 and gm.get_lab_data():
+			# Сундук эксклюзива кладётся на СКЛАД (тот же товар, что в
+			# магазине за деньги): открывается там с НАСТОЯЩИМ выбором,
+			# повтор = корм на ферму
+			var lab = gm.get_lab_data()
+			lab.storage["excl_choice"] = int(lab.storage.get("excl_choice", 0)) + 1
 	gm.save_to_active_slot()
 	var sm_b = get_tree().get_first_node_in_group("sound_manager")
 	if sm_b and sm_b.has_method("play_sound"):

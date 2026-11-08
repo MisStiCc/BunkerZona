@@ -32,11 +32,24 @@ const PERK_HP_PER_LEVEL: float = 0.01
 const PERK_HP_CAP: float = 0.10
 
 # Жетонный магазин: id -> {цена жетонов, payload}
+# Экономика: 1 Ж / 500 урона, кап 60 Ж за рейд, 2 рейда/день, +100 Ж за слейн
+# (~120-220 Ж/день). Ярусы: пачка выгоднее мелкой; эксклюзив - долгосрочная
+# цель (~1.5 дня фарма всех рейдов). Граница торга как в StoreData.FORBIDDEN:
+# энергии/побед/уровней здесь НЕ продаём.
 const SHOP := {
+	"rolls_mut_3": {"price": 18, "rolls_mut": 3},
 	"rolls_mut_5": {"price": 30, "rolls_mut": 5},
+	"rolls_mut_12": {"price": 60, "rolls_mut": 12},
+	"rolls_art_3": {"price": 18, "rolls_art": 3},
 	"rolls_art_5": {"price": 30, "rolls_art": 5},
+	"rolls_art_12": {"price": 60, "rolls_art": 12},
+	"bio_50k": {"price": 10, "bio": 50000.0},
 	"bio_100k": {"price": 20, "bio": 100000.0},
+	"bio_500k": {"price": 80, "bio": 500000.0},
 	"star_feed_1": {"price": 10, "star_feed": 1},
+	"star_feed_3": {"price": 27, "star_feed": 3},
+	"star_feed_5": {"price": 45, "star_feed": 5},
+	"excl_choice": {"price": 250, "excl": 1},
 }
 
 # Боты-соседи: имена детерминированы индексом

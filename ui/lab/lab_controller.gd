@@ -78,394 +78,394 @@ var _run_mode_button: Button
 
 
 func _ready():
-        # print("lab_controller: _ready started")
-        add_to_group("lab")
-        
-        _load_cover_art()
-        
-        # Ищем GameManager один раз при старте
-        game_manager = get_tree().get_first_node_in_group("game_manager")
-        
-        _load_data()
-        _setup_connections()
-        _apply_static_texts()
-        _refresh_ui()
-        _setup_campaign_selector()
-        # D29 «ЗОНА ЖИВЁТ»: idle-жизнь лабы (звуки/тени/гром - декорации)
-        add_child(LabAlive.new())
-        # D26 онбординг новичка: лаба показывает welcome/finish
-        if game_manager and game_manager.current_save_data != null                         and not bool(game_manager.current_save_data.onboarding_done):
-                var onb := OnboardingOverlay.new()
-                onb.host_kind = "lab"
-                add_child(onb)
-        _refresh_campaign_ui()
-        _build_shop_tabs()
-        _build_star_ui()
-        _build_farm_ui()
-        _build_gacha_ui()
-        _build_gallery_ui()
-        _build_profile_ui()
-        _build_language_button()
-        _build_tasks_widget()
-        _build_tasks_ui()
-        _build_calendar_popup()
-        _build_arena_ui()
-        _build_gates_ui()
-        _apply_bunker_style()
-        _apply_bunker_layout_sizes()
-        Loc.changed.connect(_apply_static_texts)
-        _show_last_run_result()
+		# print("lab_controller: _ready started")
+		add_to_group("lab")
+		
+		_load_cover_art()
+		
+		# Ищем GameManager один раз при старте
+		game_manager = get_tree().get_first_node_in_group("game_manager")
+		
+		_load_data()
+		_setup_connections()
+		_apply_static_texts()
+		_refresh_ui()
+		_setup_campaign_selector()
+		# D29 «ЗОНА ЖИВЁТ»: idle-жизнь лабы (звуки/тени/гром - декорации)
+		add_child(LabAlive.new())
+		# D26 онбординг новичка: лаба показывает welcome/finish
+		if game_manager and game_manager.current_save_data != null                         and not bool(game_manager.current_save_data.onboarding_done):
+				var onb := OnboardingOverlay.new()
+				onb.host_kind = "lab"
+				add_child(onb)
+		_refresh_campaign_ui()
+		_build_shop_tabs()
+		_build_star_ui()
+		_build_farm_ui()
+		_build_gacha_ui()
+		_build_gallery_ui()
+		_build_profile_ui()
+		_build_language_button()
+		_build_tasks_widget()
+		_build_tasks_ui()
+		_build_calendar_popup()
+		_build_arena_ui()
+		_build_gates_ui()
+		_apply_bunker_style()
+		_apply_bunker_layout_sizes()
+		Loc.changed.connect(_apply_static_texts)
+		_show_last_run_result()
 
-        # Прогрессия: тосты, задачи, сюжетный онбординг
-        Prog.toast.connect(_show_message)
-        Prog.task_completed.connect(_on_prog_task_done)
-        Prog.level_up.connect(_on_prog_level_up)
-        _prog_late_story()
+		# Прогрессия: тосты, задачи, сюжетный онбординг
+		Prog.toast.connect(_show_message)
+		Prog.task_completed.connect(_on_prog_task_done)
+		Prog.level_up.connect(_on_prog_level_up)
+		_prog_late_story()
 
-        # Виджет задач + календарь входа (v0.26.0)
-        Prog.tasks_changed.connect(_tw_refresh)
-        Prog.track_changed.connect(_tw_refresh)
-        Prog.season_closed.connect(_on_season_closed)
-        Prog.calendar_changed.connect(_tw_refresh)
-        _tw_intro.call_deferred()
-        _maybe_calendar_popup.call_deferred()
+		# Виджет задач + календарь входа (v0.26.0)
+		Prog.tasks_changed.connect(_tw_refresh)
+		Prog.track_changed.connect(_tw_refresh)
+		Prog.season_closed.connect(_on_season_closed)
+		Prog.calendar_changed.connect(_tw_refresh)
+		_tw_intro.call_deferred()
+		_maybe_calendar_popup.call_deferred()
 
-        # print("lab_controller: initialized, GameManager найден: ", game_manager != null)
+		# print("lab_controller: initialized, GameManager найден: ", game_manager != null)
 
 
 func _show_last_run_result():
         """Панель итогов последнего забега (результат кладёт GameManager.process_run_result)"""
-        if not get_tree().root.has_meta("last_run_result"):
-                return
+		if not get_tree().root.has_meta("last_run_result"):
+				return
 
-        var result: Dictionary = get_tree().root.get_meta("last_run_result")
-        get_tree().root.remove_meta("last_run_result")
-        show_run_result(result)
+		var result: Dictionary = get_tree().root.get_meta("last_run_result")
+		get_tree().root.remove_meta("last_run_result")
+		show_run_result(result)
 
 
 func _load_cover_art():
         """Фоновая обложка лаборатории: БУНКЕР-зал (ui/lab/bunker_lab.svg).
         Файла нет - остаётся тёмная подложка Background."""
-        var cover: TextureRect = get_node_or_null("CoverArt")
-        if not cover:
-                return
-        for path in ["res://ui/lab/lab_background_2k.png", "res://ui/lab/bunker_lab.svg"]:
-                if ResourceLoader.exists(path):
-                        cover.texture = load(path)
-                        break
+		var cover: TextureRect = get_node_or_null("CoverArt")
+		if not cover:
+				return
+		for path in ["res://ui/lab/lab_background_2k.png", "res://ui/lab/bunker_lab.svg"]:
+				if ResourceLoader.exists(path):
+						cover.texture = load(path)
+						break
 
 
 func _load_data():
-        # print("lab_controller: загрузка данных...")
-        
-        if game_manager:
-                # print("GameManager НАЙДЕН!")
-                lab_data = game_manager.get_lab_data()
-                statistics = game_manager.get_statistics()
-                # Рубеж кампании для проверки разблокировки расширенных тиров
-                lab_data.campaign_level_reached = game_manager.get_campaign_level()
-        else:
-                # print("GameManager НЕ НАЙДЕН! Создаем временные данные")
-                lab_data = LabData.new()
-                statistics = GameStatistics.new()
-        
-        # print("lab_controller: данные загружены")
+		# print("lab_controller: загрузка данных...")
+		
+		if game_manager:
+				# print("GameManager НАЙДЕН!")
+				lab_data = game_manager.get_lab_data()
+				statistics = game_manager.get_statistics()
+				# Рубеж кампании для проверки разблокировки расширенных тиров
+				lab_data.campaign_level_reached = game_manager.get_campaign_level()
+		else:
+				# print("GameManager НЕ НАЙДЕН! Создаем временные данные")
+				lab_data = LabData.new()
+				statistics = GameStatistics.new()
+		
+		# print("lab_controller: данные загружены")
 
 
 func _setup_connections():
-        start_run_button.pressed.connect(_on_start_run_pressed)
-        menu_button.pressed.connect(_on_menu_pressed)
-        settings_button.pressed.connect(_on_settings_pressed)
-        settings_back_button.pressed.connect(_on_settings_back_pressed)
-        shop_button.pressed.connect(_on_shop_pressed)
-        shop_close_button.pressed.connect(_on_shop_close_pressed)
-        _setup_settings_sliders()
-        _setup_save_slot_selector()
-        save_button.pressed.connect(_on_save_pressed)
-        artifact_storage_button.pressed.connect(_on_storage_pressed)
-        
-        anomaly_station.pressed.connect(_on_anomaly_station_pressed)
-        mutant_station.pressed.connect(_on_mutant_station_pressed)
-        monolith_station.pressed.connect(_on_monolith_station_pressed)
-        
-        _setup_sounds()
+		start_run_button.pressed.connect(_on_start_run_pressed)
+		menu_button.pressed.connect(_on_menu_pressed)
+		settings_button.pressed.connect(_on_settings_pressed)
+		settings_back_button.pressed.connect(_on_settings_back_pressed)
+		shop_button.pressed.connect(_on_shop_pressed)
+		shop_close_button.pressed.connect(_on_shop_close_pressed)
+		_setup_settings_sliders()
+		_setup_save_slot_selector()
+		save_button.pressed.connect(_on_save_pressed)
+		artifact_storage_button.pressed.connect(_on_storage_pressed)
+		
+		anomaly_station.pressed.connect(_on_anomaly_station_pressed)
+		mutant_station.pressed.connect(_on_mutant_station_pressed)
+		monolith_station.pressed.connect(_on_monolith_station_pressed)
+		
+		_setup_sounds()
 
 
 func _setup_sounds():
-        var buttons = [
-                start_run_button, menu_button, settings_button, 
-                save_button, artifact_storage_button,
-                anomaly_station, mutant_station, monolith_station
-        ]
-        
-        for btn in buttons:
-                if btn:
-                        btn.mouse_entered.connect(_play_hover_sound)
+		var buttons = [
+				start_run_button, menu_button, settings_button, 
+				save_button, artifact_storage_button,
+				anomaly_station, mutant_station, monolith_station
+		]
+		
+		for btn in buttons:
+				if btn:
+						btn.mouse_entered.connect(_play_hover_sound)
 
 
 func _play_hover_sound():
-        var sm = get_tree().get_first_node_in_group("sound_manager")
-        if sm and sm.has_method("play_sound"):
-                sm.play_sound("ui_hover", 0.3)
+		var sm = get_tree().get_first_node_in_group("sound_manager")
+		if sm and sm.has_method("play_sound"):
+				sm.play_sound("ui_hover", 0.3)
 
 
 func _apply_static_texts():
         """Все статические надписи лаборатории по текущему языку (Loc.changed пере apply)"""
-        var title: Label = get_node_or_null("VBox/Header/Title")
-        if title:
-                title.text = Loc.t("lab.title")
-        var info: Label = get_node_or_null("VBox/InfoPanel/HBox/InfoLabel")
-        if info:
-                info.text = Loc.t("lab.info_header")
-        var biomass_prefix: Label = get_node_or_null("VBox/InfoPanel/HBox/BiomassLabel")
-        if biomass_prefix:
-                biomass_prefix.text = Loc.t("lab.biomass_prefix")
-        start_run_button.text = Loc.t("lab.start_run")
-        menu_button.text = Loc.t("lab.menu")
-        settings_button.text = Loc.t("lab.settings")
-        shop_button.text = Loc.t("lab.shop")
-        save_button.text = Loc.t("lab.save")
-        artifact_storage_button.text = Loc.t("lab.storage_open")
-        var storage_label: Label = get_node_or_null("VBox/StoragePanel/HBox/StorageLabel")
-        if storage_label:
-                storage_label.text = Loc.t("lab.storage")
-        var settings_title: Label = get_node_or_null("SettingsScreen/Panel/SettingsTitle")
-        if settings_title:
-                settings_title.text = Loc.t("lab.settings")
-        var music_label: Label = get_node_or_null("SettingsScreen/Panel/MusicLabel")
-        if music_label:
-                music_label.text = Loc.t("lab.settings_music")
-        var sfx_label: Label = get_node_or_null("SettingsScreen/Panel/SfxLabel")
-        if sfx_label:
-                sfx_label.text = Loc.t("lab.settings_sfx")
-        var settings_back: Button = get_node_or_null("SettingsScreen/Panel/BackButton")
-        if settings_back:
-                settings_back.text = Loc.t("lab.back")
-        var shop_title: Label = get_node_or_null("ShopPanel/Panel/ShopTitle")
-        if shop_title:
-                shop_title.text = Loc.t("shop.title")
-        if mutants_header:
-                mutants_header.text = Loc.t("shop.mutants_header")
-        if artifacts_header:
-                artifacts_header.text = Loc.t("shop.artifacts_header")
-        var shop_close: Button = get_node_or_null("ShopPanel/Panel/ShopClose")
-        if shop_close:
-                shop_close.text = Loc.t("lab.back")
-        # v0.31.2: долокализация станций улучшений и хранилища
-        if up_title:
-                up_title.text = Loc.t("upgrade.title")
-        var up_back: Button = get_node_or_null("UpgradePanel/Panel/Margin/VBox/BackButton")
-        if up_back:
-                up_back.text = Loc.t("lab.back")
-        var st_title: Label = get_node_or_null("StoragePanel/Panel/Margin/VBox/Title")
-        if st_title:
-                st_title.text = Loc.t("lab.storage")
-        var st_back: Button = get_node_or_null("StoragePanel/Panel/Margin/VBox/BackButton")
-        if st_back:
-                st_back.text = Loc.t("lab.back")
-        var st_tabs: TabContainer = get_node_or_null("StoragePanel/Panel/Margin/VBox/Tabs")
-        if st_tabs:
-                st_tabs.set_tab_title(0, Loc.t("storage.tab_common"))
-                st_tabs.set_tab_title(1, Loc.t("storage.tab_rare"))
-                st_tabs.set_tab_title(2, Loc.t("storage.tab_legendary"))
-        # Панели звёзд/фермы (строятся кодом) - перезаполнить
-        if star_panel and star_panel.visible:
-                _rebuild_star_panel()
-        if farm_panel and farm_panel.visible:
-                _rebuild_farm_panel()
-        # Языковая кнопка показывает текущий язык
-        if _lang_button:
-                _lang_button.text = Loc.t("menu.language")
+		var title: Label = get_node_or_null("VBox/Header/Title")
+		if title:
+				title.text = Loc.t("lab.title")
+		var info: Label = get_node_or_null("VBox/InfoPanel/HBox/InfoLabel")
+		if info:
+				info.text = Loc.t("lab.info_header")
+		var biomass_prefix: Label = get_node_or_null("VBox/InfoPanel/HBox/BiomassLabel")
+		if biomass_prefix:
+				biomass_prefix.text = Loc.t("lab.biomass_prefix")
+		start_run_button.text = Loc.t("lab.start_run")
+		menu_button.text = Loc.t("lab.menu")
+		settings_button.text = Loc.t("lab.settings")
+		shop_button.text = Loc.t("lab.shop")
+		save_button.text = Loc.t("lab.save")
+		artifact_storage_button.text = Loc.t("lab.storage_open")
+		var storage_label: Label = get_node_or_null("VBox/StoragePanel/HBox/StorageLabel")
+		if storage_label:
+				storage_label.text = Loc.t("lab.storage")
+		var settings_title: Label = get_node_or_null("SettingsScreen/Panel/SettingsTitle")
+		if settings_title:
+				settings_title.text = Loc.t("lab.settings")
+		var music_label: Label = get_node_or_null("SettingsScreen/Panel/MusicLabel")
+		if music_label:
+				music_label.text = Loc.t("lab.settings_music")
+		var sfx_label: Label = get_node_or_null("SettingsScreen/Panel/SfxLabel")
+		if sfx_label:
+				sfx_label.text = Loc.t("lab.settings_sfx")
+		var settings_back: Button = get_node_or_null("SettingsScreen/Panel/BackButton")
+		if settings_back:
+				settings_back.text = Loc.t("lab.back")
+		var shop_title: Label = get_node_or_null("ShopPanel/Panel/ShopTitle")
+		if shop_title:
+				shop_title.text = Loc.t("shop.title")
+		if mutants_header:
+				mutants_header.text = Loc.t("shop.mutants_header")
+		if artifacts_header:
+				artifacts_header.text = Loc.t("shop.artifacts_header")
+		var shop_close: Button = get_node_or_null("ShopPanel/Panel/ShopClose")
+		if shop_close:
+				shop_close.text = Loc.t("lab.back")
+		# v0.31.2: долокализация станций улучшений и хранилища
+		if up_title:
+				up_title.text = Loc.t("upgrade.title")
+		var up_back: Button = get_node_or_null("UpgradePanel/Panel/Margin/VBox/BackButton")
+		if up_back:
+				up_back.text = Loc.t("lab.back")
+		var st_title: Label = get_node_or_null("StoragePanel/Panel/Margin/VBox/Title")
+		if st_title:
+				st_title.text = Loc.t("lab.storage")
+		var st_back: Button = get_node_or_null("StoragePanel/Panel/Margin/VBox/BackButton")
+		if st_back:
+				st_back.text = Loc.t("lab.back")
+		var st_tabs: TabContainer = get_node_or_null("StoragePanel/Panel/Margin/VBox/Tabs")
+		if st_tabs:
+				st_tabs.set_tab_title(0, Loc.t("storage.tab_common"))
+				st_tabs.set_tab_title(1, Loc.t("storage.tab_rare"))
+				st_tabs.set_tab_title(2, Loc.t("storage.tab_legendary"))
+		# Панели звёзд/фермы (строятся кодом) - перезаполнить
+		if star_panel and star_panel.visible:
+				_rebuild_star_panel()
+		if farm_panel and farm_panel.visible:
+				_rebuild_farm_panel()
+		# Языковая кнопка показывает текущий язык
+		if _lang_button:
+				_lang_button.text = Loc.t("menu.language")
 
 
 func _play_click_sound():
-        var sm = get_tree().get_first_node_in_group("sound_manager")
-        if sm and sm.has_method("play_sound"):
-                sm.play_sound("ui_click", 0.6)
+		var sm = get_tree().get_first_node_in_group("sound_manager")
+		if sm and sm.has_method("play_sound"):
+				sm.play_sound("ui_click", 0.6)
 
 
 func _refresh_ui():
-        if not lab_data:
-                # print("lab_data отсутствует, создаем новый")
-                lab_data = LabData.new()
-        _refresh_gacha_deck()
-        
-        run_number_label.text = Loc.t("lab.day", {"n": lab_data.run_number})
-        biomass_label.text = _format_number(lab_data.biomass)
-        
-        _update_station_button(anomaly_station, Loc.t("lab.anomalies"), lab_data.get_total_anomaly_levels())
-        _update_station_button(mutant_station, Loc.t("lab.mutants"), lab_data.get_total_mutant_levels())
-        _update_station_button(monolith_station, Loc.t("lab.monolith"), lab_data.get_total_monolith_levels())
-        
-        var common = lab_data.get_artifact_count("common")
-        var rare = lab_data.get_artifact_count("rare")
-        var legendary = lab_data.get_artifact_count("legendary")
-        artifact_counts_label.text = Loc.t("lab.storage_counts", {"c": common, "r": rare, "l": legendary})
-        
-        if statistics:
-                stats_label.text = "Всего забегов: %d   Побед: %d   Поражений: %d\nСталкеров убито: %d   Артефактов украдено: %d\nРекорд выживания: %d волн" % [
-                        statistics.total_runs,
-                        statistics.wins,
-                        statistics.losses,
-                        statistics.stalkers_killed,
-                        statistics.artifacts_stolen,
-                        statistics.best_survival_wave
-                ]
+		if not lab_data:
+				# print("lab_data отсутствует, создаем новый")
+				lab_data = LabData.new()
+		_refresh_gacha_deck()
+		
+		run_number_label.text = Loc.t("lab.day", {"n": lab_data.run_number})
+		biomass_label.text = _format_number(lab_data.biomass)
+		
+		_update_station_button(anomaly_station, Loc.t("lab.anomalies"), lab_data.get_total_anomaly_levels())
+		_update_station_button(mutant_station, Loc.t("lab.mutants"), lab_data.get_total_mutant_levels())
+		_update_station_button(monolith_station, Loc.t("lab.monolith"), lab_data.get_total_monolith_levels())
+		
+		var common = lab_data.get_artifact_count("common")
+		var rare = lab_data.get_artifact_count("rare")
+		var legendary = lab_data.get_artifact_count("legendary")
+		artifact_counts_label.text = Loc.t("lab.storage_counts", {"c": common, "r": rare, "l": legendary})
+		
+		if statistics:
+				stats_label.text = "Всего забегов: %d   Побед: %d   Поражений: %d\nСталкеров убито: %d   Артефактов украдено: %d\nРекорд выживания: %d волн" % [
+						statistics.total_runs,
+						statistics.wins,
+						statistics.losses,
+						statistics.stalkers_killed,
+						statistics.artifacts_stolen,
+						statistics.best_survival_wave
+				]
 
 
 func _update_station_button(station: Button, station_name: String, total_levels: int):
-        var name_label = station.get_node_or_null("StationName")
-        if name_label and name_label is Label:
-                name_label.text = station_name
-        
-        var level_label = station.get_node_or_null("StationLevel")
-        if level_label and level_label is Label:
-                level_label.text = Loc.t("lab.level_short", {"n": total_levels})
+		var name_label = station.get_node_or_null("StationName")
+		if name_label and name_label is Label:
+				name_label.text = station_name
+		
+		var level_label = station.get_node_or_null("StationLevel")
+		if level_label and level_label is Label:
+				level_label.text = Loc.t("lab.level_short", {"n": total_levels})
 
 
 func _format_number(value: float) -> String:
-        var s = str(int(value))
-        var result = ""
-        var count = 0
-        
-        for i in range(s.length() - 1, -1, -1):
-                if count > 0 and count % 3 == 0:
-                        result = " " + result
-                result = s[i] + result
-                count += 1
-        
-        return result
+		var s = str(int(value))
+		var result = ""
+		var count = 0
+		
+		for i in range(s.length() - 1, -1, -1):
+				if count > 0 and count % 3 == 0:
+						result = " " + result
+				result = s[i] + result
+				count += 1
+		
+		return result
 
 
 # ==================== КАМПАНИЯ ====================
 
 func _setup_campaign_selector():
         """Селектор уровня кампании в шапке лаборатории: ◀ уровень ▶ и режим сложности"""
-        # По умолчанию стоим на ТЕКУЩЕМ рубеже, а не переигрываем первый уровень
-        if game_manager:
-                _campaign_level = game_manager.get_campaign_level()
-                _tower_floor = game_manager.get_tower_frontier()
-        var header: HBoxContainer = get_node_or_null("VBox/Header")
-        if not header:
-                # print("lab_controller: Header не найден, селектор кампании не построен")
-                return
+		# По умолчанию стоим на ТЕКУЩЕМ рубеже, а не переигрываем первый уровень
+		if game_manager:
+				_campaign_level = game_manager.get_campaign_level()
+				_tower_floor = game_manager.get_tower_frontier()
+		var header: HBoxContainer = get_node_or_null("VBox/Header")
+		if not header:
+				# print("lab_controller: Header не найден, селектор кампании не построен")
+				return
 
-        var row := HBoxContainer.new()
-        row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.alignment = BoxContainer.ALIGNMENT_END
-        row.add_theme_constant_override("separation", 8)
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.alignment = BoxContainer.ALIGNMENT_END
+		row.add_theme_constant_override("separation", 8)
 
-        _campaign_label = Label.new()
-        _campaign_label.add_theme_font_size_override("font_size", 16)
-        _campaign_label.clip_text = true
-        _campaign_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_campaign_label = Label.new()
+		_campaign_label.add_theme_font_size_override("font_size", 16)
+		_campaign_label.clip_text = true
+		_campaign_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-        _run_mode_button = Button.new()
-        _run_mode_button.text = "Кампания"
-        _run_mode_button.tooltip_text = "Режим забега: Кампания → Башня Монолита → Выживание"
-        _campaign_prev_button = Button.new()
-        _campaign_prev_button.text = "◀"
-        _campaign_prev_button.tooltip_text = "Предыдущий уровень / этаж"
-        _campaign_next_button = Button.new()
-        _campaign_next_button.text = "▶"
-        _campaign_next_button.tooltip_text = "Следующий уровень / этаж"
-        _campaign_mode_button = Button.new()
+		_run_mode_button = Button.new()
+		_run_mode_button.text = "Кампания"
+		_run_mode_button.tooltip_text = "Режим забега: Кампания → Башня Монолита → Выживание"
+		_campaign_prev_button = Button.new()
+		_campaign_prev_button.text = "◀"
+		_campaign_prev_button.tooltip_text = "Предыдущий уровень / этаж"
+		_campaign_next_button = Button.new()
+		_campaign_next_button.text = "▶"
+		_campaign_next_button.tooltip_text = "Следующий уровень / этаж"
+		_campaign_mode_button = Button.new()
 
-        _gates_button = Button.new()
-        _gates_button.text = "ВРАТА"
-        _gates_button.tooltip_text = "Врата ярусов башни"
-        row.add_child(_run_mode_button)
-        row.add_child(_campaign_prev_button)
-        row.add_child(_campaign_label)
-        row.add_child(_campaign_next_button)
-        row.add_child(_campaign_mode_button)
-        row.add_child(_gates_button)
-        header.add_child(row)
-        _gates_button.pressed.connect(_on_gates_open_pressed)
-        _gates_button.visible = false
+		_gates_button = Button.new()
+		_gates_button.text = "ВРАТА"
+		_gates_button.tooltip_text = "Врата ярусов башни"
+		row.add_child(_run_mode_button)
+		row.add_child(_campaign_prev_button)
+		row.add_child(_campaign_label)
+		row.add_child(_campaign_next_button)
+		row.add_child(_campaign_mode_button)
+		row.add_child(_gates_button)
+		header.add_child(row)
+		_gates_button.pressed.connect(_on_gates_open_pressed)
+		_gates_button.visible = false
 
-        _run_mode_button.pressed.connect(_on_run_mode_pressed)
-        _campaign_prev_button.pressed.connect(_on_campaign_prev_pressed)
-        _campaign_next_button.pressed.connect(_on_campaign_next_pressed)
-        _campaign_mode_button.pressed.connect(_on_campaign_mode_pressed)
-        for btn in [_run_mode_button, _campaign_prev_button, _campaign_next_button, _campaign_mode_button, _gates_button]:
-                btn.mouse_entered.connect(_play_hover_sound)
+		_run_mode_button.pressed.connect(_on_run_mode_pressed)
+		_campaign_prev_button.pressed.connect(_on_campaign_prev_pressed)
+		_campaign_next_button.pressed.connect(_on_campaign_next_pressed)
+		_campaign_mode_button.pressed.connect(_on_campaign_mode_pressed)
+		for btn in [_run_mode_button, _campaign_prev_button, _campaign_next_button, _campaign_mode_button, _gates_button]:
+				btn.mouse_entered.connect(_play_hover_sound)
 
 
 func _refresh_campaign_ui():
-        if not game_manager or not _campaign_label:
-                return
+		if not game_manager or not _campaign_label:
+				return
 
-        # Карта пути внизу лабы (однократная замена Spacer'а)
-        if _journey == null:
-                _setup_journey_map()
-        _update_journey()
+		# Карта пути внизу лабы (однократная замена Spacer'а)
+		if _journey == null:
+				_setup_journey_map()
+		_update_journey()
 
-        # Режим забега определяет, что показывает строка
-        var mode: String = game_manager.get_selected_run_mode()
-        var is_survival: bool = mode == "survival"
-        _run_mode_button.text = "Башня" if mode == "tower" else ("Выживание" if is_survival else "Кампания")
-        # Множитель сложности применяется в обоих режимах
-        _campaign_mode_button.text = "Сложность: %s" % CampaignData.get_mode_name(game_manager.get_campaign_mode())
+		# Режим забега определяет, что показывает строка
+		var mode: String = game_manager.get_selected_run_mode()
+		var is_survival: bool = mode == "survival"
+		_run_mode_button.text = "Башня" if mode == "tower" else ("Выживание" if is_survival else "Кампания")
+		# Множитель сложности применяется в обоих режимах
+		_campaign_mode_button.text = "Сложность: %s" % CampaignData.get_mode_name(game_manager.get_campaign_mode())
 
-        if mode == "tower":
-                # Башня Монолита: выбор этажа в пределах открытого рубежа
-                if _gates_button:
-                        _gates_button.visible = true
-                var tower_frontier: int = game_manager.get_tower_frontier()
-                _tower_floor = clampi(_tower_floor, 1, tower_frontier)
-                var tower_tier: Dictionary = TowerData.get_tier(_tower_floor)
-                var saved_stars: int = 0
-                if game_manager.current_save_data:
-                        saved_stars = int(game_manager.current_save_data.tower_stars.get(str(_tower_floor), 0))
-                var tower_text: String = "БАШНЯ %d/100 - %s" % [_tower_floor, str(tower_tier.get("name", ""))]
-                if _tower_floor >= TowerData.TOTAL_FLOORS and tower_frontier >= TowerData.TOTAL_FLOORS:
-                        tower_text = "БАШНЯ ПОКОРЕНА! Финальный этаж: 100/100"
-                elif saved_stars > 0:
-                        tower_text += "  " + "★".repeat(saved_stars)
-                _campaign_label.text = tower_text
-                _campaign_prev_button.disabled = _tower_floor <= 1
-                _campaign_next_button.disabled = _tower_floor >= tower_frontier
-                return
+		if mode == "tower":
+				# Башня Монолита: выбор этажа в пределах открытого рубежа
+				if _gates_button:
+						_gates_button.visible = true
+				var tower_frontier: int = game_manager.get_tower_frontier()
+				_tower_floor = clampi(_tower_floor, 1, tower_frontier)
+				var tower_tier: Dictionary = TowerData.get_tier(_tower_floor)
+				var saved_stars: int = 0
+				if game_manager.current_save_data:
+						saved_stars = int(game_manager.current_save_data.tower_stars.get(str(_tower_floor), 0))
+				var tower_text: String = "БАШНЯ %d/100 - %s" % [_tower_floor, str(tower_tier.get("name", ""))]
+				if _tower_floor >= TowerData.TOTAL_FLOORS and tower_frontier >= TowerData.TOTAL_FLOORS:
+						tower_text = "БАШНЯ ПОКОРЕНА! Финальный этаж: 100/100"
+				elif saved_stars > 0:
+						tower_text += "  " + "★".repeat(saved_stars)
+				_campaign_label.text = tower_text
+				_campaign_prev_button.disabled = _tower_floor <= 1
+				_campaign_next_button.disabled = _tower_floor >= tower_frontier
+				return
 
-        if is_survival:
-                var record: int = 0
-                var stats = game_manager.get_statistics()
-                if stats:
-                        record = stats.best_survival_wave
-                _campaign_label.text = "ВЫЖИВАНИЕ - волны без предела, награда за каждую (рекорд: %d)" % record
-                _campaign_prev_button.disabled = true
-                _campaign_next_button.disabled = true
-                return
+		if is_survival:
+				var record: int = 0
+				var stats = game_manager.get_statistics()
+				if stats:
+						record = stats.best_survival_wave
+				_campaign_label.text = "ВЫЖИВАНИЕ - волны без предела, награда за каждую (рекорд: %d)" % record
+				_campaign_prev_button.disabled = true
+				_campaign_next_button.disabled = true
+				return
 
-        var frontier: int = game_manager.get_campaign_level()
-        # NG+ (D12): кампания пройдена - вход свободный на любой уровень 1..100
-        if game_manager.is_campaign_completed():
-                frontier = CampaignData.TOTAL_LEVELS
-        _campaign_level = clampi(_campaign_level, 1, frontier)
-        if _gates_button:
-                _gates_button.visible = false
+		var frontier: int = game_manager.get_campaign_level()
+		# NG+ (D12): кампания пройдена - вход свободный на любой уровень 1..100
+		if game_manager.is_campaign_completed():
+				frontier = CampaignData.TOTAL_LEVELS
+		_campaign_level = clampi(_campaign_level, 1, frontier)
+		if _gates_button:
+				_gates_button.visible = false
 
-        var cycle: int = game_manager.get_campaign_cycle()
-        var params: Dictionary = CampaignData.get_level_params(_campaign_level, game_manager.get_campaign_mode(), cycle)
-        var text: String
-        if params.get("is_boss", false):
-                text = "КАРАВАН %d/100: «%s»" % [_campaign_level, params.get("title", "")]
-        else:
-                text = "Уровень %d/100 - %s" % [_campaign_level, params.get("chapter_title", "")]
-        if _campaign_level < game_manager.get_campaign_level():
-                text += " (пройден)"
-        if cycle > 1:
-                # Бейдж NG+: что растёт в этом цикле
-                text += "  ·  ЦИКЛ %d - враги x%.2f, награды x%.2f" % [
-                                cycle, CampaignData.cycle_enemy_mult(cycle), CampaignData.cycle_reward_mult(cycle)]
-        if game_manager.is_campaign_completed() and _campaign_level >= CampaignData.TOTAL_LEVELS and cycle <= 1:
-                text = "КАМПАНИЯ ПРОЙДЕНА! Финальный уровень: 100/100"
-        _campaign_label.text = text
+		var cycle: int = game_manager.get_campaign_cycle()
+		var params: Dictionary = CampaignData.get_level_params(_campaign_level, game_manager.get_campaign_mode(), cycle)
+		var text: String
+		if params.get("is_boss", false):
+				text = "КАРАВАН %d/100: «%s»" % [_campaign_level, params.get("title", "")]
+		else:
+				text = "Уровень %d/100 - %s" % [_campaign_level, params.get("chapter_title", "")]
+		if _campaign_level < game_manager.get_campaign_level():
+				text += " (пройден)"
+		if cycle > 1:
+				# Бейдж NG+: что растёт в этом цикле
+				text += "  ·  ЦИКЛ %d - враги x%.2f, награды x%.2f" % [
+								cycle, CampaignData.cycle_enemy_mult(cycle), CampaignData.cycle_reward_mult(cycle)]
+		if game_manager.is_campaign_completed() and _campaign_level >= CampaignData.TOTAL_LEVELS and cycle <= 1:
+				text = "КАМПАНИЯ ПРОЙДЕНА! Финальный уровень: 100/100"
+		_campaign_label.text = text
 
-        _campaign_prev_button.disabled = _campaign_level <= 1
-        _campaign_next_button.disabled = _campaign_level >= frontier
-        _campaign_mode_button.text = "Сложность: %s" % CampaignData.get_mode_name(game_manager.get_campaign_mode())
+		_campaign_prev_button.disabled = _campaign_level <= 1
+		_campaign_next_button.disabled = _campaign_level >= frontier
+		_campaign_mode_button.text = "Сложность: %s" % CampaignData.get_mode_name(game_manager.get_campaign_mode())
 
 
 # ==================== КАРТА ПУТИ ====================
@@ -473,510 +473,510 @@ func _refresh_campaign_ui():
 func _setup_journey_map():
         """Анимированная полоса пути по Зоне вместо пустого Spacer'а:
         кампания - 100 уровней до Саркофага, башня - 100 этажей, выживание - волны."""
-        var vbox: VBoxContainer = get_node_or_null("VBox")
-        var spacer: Control = get_node_or_null("VBox/Spacer")
-        if vbox == null:
-                return
-        _journey = JourneyMap.new()
-        _journey.custom_minimum_size = Vector2(0, 240)
-        _journey.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        # Тач-жест карты пути: свайп = шаг ◀▶ (та же логика, что у кнопок)
-        _journey.step_requested.connect(_on_journey_step)
-        if spacer:
-                vbox.add_child(_journey)
-                vbox.move_child(_journey, spacer.get_index())
-                spacer.queue_free()
-        else:
-                vbox.add_child(_journey)
+		var vbox: VBoxContainer = get_node_or_null("VBox")
+		var spacer: Control = get_node_or_null("VBox/Spacer")
+		if vbox == null:
+				return
+		_journey = JourneyMap.new()
+		_journey.custom_minimum_size = Vector2(0, 240)
+		_journey.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		# Тач-жест карты пути: свайп = шаг ◀▶ (та же логика, что у кнопок)
+		_journey.step_requested.connect(_on_journey_step)
+		if spacer:
+				vbox.add_child(_journey)
+				vbox.move_child(_journey, spacer.get_index())
+				spacer.queue_free()
+		else:
+				vbox.add_child(_journey)
 
 
 func _update_journey():
-        if _journey == null or game_manager == null:
-                return
-        var jmode: String = game_manager.get_selected_run_mode()
-        if jmode == "tower":
-                _journey.set_tower(_tower_floor, game_manager.get_tower_frontier(),
-                        str(TowerData.get_tier(_tower_floor).get("name", "")))
-        elif jmode == "survival":
-                var rec: int = 0
-                var stats = game_manager.get_statistics()
-                if stats:
-                        rec = stats.best_survival_wave
-                _journey.set_survival(rec)
-        else:
-                var params: Dictionary = CampaignData.get_level_params(_campaign_level, game_manager.get_campaign_mode())
-                _journey.set_campaign(_campaign_level, game_manager.get_campaign_level(),
-                        str(params.get("chapter_title", "")))
+		if _journey == null or game_manager == null:
+				return
+		var jmode: String = game_manager.get_selected_run_mode()
+		if jmode == "tower":
+				_journey.set_tower(_tower_floor, game_manager.get_tower_frontier(),
+						str(TowerData.get_tier(_tower_floor).get("name", "")))
+		elif jmode == "survival":
+				var rec: int = 0
+				var stats = game_manager.get_statistics()
+				if stats:
+						rec = stats.best_survival_wave
+				_journey.set_survival(rec)
+		else:
+				var params: Dictionary = CampaignData.get_level_params(_campaign_level, game_manager.get_campaign_mode())
+				_journey.set_campaign(_campaign_level, game_manager.get_campaign_level(),
+						str(params.get("chapter_title", "")))
 
 
 func _on_journey_step(dir: int) -> void:
         """Свайп по ленте пути (тач-жест карты этажей) — шаг как кнопками ◀▶."""
-        if dir < 0:
-                _on_campaign_prev_pressed()
-        else:
-                _on_campaign_next_pressed()
+		if dir < 0:
+				_on_campaign_prev_pressed()
+		else:
+				_on_campaign_next_pressed()
 
 
 func _on_run_mode_pressed():
         """Переключение режима забега: кампания -> башня -> выживание -> кампания"""
-        _play_click_sound()
-        if not game_manager:
-                return
+		_play_click_sound()
+		if not game_manager:
+				return
 
-        var cur: String = game_manager.get_selected_run_mode()
-        var next_mode: String = "tower"
-        if cur == "tower":
-                next_mode = "survival"
-        elif cur == "survival":
-                next_mode = "campaign"
+		var cur: String = game_manager.get_selected_run_mode()
+		var next_mode: String = "tower"
+		if cur == "tower":
+				next_mode = "survival"
+		elif cur == "survival":
+				next_mode = "campaign"
 
-        game_manager.set_selected_run_mode(next_mode)
-        _refresh_campaign_ui()
-        # Врата ярусов встречают игрока при входе в режим Башни (макет «вариант 4»)
-        if next_mode == "tower":
-                _open_gates()
-        elif gates_panel and gates_panel.visible:
-                gates_panel.visible = false
+		game_manager.set_selected_run_mode(next_mode)
+		_refresh_campaign_ui()
+		# Врата ярусов встречают игрока при входе в режим Башни (макет «вариант 4»)
+		if next_mode == "tower":
+				_open_gates()
+		elif gates_panel and gates_panel.visible:
+				gates_panel.visible = false
 
 
 func _on_campaign_prev_pressed():
-        _play_click_sound()
-        if game_manager and game_manager.get_selected_run_mode() == "tower":
-                _tower_floor = maxi(1, _tower_floor - 1)
-        else:
-                _campaign_level = maxi(1, _campaign_level - 1)
-        _refresh_campaign_ui()
+		_play_click_sound()
+		if game_manager and game_manager.get_selected_run_mode() == "tower":
+				_tower_floor = maxi(1, _tower_floor - 1)
+		else:
+				_campaign_level = maxi(1, _campaign_level - 1)
+		_refresh_campaign_ui()
 
 
 func _on_campaign_next_pressed():
-        _play_click_sound()
-        if game_manager and game_manager.get_selected_run_mode() == "tower":
-                var tower_frontier: int = game_manager.get_tower_frontier()
-                _tower_floor = mini(tower_frontier, _tower_floor + 1)
-        else:
-                var frontier: int = game_manager.get_campaign_level() if game_manager else 1
-                _campaign_level = mini(frontier, _campaign_level + 1)
-        _refresh_campaign_ui()
+		_play_click_sound()
+		if game_manager and game_manager.get_selected_run_mode() == "tower":
+				var tower_frontier: int = game_manager.get_tower_frontier()
+				_tower_floor = mini(tower_frontier, _tower_floor + 1)
+		else:
+				var frontier: int = game_manager.get_campaign_level() if game_manager else 1
+				_campaign_level = mini(frontier, _campaign_level + 1)
+		_refresh_campaign_ui()
 
 
 func _on_campaign_mode_pressed():
         """Цикл режимов сложности: Сталкер -> Ветеран -> Легенда"""
-        _play_click_sound()
-        if not game_manager:
-                return
+		_play_click_sound()
+		if not game_manager:
+				return
 
-        var current: String = game_manager.get_campaign_mode()
-        var next_mode: String = CampaignData.MODE_EASY
-        if current == CampaignData.MODE_EASY:
-                next_mode = CampaignData.MODE_NORMAL
-        elif current == CampaignData.MODE_NORMAL:
-                next_mode = CampaignData.MODE_HARD
+		var current: String = game_manager.get_campaign_mode()
+		var next_mode: String = CampaignData.MODE_EASY
+		if current == CampaignData.MODE_EASY:
+				next_mode = CampaignData.MODE_NORMAL
+		elif current == CampaignData.MODE_NORMAL:
+				next_mode = CampaignData.MODE_HARD
 
-        game_manager.set_campaign_mode(next_mode)
-        _refresh_campaign_ui()
+		game_manager.set_campaign_mode(next_mode)
+		_refresh_campaign_ui()
 
 
 # ==================== ОБРАБОТЧИКИ ====================
 
 func _on_start_run_pressed():
-        # D26: шаг welcome завершён - забег начался (рамка уехала в подготовку)
-        var onb_w = get_tree().get_first_node_in_group("onboarding")
-        if onb_w == null:
-                for ch in get_children():
-                        if ch is OnboardingOverlay:
-                                onb_w = ch
-                                break
-        if onb_w != null and onb_w._step_id == "welcome":
-                onb_w.complete_step("welcome")
-        _play_click_sound()
-        # v0.27.0: перед выходом - брифинг Проводника; запуск из поп-апа
-        _briefing_open()
+		# D26: шаг welcome завершён - забег начался (рамка уехала в подготовку)
+		var onb_w = get_tree().get_first_node_in_group("onboarding")
+		if onb_w == null:
+				for ch in get_children():
+						if ch is OnboardingOverlay:
+								onb_w = ch
+								break
+		if onb_w != null and onb_w._step_id == "welcome":
+				onb_w.complete_step("welcome")
+		_play_click_sound()
+		# v0.27.0: перед выходом - брифинг Проводника; запуск из поп-апа
+		_briefing_open()
 
 
 func _briefing_launch():
-        run_started.emit()
+		run_started.emit()
 
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
+		if not game_manager:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
 
-        if game_manager:
-                # Выбранный в селекторе уровень кампании уходит в параметры забега
-                game_manager.selected_campaign_level = _campaign_level
-                # Башня: выбранный этаж уходит в параметры забега
-                if game_manager.get_selected_run_mode() == "tower":
-                        game_manager.set_selected_tower_floor(_tower_floor)
-                await get_tree().create_timer(0.2).timeout
-                game_manager.change_scene("run")
-        else:
-                pass
+		if game_manager:
+				# Выбранный в селекторе уровень кампании уходит в параметры забега
+				game_manager.selected_campaign_level = _campaign_level
+				# Башня: выбранный этаж уходит в параметры забега
+				if game_manager.get_selected_run_mode() == "tower":
+						game_manager.set_selected_tower_floor(_tower_floor)
+				await get_tree().create_timer(0.2).timeout
+				game_manager.change_scene("run")
+		else:
+				pass
 
 
 func _on_menu_pressed():
-        _play_click_sound()
-        
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        
-        if game_manager:
-                await get_tree().create_timer(0.2).timeout
-                game_manager.change_scene("main_menu")
-        else:
-                # print("GameManager не найден, переходим напрямую")
-                get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+		_play_click_sound()
+		
+		if not game_manager:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
+		
+		if game_manager:
+				await get_tree().create_timer(0.2).timeout
+				game_manager.change_scene("main_menu")
+		else:
+				# print("GameManager не найден, переходим напрямую")
+				get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
 func _setup_settings_sliders():
         """Слайдеры громкости лаборатории - те же аудиошины Music/SFX,
         что и в главном меню (значения глобальные)"""
-        settings_music_slider.value_changed.connect(
-                func(v): _set_bus_volume("Music", v))
-        settings_sfx_slider.value_changed.connect(
-                func(v): _set_bus_volume("SFX", v))
-        var music_idx = AudioServer.get_bus_index("Music")
-        var sfx_idx = AudioServer.get_bus_index("SFX")
-        if music_idx >= 0:
-                settings_music_slider.set_value_no_signal(db_to_linear(AudioServer.get_bus_volume_db(music_idx)))
-        if sfx_idx >= 0:
-                settings_sfx_slider.set_value_no_signal(db_to_linear(AudioServer.get_bus_volume_db(sfx_idx)))
+		settings_music_slider.value_changed.connect(
+				func(v): _set_bus_volume("Music", v))
+		settings_sfx_slider.value_changed.connect(
+				func(v): _set_bus_volume("SFX", v))
+		var music_idx = AudioServer.get_bus_index("Music")
+		var sfx_idx = AudioServer.get_bus_index("SFX")
+		if music_idx >= 0:
+				settings_music_slider.set_value_no_signal(db_to_linear(AudioServer.get_bus_volume_db(music_idx)))
+		if sfx_idx >= 0:
+				settings_sfx_slider.set_value_no_signal(db_to_linear(AudioServer.get_bus_volume_db(sfx_idx)))
 
 
 func _setup_save_slot_selector():
         """Выбор активного слота сохранения между слайдерами и кнопкой НАЗАД"""
-        var panel = get_node_or_null("SettingsScreen/Panel")
-        if not panel:
-                # print("lab_controller: SettingsScreen/Panel не найден, селектор слота не построен")
-                return
+		var panel = get_node_or_null("SettingsScreen/Panel")
+		if not panel:
+				# print("lab_controller: SettingsScreen/Panel не найден, селектор слота не построен")
+				return
 
-        var selector := SaveSlotSelector.new()
-        selector.position = Vector2(30, 202)
-        selector.size = Vector2(340, 28)
-        panel.add_child(selector)
-        # D14: настройки доступности (масштаб/дальтоник/тряска/мерцание)
-        var acc := AccessibilityControls.new()
-        acc.position = Vector2(30, 300)
-        panel.add_child(acc)
+		var selector := SaveSlotSelector.new()
+		selector.position = Vector2(30, 202)
+		selector.size = Vector2(340, 28)
+		panel.add_child(selector)
+		# D14: настройки доступности (масштаб/дальтоник/тряска/мерцание)
+		var acc := AccessibilityControls.new()
+		acc.position = Vector2(30, 300)
+		panel.add_child(acc)
 
 
 func _set_bus_volume(bus_name: String, value: float):
-        var idx = AudioServer.get_bus_index(bus_name)
-        if idx >= 0:
-                AudioServer.set_bus_volume_db(idx, linear_to_db(max(value, 0.0001)))
-                AudioServer.set_bus_mute(idx, value <= 0.001)
+		var idx = AudioServer.get_bus_index(bus_name)
+		if idx >= 0:
+				AudioServer.set_bus_volume_db(idx, linear_to_db(max(value, 0.0001)))
+				AudioServer.set_bus_mute(idx, value <= 0.001)
 
 
 func _on_settings_back_pressed():
-        _play_click_sound()
-        settings_screen.visible = false
+		_play_click_sound()
+		settings_screen.visible = false
 
 
 # ==================== МАГАЗИН ====================
 
 func _on_shop_pressed():
-        _play_click_sound()
-        shop_panel.visible = true
-        _rebuild_shop()
+		_play_click_sound()
+		shop_panel.visible = true
+		_rebuild_shop()
 
 
 func _on_shop_close_pressed():
-        _play_click_sound()
-        shop_panel.visible = false
+		_play_click_sound()
+		shop_panel.visible = false
 
 
 func _rebuild_shop():
         """Кнопки магазина из таблиц GachaData: имя + цена, покупка за биомассу лаборатории"""
-        for child in mutant_grid.get_children():
-                child.queue_free()
-        for child in artifact_grid.get_children():
-                child.queue_free()
-        var lab_biomass: float = lab_data.biomass if lab_data else 0.0
-        shop_biomass_label.text = Loc.t("shop.biomass", {"n": int(lab_biomass)})
-        for entry in GachaData.get_shop_mutants():
-                var type: String = entry[0]
-                var price: float = entry[2]
-                var btn := Button.new()
-                if lab_data and not lab_data.unlocked_mutants.has(type):
-                        btn.disabled = true
-                        btn.text = entry[1] + "
+		for child in mutant_grid.get_children():
+				child.queue_free()
+		for child in artifact_grid.get_children():
+				child.queue_free()
+		var lab_biomass: float = lab_data.biomass if lab_data else 0.0
+		shop_biomass_label.text = Loc.t("shop.biomass", {"n": int(lab_biomass)})
+		for entry in GachaData.get_shop_mutants():
+				var type: String = entry[0]
+				var price: float = entry[2]
+				var btn := Button.new()
+				if lab_data and not lab_data.unlocked_mutants.has(type):
+						btn.disabled = true
+						btn.text = entry[1] + "
 " + Loc.t("shop.locked", {"n": GachaData.get_unlock_campaign_level(type)})
-                else:
-                        btn.text = _shop_item_text(entry[1], type, true) + "
+				else:
+						btn.text = _shop_item_text(entry[1], type, true) + "
 🧬" + str(int(price))
-                        btn.pressed.connect(_on_shop_buy.bind("mutant", type, price))
-                _add_card_icon(btn, type, true)
-                btn.custom_minimum_size = Vector2(160, 46)
-                mutant_grid.add_child(btn)
-        for entry in GachaData.get_shop_artifacts():
-                var type: String = entry[0]
-                var price: float = entry[2]
-                var btn := Button.new()
-                if lab_data and not lab_data.won_artifacts.has(type):
-                        btn.disabled = true
-                        btn.text = entry[1] + "
+						btn.pressed.connect(_on_shop_buy.bind("mutant", type, price))
+				_add_card_icon(btn, type, true)
+				btn.custom_minimum_size = Vector2(160, 46)
+				mutant_grid.add_child(btn)
+		for entry in GachaData.get_shop_artifacts():
+				var type: String = entry[0]
+				var price: float = entry[2]
+				var btn := Button.new()
+				if lab_data and not lab_data.won_artifacts.has(type):
+						btn.disabled = true
+						btn.text = entry[1] + "
 " + Loc.t("shop.locked", {"n": GachaData.get_unlock_campaign_level(type)})
-                else:
-                        btn.text = _shop_item_text(entry[1], type, false) + "
+				else:
+						btn.text = _shop_item_text(entry[1], type, false) + "
 🧬" + str(int(price))
-                        btn.pressed.connect(_on_shop_buy.bind("artifact", type, price))
-                _add_card_icon(btn, type, false)
-                btn.custom_minimum_size = Vector2(240, 46)
-                artifact_grid.add_child(btn)
-        _rebuild_shop_season()
-        _rebuild_shop_exchange()
+						btn.pressed.connect(_on_shop_buy.bind("artifact", type, price))
+				_add_card_icon(btn, type, false)
+				btn.custom_minimum_size = Vector2(240, 46)
+				artifact_grid.add_child(btn)
+		_rebuild_shop_season()
+		_rebuild_shop_exchange()
 
 
 func _add_card_icon(btn: Button, type: String, is_mutant: bool):
         """Карточка-иконка слева от текста кнопки (магазин/дропы/ферма)"""
-        var path: String = GachaData.card_icon_path(type, is_mutant)
-        if ResourceLoader.exists(path):
-                btn.icon = load(path)
-                btn.expand_icon = true
-                btn.add_theme_constant_override("icon_max_width", 24)
+		var path: String = GachaData.card_icon_path(type, is_mutant)
+		if ResourceLoader.exists(path):
+				btn.icon = load(path)
+				btn.expand_icon = true
+				btn.add_theme_constant_override("icon_max_width", 24)
 
 
 func _make_icon_rect(type: String, is_mutant: bool, icon_size: int = 24) -> TextureRect:
-        var rect := TextureRect.new()
-        var path: String = GachaData.card_icon_path(type, is_mutant)
-        if ResourceLoader.exists(path):
-                rect.texture = load(path)
-        rect.custom_minimum_size = Vector2(icon_size, icon_size)
-        rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-        rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        # D14: дальтоник-режим - форма редкости в углу (▢△◇★)
-        var rar: String = GachaData.get_mutant_rarity(type) if is_mutant else GachaData.get_artifact_rarity(type)
-        var glyph: String = Accessibility.rarity_glyph(rar)
-        if glyph != "":
-                var g := Label.new()
-                g.text = glyph
-                g.add_theme_font_size_override("font_size", maxi(10, icon_size / 2))
-                g.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
-                g.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-                g.add_theme_constant_override("outline_size", 3)
-                g.position = Vector2.ZERO
-                g.mouse_filter = Control.MOUSE_FILTER_IGNORE
-                rect.add_child(g)
-        return rect
+		var rect := TextureRect.new()
+		var path: String = GachaData.card_icon_path(type, is_mutant)
+		if ResourceLoader.exists(path):
+				rect.texture = load(path)
+		rect.custom_minimum_size = Vector2(icon_size, icon_size)
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		# D14: дальтоник-режим - форма редкости в углу (▢△◇★)
+		var rar: String = GachaData.get_mutant_rarity(type) if is_mutant else GachaData.get_artifact_rarity(type)
+		var glyph: String = Accessibility.rarity_glyph(rar)
+		if glyph != "":
+				var g := Label.new()
+				g.text = glyph
+				g.add_theme_font_size_override("font_size", maxi(10, icon_size / 2))
+				g.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+				g.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+				g.add_theme_constant_override("outline_size", 3)
+				g.position = Vector2.ZERO
+				g.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				rect.add_child(g)
+		return rect
 
 
 func _shop_item_text(item_name: String, type: String, is_mutant: bool) -> String:
         """Имя + звёзды, если тип уже в коллекции (в бою получит эти звёзды)"""
-        if not lab_data:
-                return item_name
-        var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
-        var owned: bool = lab_data.unlocked_mutants.has(type) if is_mutant else lab_data.won_artifacts.has(type)
-        if owned and stars > 1:
-                return item_name + " " + "★".repeat(stars)
-        if owned:
-                return item_name + " ★"
-        return item_name
+		if not lab_data:
+				return item_name
+		var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
+		var owned: bool = lab_data.unlocked_mutants.has(type) if is_mutant else lab_data.won_artifacts.has(type)
+		if owned and stars > 1:
+				return item_name + " " + "★".repeat(stars)
+		if owned:
+				return item_name + " ★"
+		return item_name
 
 
 func _on_shop_buy(kind: String, item_type: String, price: float):
-        var bought := false
-        if kind == "mutant":
-                bought = game_manager.buy_shop_mutant(item_type, price)
-        else:
-                bought = game_manager.buy_shop_artifact(item_type, price)
-        if bought:
-                _play_click_sound()
-                _rebuild_shop()
-        else:
-                _show_message(Loc.t("shop.not_enough"), 1.5)
+		var bought := false
+		if kind == "mutant":
+				bought = game_manager.buy_shop_mutant(item_type, price)
+		else:
+				bought = game_manager.buy_shop_artifact(item_type, price)
+		if bought:
+				_play_click_sound()
+				_rebuild_shop()
+		else:
+				_show_message(Loc.t("shop.not_enough"), 1.5)
 
 
 func _build_shop_tabs():
         """Вкладки магазина: МУТАНТЫ/АРТЕФАКТЫ (за биомассу) + СЕЗОН/ОБМЕННИК (за СП)"""
-        if shop_tabs == null:
-                return
-        for t in ["МУТАНТЫ", "АРТЕФАКТЫ", "СЕЗОН", "ОБМЕННИК"]:
-                shop_tabs.add_tab(t)
-        shop_tabs.tab_changed.connect(_on_shop_tab_changed)
-        _on_shop_tab_changed(0)
+		if shop_tabs == null:
+				return
+		for t in ["МУТАНТЫ", "АРТЕФАКТЫ", "СЕЗОН", "ОБМЕННИК"]:
+				shop_tabs.add_tab(t)
+		shop_tabs.tab_changed.connect(_on_shop_tab_changed)
+		_on_shop_tab_changed(0)
 
 
 func _on_shop_tab_changed(idx: int):
-        mutants_header.visible = idx == 0
-        mutant_grid.visible = idx == 0
-        artifacts_header.visible = idx == 1
-        artifact_grid.visible = idx == 1
-        season_header.visible = idx == 2
-        season_scroll.visible = idx == 2
-        exchange_header.visible = idx == 3
-        exchange_scroll.visible = idx == 3
-        shop_biomass_label.visible = idx == 0 or idx == 1
-        shop_sp_label.visible = idx == 2 or idx == 3
+		mutants_header.visible = idx == 0
+		mutant_grid.visible = idx == 0
+		artifacts_header.visible = idx == 1
+		artifact_grid.visible = idx == 1
+		season_header.visible = idx == 2
+		season_scroll.visible = idx == 2
+		exchange_header.visible = idx == 3
+		exchange_scroll.visible = idx == 3
+		shop_biomass_label.visible = idx == 0 or idx == 1
+		shop_sp_label.visible = idx == 2 or idx == 3
 
 
 func _rebuild_shop_season():
         """СЕЗОН: товары за очки сезона - эксклюзивы ЧЯ, крутки, биомасса, копии"""
-        for child in season_grid.get_children():
-                child.queue_free()
-        var sp: int = lab_data.season_points if lab_data else 0
-        shop_sp_label.text = "Очки сезона (СП): %d" % sp
-        for entry in GachaData.SEASON_SHOP:
-                var kind: String = entry[0]
-                var type: String = entry[1]
-                var item: String = entry[2]
-                var price: int = int(entry[3])
-                var sub := ""
-                if kind == "ex_mut":
-                        sub = "ЭКСКЛЮЗИВ · боец набора" + ("; дубликат = +1 копия" if (lab_data and lab_data.unlocked_mutants.has(type)) else "")
-                elif kind == "ex_anom":
-                        sub = "ЭКСКЛЮЗИВ · аномалия боя" + ("; дубликат = +400 био" if (lab_data and lab_data.exclusive_anomalies.has(type)) else "")
-                elif kind == "mut":
-                        sub = "в коллекцию" + ("; дубликат = копия на ферму" if (lab_data and lab_data.unlocked_mutants.has(type)) else "")
-                elif kind == "art":
-                        sub = "аномалия откроется, артефакт придёт в бой"
-                elif kind == "rolls_mut":
-                        sub = "+10 круток гачи мутантов"
-                elif kind == "rolls_art":
-                        sub = "+10 круток гачи артефактов"
-                elif kind == "biomass":
-                        sub = "+100 000 биомассы лаборатории"
-                elif kind == "copy":
-                        sub = "копия на ферму: корм звёзд"
-                var btn := Button.new()
-                btn.text = item + "\n" + str(price) + " СП"
-                btn.tooltip_text = sub
-                if kind == "ex_mut" or kind == "copy" or kind == "mut":
-                        _add_card_icon(btn, type, true)
-                elif kind == "ex_anom" or kind == "art":
-                        _add_card_icon(btn, type, false)
-                if lab_data and sp < price:
-                        btn.disabled = true
-                btn.custom_minimum_size = Vector2(250, 52)
-                btn.pressed.connect(_on_season_buy.bind(kind, type, price))
-                btn.mouse_entered.connect(_play_hover_sound)
-                season_grid.add_child(btn)
+		for child in season_grid.get_children():
+				child.queue_free()
+		var sp: int = lab_data.season_points if lab_data else 0
+		shop_sp_label.text = "Очки сезона (СП): %d" % sp
+		for entry in GachaData.SEASON_SHOP:
+				var kind: String = entry[0]
+				var type: String = entry[1]
+				var item: String = entry[2]
+				var price: int = int(entry[3])
+				var sub := ""
+				if kind == "ex_mut":
+						sub = "ЭКСКЛЮЗИВ · боец набора" + ("; дубликат = +1 копия" if (lab_data and lab_data.unlocked_mutants.has(type)) else "")
+				elif kind == "ex_anom":
+						sub = "ЭКСКЛЮЗИВ · аномалия боя" + ("; дубликат = +400 био" if (lab_data and lab_data.exclusive_anomalies.has(type)) else "")
+				elif kind == "mut":
+						sub = "в коллекцию" + ("; дубликат = копия на ферму" if (lab_data and lab_data.unlocked_mutants.has(type)) else "")
+				elif kind == "art":
+						sub = "аномалия откроется, артефакт придёт в бой"
+				elif kind == "rolls_mut":
+						sub = "+10 круток гачи мутантов"
+				elif kind == "rolls_art":
+						sub = "+10 круток гачи артефактов"
+				elif kind == "biomass":
+						sub = "+100 000 биомассы лаборатории"
+				elif kind == "copy":
+						sub = "копия на ферму: корм звёзд"
+				var btn := Button.new()
+				btn.text = item + "\n" + str(price) + " СП"
+				btn.tooltip_text = sub
+				if kind == "ex_mut" or kind == "copy" or kind == "mut":
+						_add_card_icon(btn, type, true)
+				elif kind == "ex_anom" or kind == "art":
+						_add_card_icon(btn, type, false)
+				if lab_data and sp < price:
+						btn.disabled = true
+				btn.custom_minimum_size = Vector2(250, 52)
+				btn.pressed.connect(_on_season_buy.bind(kind, type, price))
+				btn.mouse_entered.connect(_play_hover_sound)
+				season_grid.add_child(btn)
 
 
 func _rebuild_shop_exchange():
         """ОБМЕННИК: артефакты выбросов и биомасса -> очки сезона"""
-        for child in exchange_box.get_children():
-                child.queue_free()
-        var sp: int = lab_data.season_points if lab_data else 0
-        shop_sp_label.text = "Очки сезона (СП): %d" % sp
-        var c := 0
-        var r := 0
-        var l := 0
-        if lab_data:
-                c = lab_data.artifacts_common.size()
-                r = lab_data.artifacts_rare.size()
-                l = lab_data.artifacts_legendary.size()
-        var total: int = c + r + l
-        var sp_sum: int = c + r * 3 + l * 10
-        var row1 := Button.new()
-        if total <= 0:
-                row1.text = "Артефактов с выбросов нет\n(поднимай артефакты на забегах)"
-                row1.disabled = true
-        else:
-                row1.text = "Артефакты выбросов: %d шт\nОБМЕНЯТЬ ВСЕ -> +%d СП" % [total, sp_sum]
-                row1.pressed.connect(_on_exchange_artifacts)
-        row1.custom_minimum_size = Vector2(0, 56)
-        row1.mouse_entered.connect(_play_hover_sound)
-        exchange_box.add_child(row1)
-        var row2 := Button.new()
-        row2.text = "50 000 биомассы -> +5 СП"
-        row2.tooltip_text = "Сплав лишней биомассы в очки сезона"
-        if lab_data and lab_data.biomass < 50000.0:
-                row2.disabled = true
-        row2.custom_minimum_size = Vector2(0, 46)
-        row2.pressed.connect(_on_exchange_biomass)
-        row2.mouse_entered.connect(_play_hover_sound)
-        exchange_box.add_child(row2)
-        var copies := 0
-        if lab_data:
-                for t in lab_data.farm_copies:
-                        copies += int(lab_data.farm_copies[t])
-        var row3 := Button.new()
-        if copies <= 0:
-                row3.text = "Копий на ферме нет\n(дубликаты гачи и копии с событий копятся тут)"
-                row3.disabled = true
-        else:
-                row3.text = "Копии фермы: %d шт\nОБМЕНЯТЬ ВСЕ -> +%d СП" % [copies, copies * int(GachaData.EXCHANGE_COPY_SP)]
-                row3.tooltip_text = "Внимание: копии - это корм звёзд. Продавай только излишки!"
-                row3.pressed.connect(_on_exchange_copies)
-        row3.custom_minimum_size = Vector2(0, 56)
-        row3.mouse_entered.connect(_play_hover_sound)
-        exchange_box.add_child(row3)
-        var cap := Label.new()
-        cap.text = "Курс: обычный артефакт = 1 СП, редкий = 3 СП,\nлегендарный = 10 СП, копия фермы = 2 СП.\nАртефакты падают на выбросах. СП также дают:\nвызов +5, оборона +10, пережитый выброс +3,\nзадачи и медали сезона."
-        cap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        cap.add_theme_font_size_override("font_size", 12)
-        exchange_box.add_child(cap)
+		for child in exchange_box.get_children():
+				child.queue_free()
+		var sp: int = lab_data.season_points if lab_data else 0
+		shop_sp_label.text = "Очки сезона (СП): %d" % sp
+		var c := 0
+		var r := 0
+		var l := 0
+		if lab_data:
+				c = lab_data.artifacts_common.size()
+				r = lab_data.artifacts_rare.size()
+				l = lab_data.artifacts_legendary.size()
+		var total: int = c + r + l
+		var sp_sum: int = c + r * 3 + l * 10
+		var row1 := Button.new()
+		if total <= 0:
+				row1.text = "Артефактов с выбросов нет\n(поднимай артефакты на забегах)"
+				row1.disabled = true
+		else:
+				row1.text = "Артефакты выбросов: %d шт\nОБМЕНЯТЬ ВСЕ -> +%d СП" % [total, sp_sum]
+				row1.pressed.connect(_on_exchange_artifacts)
+		row1.custom_minimum_size = Vector2(0, 56)
+		row1.mouse_entered.connect(_play_hover_sound)
+		exchange_box.add_child(row1)
+		var row2 := Button.new()
+		row2.text = "50 000 биомассы -> +5 СП"
+		row2.tooltip_text = "Сплав лишней биомассы в очки сезона"
+		if lab_data and lab_data.biomass < 50000.0:
+				row2.disabled = true
+		row2.custom_minimum_size = Vector2(0, 46)
+		row2.pressed.connect(_on_exchange_biomass)
+		row2.mouse_entered.connect(_play_hover_sound)
+		exchange_box.add_child(row2)
+		var copies := 0
+		if lab_data:
+				for t in lab_data.farm_copies:
+						copies += int(lab_data.farm_copies[t])
+		var row3 := Button.new()
+		if copies <= 0:
+				row3.text = "Копий на ферме нет\n(дубликаты гачи и копии с событий копятся тут)"
+				row3.disabled = true
+		else:
+				row3.text = "Копии фермы: %d шт\nОБМЕНЯТЬ ВСЕ -> +%d СП" % [copies, copies * int(GachaData.EXCHANGE_COPY_SP)]
+				row3.tooltip_text = "Внимание: копии - это корм звёзд. Продавай только излишки!"
+				row3.pressed.connect(_on_exchange_copies)
+		row3.custom_minimum_size = Vector2(0, 56)
+		row3.mouse_entered.connect(_play_hover_sound)
+		exchange_box.add_child(row3)
+		var cap := Label.new()
+		cap.text = "Курс: обычный артефакт = 1 СП, редкий = 3 СП,\nлегендарный = 10 СП, копия фермы = 2 СП.\nАртефакты падают на выбросах. СП также дают:\nвызов +5, оборона +10, пережитый выброс +3,\nзадачи и медали сезона."
+		cap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cap.add_theme_font_size_override("font_size", 12)
+		exchange_box.add_child(cap)
 
 
 func _on_season_buy(kind: String, type: String, price: int):
-        _play_click_sound()
-        var res: Dictionary = {}
-        if kind == "ex_mut" or kind == "ex_anom":
-                res = game_manager.buy_season_exclusive(kind, type)
-        elif kind == "mut":
-                res = game_manager.buy_season_mutant(type)
-        elif kind == "art":
-                if game_manager.buy_season_artifact(type):
-                        res = {"name": GachaData.display_name(type)}
-        elif kind == "rolls_mut":
-                if game_manager.buy_season_rolls("mutants", 10):
-                        res = {"name": "Крутки мутантов x10"}
-        elif kind == "rolls_art":
-                if game_manager.buy_season_rolls("artifacts", 10):
-                        res = {"name": "Крутки артефактов x10"}
-        elif kind == "biomass":
-                if game_manager.buy_season_biomass():
-                        res = {"name": "Биомасса 100 000"}
-        elif kind == "copy":
-                if game_manager.buy_season_copy(type):
-                        res = {"name": "Копия на ферму"}
-        if res.is_empty():
-                _show_message("Не хватает очков сезона (нужно " + str(price) + " СП)", 1.5)
-                return
-        var msg := ""
-        if res.has("status"):
-                if str(res.get("status")) == "dup":
-                        msg = str(res.get("name", "")) + ": дубликат -> " + ("копия на ферму" if (kind == "ex_mut" or kind == "mut") else "+400 биомассы")
-                else:
-                        msg = "ЭКСКЛЮЗИВ: " + str(res.get("name", "")) + " - в коллекции!"
-        else:
-                msg = str(res.get("name", "")) + " - за " + str(price) + " СП"
-        _show_message(msg, 2.2)
-        lab_data = game_manager.get_lab_data()
-        _rebuild_shop()
-        _refresh_ui()
+		_play_click_sound()
+		var res: Dictionary = {}
+		if kind == "ex_mut" or kind == "ex_anom":
+				res = game_manager.buy_season_exclusive(kind, type)
+		elif kind == "mut":
+				res = game_manager.buy_season_mutant(type)
+		elif kind == "art":
+				if game_manager.buy_season_artifact(type):
+						res = {"name": GachaData.display_name(type)}
+		elif kind == "rolls_mut":
+				if game_manager.buy_season_rolls("mutants", 10):
+						res = {"name": "Крутки мутантов x10"}
+		elif kind == "rolls_art":
+				if game_manager.buy_season_rolls("artifacts", 10):
+						res = {"name": "Крутки артефактов x10"}
+		elif kind == "biomass":
+				if game_manager.buy_season_biomass():
+						res = {"name": "Биомасса 100 000"}
+		elif kind == "copy":
+				if game_manager.buy_season_copy(type):
+						res = {"name": "Копия на ферму"}
+		if res.is_empty():
+				_show_message("Не хватает очков сезона (нужно " + str(price) + " СП)", 1.5)
+				return
+		var msg := ""
+		if res.has("status"):
+				if str(res.get("status")) == "dup":
+						msg = str(res.get("name", "")) + ": дубликат -> " + ("копия на ферму" if (kind == "ex_mut" or kind == "mut") else "+400 биомассы")
+				else:
+						msg = "ЭКСКЛЮЗИВ: " + str(res.get("name", "")) + " - в коллекции!"
+		else:
+				msg = str(res.get("name", "")) + " - за " + str(price) + " СП"
+		_show_message(msg, 2.2)
+		lab_data = game_manager.get_lab_data()
+		_rebuild_shop()
+		_refresh_ui()
 
 
 func _on_exchange_artifacts():
-        _play_click_sound()
-        var res: Dictionary = game_manager.exchange_all_artifacts_to_sp()
-        if res.is_empty():
-                _show_message("Артефактов с выбросов нет", 1.2)
-                return
-        _show_message("Обмен: %d артефактов -> +%d СП" % [int(res.get("count", 0)), int(res.get("sp", 0))], 2.2)
-        lab_data = game_manager.get_lab_data()
-        _rebuild_shop()
-        _refresh_ui()
+		_play_click_sound()
+		var res: Dictionary = game_manager.exchange_all_artifacts_to_sp()
+		if res.is_empty():
+				_show_message("Артефактов с выбросов нет", 1.2)
+				return
+		_show_message("Обмен: %d артефактов -> +%d СП" % [int(res.get("count", 0)), int(res.get("sp", 0))], 2.2)
+		lab_data = game_manager.get_lab_data()
+		_rebuild_shop()
+		_refresh_ui()
 
 
 func _on_exchange_copies():
-        _play_click_sound()
-        var res: Dictionary = game_manager.exchange_all_farm_copies_to_sp()
-        if res.is_empty():
-                _show_message("Копий на ферме нет", 1.2)
-                return
-        _show_message("Обмен: %d копий -> +%d СП" % [int(res.get("count", 0)), int(res.get("sp", 0))], 2.2)
-        lab_data = game_manager.get_lab_data()
-        _rebuild_shop()
-        _refresh_ui()
+		_play_click_sound()
+		var res: Dictionary = game_manager.exchange_all_farm_copies_to_sp()
+		if res.is_empty():
+				_show_message("Копий на ферме нет", 1.2)
+				return
+		_show_message("Обмен: %d копий -> +%d СП" % [int(res.get("count", 0)), int(res.get("sp", 0))], 2.2)
+		lab_data = game_manager.get_lab_data()
+		_rebuild_shop()
+		_refresh_ui()
 
 
 func _on_exchange_biomass():
-        _play_click_sound()
-        if game_manager.exchange_biomass_to_sp():
-                _show_message("50 000 биомассы -> +5 СП", 2.0)
-                lab_data = game_manager.get_lab_data()
-                _rebuild_shop()
-                _refresh_ui()
-        else:
-                _show_message("Нужно 50 000 биомассы", 1.5)
+		_play_click_sound()
+		if game_manager.exchange_biomass_to_sp():
+				_show_message("50 000 биомассы -> +5 СП", 2.0)
+				lab_data = game_manager.get_lab_data()
+				_rebuild_shop()
+				_refresh_ui()
+		else:
+				_show_message("Нужно 50 000 биомассы", 1.5)
 
 
 # ==================== ЗВЁЗДНОСТЬ ====================
@@ -989,278 +989,278 @@ var _stars_return: String = ""  # откуда открыли звёзды: "far
 
 func _build_star_ui():
         """Кнопка ★ в магазине + панель прокачки звёзд (строится кодом)"""
-        star_panel = Control.new()
-        star_panel.name = "StarPanel"
-        star_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        star_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        star_panel.visible = false
-        add_child(star_panel)
+		star_panel = Control.new()
+		star_panel.name = "StarPanel"
+		star_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		star_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		star_panel.visible = false
+		add_child(star_panel)
 
-        var shade := ColorRect.new()
-        shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-        shade.color = Color(0, 0, 0, 0.6)
-        star_panel.add_child(shade)
+		var shade := ColorRect.new()
+		shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+		shade.color = Color(0, 0, 0, 0.6)
+		star_panel.add_child(shade)
 
-        var panel := Panel.new()
-        panel.anchor_left = 0.5
-        panel.anchor_top = 0.5
-        panel.anchor_right = 0.5
-        panel.anchor_bottom = 0.5
-        panel.offset_left = -280.0
-        panel.offset_top = -210.0
-        panel.offset_right = 280.0
-        panel.offset_bottom = 210.0
-        star_panel.add_child(panel)
+		var panel := Panel.new()
+		panel.anchor_left = 0.5
+		panel.anchor_top = 0.5
+		panel.anchor_right = 0.5
+		panel.anchor_bottom = 0.5
+		panel.offset_left = -280.0
+		panel.offset_top = -210.0
+		panel.offset_right = 280.0
+		panel.offset_bottom = 210.0
+		star_panel.add_child(panel)
 
-        var title := Label.new()
-        title.text = Loc.t("stars.title")
-        title.position = Vector2(0, 10)
-        title.size = Vector2(560, 25)
-        title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        panel.add_child(title)
+		var title := Label.new()
+		title.text = Loc.t("stars.title")
+		title.position = Vector2(0, 10)
+		title.size = Vector2(560, 25)
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		panel.add_child(title)
 
-        star_biomass_label = Label.new()
-        star_biomass_label.position = Vector2(0, 36)
-        star_biomass_label.size = Vector2(560, 20)
-        star_biomass_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        panel.add_child(star_biomass_label)
+		star_biomass_label = Label.new()
+		star_biomass_label.position = Vector2(0, 36)
+		star_biomass_label.size = Vector2(560, 20)
+		star_biomass_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		panel.add_child(star_biomass_label)
 
-        var scroll := ScrollContainer.new()
-        scroll.position = Vector2(20, 64)
-        scroll.size = Vector2(520, 288)
-        panel.add_child(scroll)
-        # v0.29.3: свайп-слой поверх (attach пересёт якоря — тут слой-сиблинг)
-        _add_abs_swipe_layer(panel, scroll)
+		var scroll := ScrollContainer.new()
+		scroll.position = Vector2(20, 64)
+		scroll.size = Vector2(520, 288)
+		panel.add_child(scroll)
+		# v0.29.3: свайп-слой поверх (attach пересёт якоря — тут слой-сиблинг)
+		_add_abs_swipe_layer(panel, scroll)
 
-        star_list = VBoxContainer.new()
-        star_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        star_list.add_theme_constant_override("separation", 4)
-        scroll.add_child(star_list)
+		star_list = VBoxContainer.new()
+		star_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		star_list.add_theme_constant_override("separation", 4)
+		scroll.add_child(star_list)
 
-        var close_btn := Button.new()
-        close_btn.text = "НАЗАД"
-        close_btn.position = Vector2(200, 362)
-        close_btn.size = Vector2(160, 35)
-        close_btn.pressed.connect(_on_stars_close_pressed)
-        close_btn.mouse_entered.connect(_play_hover_sound)
-        panel.add_child(close_btn)
+		var close_btn := Button.new()
+		close_btn.text = "НАЗАД"
+		close_btn.position = Vector2(200, 362)
+		close_btn.size = Vector2(160, 35)
+		close_btn.pressed.connect(_on_stars_close_pressed)
+		close_btn.mouse_entered.connect(_play_hover_sound)
+		panel.add_child(close_btn)
 
 
 func _on_stars_pressed():
-        _play_click_sound()
-        # Запоминаем, откуда открыли звёзды, чтобы вернуть панель после закрытия (ферма не должна «пропадать»)
-        if farm_panel.visible:
-                _stars_return = "farm"
-        elif shop_panel.visible:
-                _stars_return = "shop"
-        else:
-                _stars_return = ""
-        shop_panel.visible = false
-        farm_panel.visible = false
-        star_panel.visible = true
-        _rebuild_star_panel()
+		_play_click_sound()
+		# Запоминаем, откуда открыли звёзды, чтобы вернуть панель после закрытия (ферма не должна «пропадать»)
+		if farm_panel.visible:
+				_stars_return = "farm"
+		elif shop_panel.visible:
+				_stars_return = "shop"
+		else:
+				_stars_return = ""
+		shop_panel.visible = false
+		farm_panel.visible = false
+		star_panel.visible = true
+		_rebuild_star_panel()
 
 
 func _on_stars_close_pressed():
-        _play_click_sound()
-        star_panel.visible = false
-        # Возвращаем пользователя туда, откуда он открывал звёзды (обычно — ферма)
-        if _stars_return == "farm":
-                farm_panel.visible = true
-                _rebuild_farm_panel()
-        elif _stars_return == "shop":
-                shop_panel.visible = true
-                _rebuild_shop()
-        _stars_return = ""
+		_play_click_sound()
+		star_panel.visible = false
+		# Возвращаем пользователя туда, откуда он открывал звёзды (обычно — ферма)
+		if _stars_return == "farm":
+				farm_panel.visible = true
+				_rebuild_farm_panel()
+		elif _stars_return == "shop":
+				shop_panel.visible = true
+				_rebuild_shop()
+		_stars_return = ""
 
 
 func _rebuild_star_panel():
         """Строка на каждого питомца коллекции: имя, звёзды, цена следующей звезды"""
-        for child in star_list.get_children():
-                child.queue_free()
-        if not lab_data:
-                return
-        star_biomass_label.text = Loc.t("stars.biomass_line", {"n": int(lab_data.biomass)})
+		for child in star_list.get_children():
+				child.queue_free()
+		if not lab_data:
+				return
+		star_biomass_label.text = Loc.t("stars.biomass_line", {"n": int(lab_data.biomass)})
 
-        var artifacts: Array[String] = []
-        for t in lab_data.won_artifacts:
-                if not artifacts.has(t):
-                        artifacts.append(t)
+		var artifacts: Array[String] = []
+		for t in lab_data.won_artifacts:
+				if not artifacts.has(t):
+						artifacts.append(t)
 
-        if artifacts.is_empty():
-                var empty := Label.new()
-                empty.text = Loc.t("stars.artifacts_only")
-                star_list.add_child(empty)
-                return
+		if artifacts.is_empty():
+				var empty := Label.new()
+				empty.text = Loc.t("stars.artifacts_only")
+				star_list.add_child(empty)
+				return
 
-        star_list.add_child(_make_star_section(Loc.t("stars.artifacts_header")))
-        for type in artifacts:
-                star_list.add_child(_make_star_row("artifact", type))
+		star_list.add_child(_make_star_section(Loc.t("stars.artifacts_header")))
+		for type in artifacts:
+				star_list.add_child(_make_star_row("artifact", type))
 
 
 func _make_star_section(text: String) -> Label:
-        var label := Label.new()
-        label.text = text
-        return label
+		var label := Label.new()
+		label.text = text
+		return label
 
 
 func _make_star_row(kind: String, type: String) -> Control:
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 6)
-        row.add_child(_make_icon_rect(type, kind == "mutant", 26))
-        var stars: int = lab_data.get_mutant_stars(type) if kind == "mutant" else lab_data.get_artifact_stars(type)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row.add_child(_make_icon_rect(type, kind == "mutant", 26))
+		var stars: int = lab_data.get_mutant_stars(type) if kind == "mutant" else lab_data.get_artifact_stars(type)
 
-        var name_label := Label.new()
-        name_label.text = "%s  %s" % [GachaData.display_name(type), LabData.stars_text(stars)]
-        name_label.tooltip_text = Loc.t("stars.mult_tip", {"n": "%.1f" % LabData.get_star_stat_mult(stars)})
-        name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.add_child(name_label)
+		var name_label := Label.new()
+		name_label.text = "%s  %s" % [GachaData.display_name(type), LabData.stars_text(stars)]
+		name_label.tooltip_text = Loc.t("stars.mult_tip", {"n": "%.1f" % LabData.get_star_stat_mult(stars)})
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(name_label)
 
-        if stars >= LabData.MAX_STARS:
-                var max_label := Label.new()
-                max_label.text = Loc.t("stars.max")
-                row.add_child(max_label)
-        else:
-                var cost := lab_data.get_star_upgrade_cost(stars)
-                var btn := Button.new()
-                btn.text = "🧬 " + str(int(cost))
-                btn.pressed.connect(_on_star_upgrade.bind(kind, type))
-                btn.mouse_entered.connect(_play_hover_sound)
-                row.add_child(btn)
-        return row
+		if stars >= LabData.MAX_STARS:
+				var max_label := Label.new()
+				max_label.text = Loc.t("stars.max")
+				row.add_child(max_label)
+		else:
+				var cost := lab_data.get_star_upgrade_cost(stars)
+				var btn := Button.new()
+				btn.text = "🧬 " + str(int(cost))
+				btn.pressed.connect(_on_star_upgrade.bind(kind, type))
+				btn.mouse_entered.connect(_play_hover_sound)
+				row.add_child(btn)
+		return row
 
 
 func _on_star_upgrade(kind: String, type: String):
-        _play_click_sound()
-        var ok := false
-        if kind == "mutant":
-                ok = game_manager.upgrade_mutant_star(type)
-        else:
-                ok = game_manager.upgrade_artifact_star(type)
-        if ok:
-                lab_data = game_manager.get_lab_data()
-                _rebuild_star_panel()
-                if shop_panel.visible:
-                        _rebuild_shop()
-                _refresh_ui()
-        else:
-                _show_message(Loc.t("stars.fail_msg"), 1.5)
+		_play_click_sound()
+		var ok := false
+		if kind == "mutant":
+				ok = game_manager.upgrade_mutant_star(type)
+		else:
+				ok = game_manager.upgrade_artifact_star(type)
+		if ok:
+				lab_data = game_manager.get_lab_data()
+				_rebuild_star_panel()
+				if shop_panel.visible:
+						_rebuild_shop()
+				_refresh_ui()
+		else:
+				_show_message(Loc.t("stars.fail_msg"), 1.5)
 
 
 func _on_settings_pressed():
-        _play_click_sound()
-        settings_opened.emit()
-        settings_screen.visible = true
+		_play_click_sound()
+		settings_opened.emit()
+		settings_screen.visible = true
 
 
 func _on_save_pressed():
-        _play_click_sound()
+		_play_click_sound()
 
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
+		if not game_manager:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
 
-        if game_manager and game_manager.has_method("save_to_active_slot"):
-                game_manager.save_to_active_slot()
-                _show_message("Игра сохранена", 1.0)
-        else:
-                pass
-                # print("GameManager не найден, не могу сохранить")
+		if game_manager and game_manager.has_method("save_to_active_slot"):
+				game_manager.save_to_active_slot()
+				_show_message("Игра сохранена", 1.0)
+		else:
+				pass
+				# print("GameManager не найден, не могу сохранить")
 
 
 func _on_storage_pressed():
-        _play_click_sound()
-        storage_opened.emit()
-        _open_storage()
+		_play_click_sound()
+		storage_opened.emit()
+		_open_storage()
 
 
 func _on_anomaly_station_pressed():
-        _play_click_sound()
-        upgrade_station_opened.emit("anomaly")
-        _open_upgrade_station("anomaly")
+		_play_click_sound()
+		upgrade_station_opened.emit("anomaly")
+		_open_upgrade_station("anomaly")
 
 
 func _on_mutant_station_pressed():
-        _play_click_sound()
-        upgrade_station_opened.emit("mutant")
-        _open_upgrade_station("mutant")
+		_play_click_sound()
+		upgrade_station_opened.emit("mutant")
+		_open_upgrade_station("mutant")
 
 
 func _on_monolith_station_pressed():
-        _play_click_sound()
-        upgrade_station_opened.emit("monolith")
-        _open_upgrade_station("monolith")
+		_play_click_sound()
+		upgrade_station_opened.emit("monolith")
+		_open_upgrade_station("monolith")
 
 
 # ==================== ПАНЕЛИ ====================
 
 func _open_upgrade_station(station_type: String):
-        if upgrade_panel and upgrade_panel.has_method("setup"):
-                upgrade_panel.setup(station_type, lab_data, _on_upgrade_purchased)
-                upgrade_panel.visible = true
-        else:
-                # print("Upgrade panel not found or invalid")
-                _show_message("Панель улучшений не найдена", 1.0)
+		if upgrade_panel and upgrade_panel.has_method("setup"):
+				upgrade_panel.setup(station_type, lab_data, _on_upgrade_purchased)
+				upgrade_panel.visible = true
+		else:
+				# print("Upgrade panel not found or invalid")
+				_show_message("Панель улучшений не найдена", 1.0)
 
 
 func _on_upgrade_purchased(_upgrade_type: String):
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        
-        if game_manager:
-                lab_data = game_manager.get_lab_data()
-        _refresh_ui()
-        _show_message("Улучшение приобретено!", 1.0)
+		if not game_manager:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
+		
+		if game_manager:
+				lab_data = game_manager.get_lab_data()
+		_refresh_ui()
+		_show_message("Улучшение приобретено!", 1.0)
 
 
 func _open_storage():
-        if storage_panel and storage_panel.has_method("setup"):
-                storage_panel.setup(lab_data, _on_artifact_exchanged)
-                storage_panel.visible = true
-        else:
-                # print("Storage panel not found or invalid")
-                _show_message("Хранилище не найдено", 1.0)
+		if storage_panel and storage_panel.has_method("setup"):
+				storage_panel.setup(lab_data, _on_artifact_exchanged)
+				storage_panel.visible = true
+		else:
+				# print("Storage panel not found or invalid")
+				_show_message("Хранилище не найдено", 1.0)
 
 
 func _on_artifact_exchanged():
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        
-        if game_manager:
-                lab_data = game_manager.get_lab_data()
-        _refresh_ui()
-        _show_message("Артефакт обменян", 1.0)
+		if not game_manager:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
+		
+		if game_manager:
+				lab_data = game_manager.get_lab_data()
+		_refresh_ui()
+		_show_message("Артефакт обменян", 1.0)
 
 
 func show_run_result(result: Dictionary):
-        if result_panel and result_panel.has_method("show_result"):
-                result_panel.show_result(result)
-                result_panel.visible = true
-        
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        
-        if game_manager:
-                lab_data = game_manager.get_lab_data()
-                statistics = game_manager.get_statistics()
-        _refresh_ui()
+		if result_panel and result_panel.has_method("show_result"):
+				result_panel.show_result(result)
+				result_panel.visible = true
+		
+		if not game_manager:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
+		
+		if game_manager:
+				lab_data = game_manager.get_lab_data()
+				statistics = game_manager.get_statistics()
+		_refresh_ui()
 
 
 func _show_message(text: String, duration: float = 2.0):
-        var msg_label = Label.new()
-        msg_label.text = text
-        msg_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        msg_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        msg_label.add_theme_color_override("font_color", Color.WHITE)
-        msg_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-        msg_label.add_theme_constant_override("shadow_offset_x", 2)
-        msg_label.add_theme_constant_override("shadow_offset_y", 2)
-        
-        add_child(msg_label)
-        msg_label.position = Vector2(size.x / 2 - 100, size.y / 2)
-        
-        await get_tree().create_timer(duration).timeout
-        if is_instance_valid(msg_label):
-                msg_label.queue_free()
+		var msg_label = Label.new()
+		msg_label.text = text
+		msg_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		msg_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		msg_label.add_theme_color_override("font_color", Color.WHITE)
+		msg_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+		msg_label.add_theme_constant_override("shadow_offset_x", 2)
+		msg_label.add_theme_constant_override("shadow_offset_y", 2)
+		
+		add_child(msg_label)
+		msg_label.position = Vector2(size.x / 2 - 100, size.y / 2)
+		
+		await get_tree().create_timer(duration).timeout
+		if is_instance_valid(msg_label):
+				msg_label.queue_free()
 
 # ==================== ФЕРМА МУТАНТОВ (макет «ФЕРМА-ИНКУБАТОР») ====================
 # Полноэкранная ферма: карточки питомцев слева + АЛТАРЬ ЗВЁЗД справа ВНУТРИ фермы.
@@ -1296,553 +1296,553 @@ var _hunt_cal: HuntCalendar = null
 var _store_panel: StorePanel = null
 
 func _on_store_pressed() -> void:
-        _play_click_sound()
-        if _store_panel == null:
-                _store_panel = StorePanel.new()
-                add_child(_store_panel)
-                _store_panel.build()
-        _store_panel.open()
+		_play_click_sound()
+		if _store_panel == null:
+				_store_panel = StorePanel.new()
+				add_child(_store_panel)
+				_store_panel.build()
+		_store_panel.open()
 
 
 ## D19 ОХОТА: показать боссов дня и запустить охоту
 func _on_hunt_pressed() -> void:
-        _play_click_sound()
-        var names: Array = BossHuntData.today_names()
-        _show_message(Loc.t("hunt.today", {"n": ", ".join(names)}))
-        if game_manager:
-                game_manager.selected_campaign_level = _campaign_level
-        await get_tree().create_timer(1.6).timeout
-        if not game_manager:
-                return
-        game_manager.change_scene("run", {"hunt": true})
+		_play_click_sound()
+		var names: Array = BossHuntData.today_names()
+		_show_message(Loc.t("hunt.today", {"n": ", ".join(names)}))
+		if game_manager:
+				game_manager.selected_campaign_level = _campaign_level
+		await get_tree().create_timer(1.6).timeout
+		if not game_manager:
+				return
+		game_manager.change_scene("run", {"hunt": true})
 
 
 var _guild_overlay: GuildOverlay = null
 
 func _on_guild_pressed() -> void:
-        _play_click_sound()
-        if game_manager == null:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        if _guild_overlay == null:
-                _guild_overlay = GuildOverlay.new()
-                add_child(_guild_overlay)
-        _guild_overlay.open(game_manager.current_save_data if game_manager else null)
+		_play_click_sound()
+		if game_manager == null:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
+		if _guild_overlay == null:
+				_guild_overlay = GuildOverlay.new()
+				add_child(_guild_overlay)
+		_guild_overlay.open(game_manager.current_save_data if game_manager else null)
 
 
 func _on_codex_pressed() -> void:
-        _play_click_sound()
-        if _codex == null:
-                _codex = CodexOverlay.new()
-                add_child(_codex)
-        _codex.open()
+		_play_click_sound()
+		if _codex == null:
+				_codex = CodexOverlay.new()
+				add_child(_codex)
+		_codex.open()
 
 
 ## D22: недельный календарь боссов ОХОТЫ
 func _on_hunt_calendar_pressed() -> void:
-        _play_click_sound()
-        if _hunt_cal == null:
-                _hunt_cal = HuntCalendar.new()
-                _hunt_cal.lab = self
-                add_child(_hunt_cal)
-        _hunt_cal.open()
+		_play_click_sound()
+		if _hunt_cal == null:
+				_hunt_cal = HuntCalendar.new()
+				_hunt_cal.lab = self
+				add_child(_hunt_cal)
+		_hunt_cal.open()
 
 
 func _build_farm_ui():
         """Кнопка ФЕРМА + полноэкранная ферма-инкубатор (строится кодом)"""
-        var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
-        if bottom:
-                var farm_btn := Button.new()
-                farm_btn.name = "FarmButton"
-                farm_btn.text = Loc.t("lab.farm")
-                farm_btn.custom_minimum_size = Vector2(0, 62)
-                farm_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(farm_btn, "steel", 18)
-                farm_btn.pressed.connect(_on_farm_pressed)
-                farm_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(farm_btn)
-                # D16: вкладка магазина - ТОЛЬКО при включённой монетизации
-                # (после деговнизации D17); сейчас флаг false - кнопки нет
-                if StoreData.ENABLED:
-                                var store_btn := Button.new()
-                                store_btn.name = "StoreButton"
-                                store_btn.text = Loc.t("store.title")
-                                store_btn.custom_minimum_size = Vector2(0, 62)
-                                store_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                                BunkerUI.style_button(store_btn, "hazard", 18)
-                                store_btn.pressed.connect(_on_store_pressed)
-                                store_btn.mouse_entered.connect(_play_hover_sound)
-                                bottom.add_child(store_btn)
-                # D21 ГИЛЬДИЯ
-                var guild_btn := Button.new()
-                guild_btn.name = "GuildButton"
-                guild_btn.text = Loc.t("guild.btn")
-                guild_btn.custom_minimum_size = Vector2(0, 62)
-                guild_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(guild_btn, "steel", 18)
-                guild_btn.pressed.connect(_on_guild_pressed)
-                guild_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(guild_btn)
-                # D19 ОХОТА: ежедневный босс (кнопка всегда - покажет расписание)
-                var hunt_btn := Button.new()
-                hunt_btn.name = "HuntButton"
-                hunt_btn.text = Loc.t("hunt.button")
-                hunt_btn.custom_minimum_size = Vector2(0, 62)
-                hunt_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(hunt_btn, "steel", 18)
-                hunt_btn.pressed.connect(_on_hunt_pressed)
-                hunt_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(hunt_btn)
-                # D22: календарь недели ОХОТЫ (кто в какой день)
-                var huntcal_btn := Button.new()
-                huntcal_btn.name = "HuntCalendarButton"
-                huntcal_btn.text = Loc.t("huntcal.calendar_btn")
-                huntcal_btn.custom_minimum_size = Vector2(0, 62)
-                huntcal_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(huntcal_btn, "steel", 18)
-                huntcal_btn.pressed.connect(_on_hunt_calendar_pressed)
-                huntcal_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(huntcal_btn)
-                # Кодекс Зоны: справка по правилам (спека zona_codex)
-                var codex_btn := Button.new()
-                codex_btn.name = "CodexButton"
-                codex_btn.text = Loc.t("codex.title")
-                codex_btn.custom_minimum_size = Vector2(0, 62)
-                codex_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(codex_btn, "steel", 18)
-                codex_btn.pressed.connect(_on_codex_pressed)
-                codex_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(codex_btn)
+		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
+		if bottom:
+				var farm_btn := Button.new()
+				farm_btn.name = "FarmButton"
+				farm_btn.text = Loc.t("lab.farm")
+				farm_btn.custom_minimum_size = Vector2(0, 62)
+				farm_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(farm_btn, "steel", 18)
+				farm_btn.pressed.connect(_on_farm_pressed)
+				farm_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(farm_btn)
+				# D16: вкладка магазина - ТОЛЬКО при включённой монетизации
+				# (после деговнизации D17); сейчас флаг false - кнопки нет
+				if StoreData.ENABLED:
+								var store_btn := Button.new()
+								store_btn.name = "StoreButton"
+								store_btn.text = Loc.t("store.title")
+								store_btn.custom_minimum_size = Vector2(0, 62)
+								store_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+								BunkerUI.style_button(store_btn, "hazard", 18)
+								store_btn.pressed.connect(_on_store_pressed)
+								store_btn.mouse_entered.connect(_play_hover_sound)
+								bottom.add_child(store_btn)
+				# D21 ГИЛЬДИЯ
+				var guild_btn := Button.new()
+				guild_btn.name = "GuildButton"
+				guild_btn.text = Loc.t("guild.btn")
+				guild_btn.custom_minimum_size = Vector2(0, 62)
+				guild_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(guild_btn, "steel", 18)
+				guild_btn.pressed.connect(_on_guild_pressed)
+				guild_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(guild_btn)
+				# D19 ОХОТА: ежедневный босс (кнопка всегда - покажет расписание)
+				var hunt_btn := Button.new()
+				hunt_btn.name = "HuntButton"
+				hunt_btn.text = Loc.t("hunt.button")
+				hunt_btn.custom_minimum_size = Vector2(0, 62)
+				hunt_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(hunt_btn, "steel", 18)
+				hunt_btn.pressed.connect(_on_hunt_pressed)
+				hunt_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(hunt_btn)
+				# D22: календарь недели ОХОТЫ (кто в какой день)
+				var huntcal_btn := Button.new()
+				huntcal_btn.name = "HuntCalendarButton"
+				huntcal_btn.text = Loc.t("huntcal.calendar_btn")
+				huntcal_btn.custom_minimum_size = Vector2(0, 62)
+				huntcal_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(huntcal_btn, "steel", 18)
+				huntcal_btn.pressed.connect(_on_hunt_calendar_pressed)
+				huntcal_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(huntcal_btn)
+				# Кодекс Зоны: справка по правилам (спека zona_codex)
+				var codex_btn := Button.new()
+				codex_btn.name = "CodexButton"
+				codex_btn.text = Loc.t("codex.title")
+				codex_btn.custom_minimum_size = Vector2(0, 62)
+				codex_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(codex_btn, "steel", 18)
+				codex_btn.pressed.connect(_on_codex_pressed)
+				codex_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(codex_btn)
 
-        farm_panel = Control.new()
-        farm_panel.name = "FarmPanel"
-        farm_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        farm_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        farm_panel.visible = false
-        add_child(farm_panel)
+		farm_panel = Control.new()
+		farm_panel.name = "FarmPanel"
+		farm_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		farm_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		farm_panel.visible = false
+		add_child(farm_panel)
 
-        # Тёмный фон инкубатора
-        var bg := ColorRect.new()
-        bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        bg.color = Color(0.024, 0.031, 0.016, 0.985)
-        farm_panel.add_child(bg)
+		# Тёмный фон инкубатора
+		var bg := ColorRect.new()
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.color = Color(0.024, 0.031, 0.016, 0.985)
+		farm_panel.add_child(bg)
 
-        var shade := ColorRect.new()
-        shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-        shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        shade.color = Color(0, 0, 0, 0.0)
-        farm_panel.add_child(shade)
+		var shade := ColorRect.new()
+		shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shade.color = Color(0, 0, 0, 0.0)
+		farm_panel.add_child(shade)
 
-        var root := VBoxContainer.new()
-        root.name = "FarmRoot"
-        root.set_anchors_preset(Control.PRESET_FULL_RECT)
-        root.offset_left = 28
-        root.offset_right = -28
-        root.offset_top = 18
-        root.offset_bottom = -16
-        root.add_theme_constant_override("separation", 10)
-        farm_panel.add_child(root)
+		var root := VBoxContainer.new()
+		root.name = "FarmRoot"
+		root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		root.offset_left = 28
+		root.offset_right = -28
+		root.offset_top = 18
+		root.offset_bottom = -16
+		root.add_theme_constant_override("separation", 10)
+		farm_panel.add_child(root)
 
-        # ---- Шапка: заголовок + пластины био/круток ----
-        var head := HBoxContainer.new()
-        head.add_theme_constant_override("separation", 16)
-        root.add_child(head)
+		# ---- Шапка: заголовок + пластины био/круток ----
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 16)
+		root.add_child(head)
 
-        var title := Label.new()
-        title.name = "FarmTitle"
-        title.text = "ФЕРМА МУТАНТОВ"
-        title.add_theme_font_override("font", BunkerUI.font_title())
-        title.add_theme_font_size_override("font_size", 36)
-        title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        head.add_child(title)
-        farm_title_label = title
+		var title := Label.new()
+		title.name = "FarmTitle"
+		title.text = "ФЕРМА МУТАНТОВ"
+		title.add_theme_font_override("font", BunkerUI.font_title())
+		title.add_theme_font_size_override("font_size", 36)
+		title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		head.add_child(title)
+		farm_title_label = title
 
-        var sub := Label.new()
-        sub.text = "ИНКУБАТОР · КОПИИ · ЗВЁЗДНЫЙ БАК"
-        sub.add_theme_font_override("font", BunkerUI.font_mono())
-        sub.add_theme_font_size_override("font_size", 13)
-        sub.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-        sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        head.add_child(sub)
+		var sub := Label.new()
+		sub.text = "ИНКУБАТОР · КОПИИ · ЗВЁЗДНЫЙ БАК"
+		sub.add_theme_font_override("font", BunkerUI.font_mono())
+		sub.add_theme_font_size_override("font_size", 13)
+		sub.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+		sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		head.add_child(sub)
 
-        var spacer0 := Control.new()
-        spacer0.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        head.add_child(spacer0)
+		var spacer0 := Control.new()
+		spacer0.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(spacer0)
 
-        var sparks_plate := BunkerUI.make_plate("0", Loc.t("farm.sparks"), 130.0, "res://assets/ui/currency/icon_sparks.png")
-        sparks_plate.name = "SparksPlate"
-        head.add_child(sparks_plate)
-        var bio_plate := BunkerUI.make_plate("0", "БИО", 150.0, "res://assets/ui/currency/icon_biomass.png")
-        head.add_child(bio_plate)
-        _farm_biomass_chip = bio_plate.get_child(0).get_child(0)
+		var sparks_plate := BunkerUI.make_plate("0", Loc.t("farm.sparks"), 130.0, "res://assets/ui/currency/icon_sparks.png")
+		sparks_plate.name = "SparksPlate"
+		head.add_child(sparks_plate)
+		var bio_plate := BunkerUI.make_plate("0", "БИО", 150.0, "res://assets/ui/currency/icon_biomass.png")
+		head.add_child(bio_plate)
+		_farm_biomass_chip = bio_plate.get_child(0).get_child(0)
 
-        var rolls_plate := BunkerUI.make_plate("0", "КРУТКИ", 130.0, "res://assets/ui/currency/icon_pull.png")
-        head.add_child(rolls_plate)
-        _farm_rolls_chip = rolls_plate.get_child(0).get_child(0)
+		var rolls_plate := BunkerUI.make_plate("0", "КРУТКИ", 130.0, "res://assets/ui/currency/icon_pull.png")
+		head.add_child(rolls_plate)
+		_farm_rolls_chip = rolls_plate.get_child(0).get_child(0)
 
-        # ---- Фильтры (как в галерее): ВСЕ / ГОТОВЫЕ / ЭКСКЛЮЗИВЫ / МАКС + счётчик ----
-        var frow := HBoxContainer.new()
-        frow.name = "FarmFilterRow"
-        frow.add_theme_constant_override("separation", 6)
-        root.add_child(frow)
+		# ---- Фильтры (как в галерее): ВСЕ / ГОТОВЫЕ / ЭКСКЛЮЗИВЫ / МАКС + счётчик ----
+		var frow := HBoxContainer.new()
+		frow.name = "FarmFilterRow"
+		frow.add_theme_constant_override("separation", 6)
+		root.add_child(frow)
 
-        _farm_filter_group = ButtonGroup.new()
-        for fdef in [["all", "ВСЕ"], ["ready", "ГОТОВЫЕ"], ["exclusive", "ЭКСКЛЮЗИВЫ"], ["max", "МАКС ★5"]]:
-                var fb := Button.new()
-                fb.text = str(fdef[1])
-                fb.toggle_mode = true
-                fb.button_group = _farm_filter_group
-                fb.button_pressed = str(fdef[0]) == _farm_filter
-                fb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(fb, "steel", 12)
-                fb.pressed.connect(_on_farm_filter_pressed.bind(str(fdef[0])))
-                frow.add_child(fb)
+		_farm_filter_group = ButtonGroup.new()
+		for fdef in [["all", "ВСЕ"], ["ready", "ГОТОВЫЕ"], ["exclusive", "ЭКСКЛЮЗИВЫ"], ["max", "МАКС ★5"]]:
+				var fb := Button.new()
+				fb.text = str(fdef[1])
+				fb.toggle_mode = true
+				fb.button_group = _farm_filter_group
+				fb.button_pressed = str(fdef[0]) == _farm_filter
+				fb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(fb, "steel", 12)
+				fb.pressed.connect(_on_farm_filter_pressed.bind(str(fdef[0])))
+				frow.add_child(fb)
 
-        _farm_filter_count = BunkerUI.make_mono_label("", 12, Color("ffd94d"))
-        _farm_filter_count.custom_minimum_size = Vector2(150, 0)
-        _farm_filter_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        _farm_filter_count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        frow.add_child(_farm_filter_count)
+		_farm_filter_count = BunkerUI.make_mono_label("", 12, Color("ffd94d"))
+		_farm_filter_count.custom_minimum_size = Vector2(150, 0)
+		_farm_filter_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_farm_filter_count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		frow.add_child(_farm_filter_count)
 
-        # ---- Тело: карточки (лево) + алтарь (право) ----
-        var body := HBoxContainer.new()
-        body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        body.add_theme_constant_override("separation", 16)
-        root.add_child(body)
+		# ---- Тело: карточки (лево) + алтарь (право) ----
+		var body := HBoxContainer.new()
+		body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		body.add_theme_constant_override("separation", 16)
+		root.add_child(body)
 
-        # Горизонтальный скролл карточек (обычный режим) + слой свайпа поверх
-        _farm_cards_scroll = ScrollContainer.new()
-        _farm_cards_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
-        _farm_cards_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-        _farm_cards_wrap = _make_swipe_overlay(_farm_cards_scroll, true)
-        body.add_child(_farm_cards_wrap)
+		# Горизонтальный скролл карточек (обычный режим) + слой свайпа поверх
+		_farm_cards_scroll = ScrollContainer.new()
+		_farm_cards_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+		_farm_cards_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_farm_cards_wrap = _make_swipe_overlay(_farm_cards_scroll, true)
+		body.add_child(_farm_cards_wrap)
 
-        _farm_cards_box = HBoxContainer.new()
-        _farm_cards_box.add_theme_constant_override("separation", 14)
-        _farm_cards_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        _farm_cards_scroll.add_child(_farm_cards_box)
+		_farm_cards_box = HBoxContainer.new()
+		_farm_cards_box.add_theme_constant_override("separation", 14)
+		_farm_cards_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_farm_cards_scroll.add_child(_farm_cards_box)
 
-        # Вертикальный скролл режимов (кормление/грелка/утилизация) + слой свайпа
-        _farm_modes_scroll = ScrollContainer.new()
-        _farm_modes_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-        _farm_modes_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
-        _farm_modes_scroll.visible = false
-        _farm_modes_wrap = _make_swipe_overlay(_farm_modes_scroll, false)
-        body.add_child(_farm_modes_wrap)
+		# Вертикальный скролл режимов (кормление/грелка/утилизация) + слой свайпа
+		_farm_modes_scroll = ScrollContainer.new()
+		_farm_modes_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_farm_modes_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+		_farm_modes_scroll.visible = false
+		_farm_modes_wrap = _make_swipe_overlay(_farm_modes_scroll, false)
+		body.add_child(_farm_modes_wrap)
 
-        farm_list = VBoxContainer.new()
-        farm_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        farm_list.add_theme_constant_override("separation", 10)
-        _farm_modes_scroll.add_child(farm_list)
+		farm_list = VBoxContainer.new()
+		farm_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		farm_list.add_theme_constant_override("separation", 10)
+		_farm_modes_scroll.add_child(farm_list)
 
-        _farm_altar_panel = Panel.new()
-        _farm_altar_panel.custom_minimum_size = Vector2(440, 0)
-        body.add_child(_farm_altar_panel)
+		_farm_altar_panel = Panel.new()
+		_farm_altar_panel.custom_minimum_size = Vector2(440, 0)
+		body.add_child(_farm_altar_panel)
 
-        _farm_altar_box = VBoxContainer.new()
-        _farm_altar_box.set_anchors_preset(Control.PRESET_FULL_RECT)
-        _farm_altar_box.offset_left = 22
-        _farm_altar_box.offset_right = -22
-        _farm_altar_box.offset_top = 14
-        _farm_altar_box.offset_bottom = -14
-        _farm_altar_box.add_theme_constant_override("separation", 7)
-        _farm_altar_panel.add_child(_farm_altar_box)
+		_farm_altar_box = VBoxContainer.new()
+		_farm_altar_box.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_farm_altar_box.offset_left = 22
+		_farm_altar_box.offset_right = -22
+		_farm_altar_box.offset_top = 14
+		_farm_altar_box.offset_bottom = -14
+		_farm_altar_box.add_theme_constant_override("separation", 7)
+		_farm_altar_panel.add_child(_farm_altar_box)
 
-        # ---- Подвал: НАЗАД / УТИЛИЗАЦИЯ / КОРМОВАЯ ГРЕЛКА ----
-        var foot := HBoxContainer.new()
-        foot.add_theme_constant_override("separation", 14)
-        root.add_child(foot)
+		# ---- Подвал: НАЗАД / УТИЛИЗАЦИЯ / КОРМОВАЯ ГРЕЛКА ----
+		var foot := HBoxContainer.new()
+		foot.add_theme_constant_override("separation", 14)
+		root.add_child(foot)
 
-        var back_btn := Button.new()
-        back_btn.text = "◄  НАЗАД"
-        back_btn.custom_minimum_size = Vector2(190, 62)
-        BunkerUI.style_button(back_btn, "steel", 20)
-        back_btn.pressed.connect(_on_farm_close_pressed)
-        back_btn.mouse_entered.connect(_play_hover_sound)
-        foot.add_child(back_btn)
+		var back_btn := Button.new()
+		back_btn.text = "◄  НАЗАД"
+		back_btn.custom_minimum_size = Vector2(190, 62)
+		BunkerUI.style_button(back_btn, "steel", 20)
+		back_btn.pressed.connect(_on_farm_close_pressed)
+		back_btn.mouse_entered.connect(_play_hover_sound)
+		foot.add_child(back_btn)
 
-        var recycle_btn := Button.new()
-        recycle_btn.text = "УТИЛИЗАЦИЯ КОПИЙ"
-        recycle_btn.custom_minimum_size = Vector2(280, 62)
-        BunkerUI.style_button(recycle_btn, "danger", 18)
-        recycle_btn.pressed.connect(_on_recycle_pressed)
-        recycle_btn.mouse_entered.connect(_play_hover_sound)
-        foot.add_child(recycle_btn)
+		var recycle_btn := Button.new()
+		recycle_btn.text = "УТИЛИЗАЦИЯ КОПИЙ"
+		recycle_btn.custom_minimum_size = Vector2(280, 62)
+		BunkerUI.style_button(recycle_btn, "danger", 18)
+		recycle_btn.pressed.connect(_on_recycle_pressed)
+		recycle_btn.mouse_entered.connect(_play_hover_sound)
+		foot.add_child(recycle_btn)
 
-        # D16 (conv_autofill): разовый сбор всех копий в СП
-        var gm_af = get_tree().get_first_node_in_group("game_manager")
-        var owned_af: Dictionary = gm_af.current_save_data.owned if gm_af and gm_af.current_save_data else {}
-        if StoreData.autofill_enabled(owned_af):
-                var autofill_btn := Button.new()
-                autofill_btn.text = Loc.t("store.autofill_btn")
-                autofill_btn.custom_minimum_size = Vector2(280, 62)
-                BunkerUI.style_button(autofill_btn, "hazard", 18)
-                autofill_btn.pressed.connect(_on_farm_autofill_pressed)
-                autofill_btn.mouse_entered.connect(_play_hover_sound)
-                foot.add_child(autofill_btn)
+		# D16 (conv_autofill): разовый сбор всех копий в СП
+		var gm_af = get_tree().get_first_node_in_group("game_manager")
+		var owned_af: Dictionary = gm_af.current_save_data.owned if gm_af and gm_af.current_save_data else {}
+		if StoreData.autofill_enabled(owned_af):
+				var autofill_btn := Button.new()
+				autofill_btn.text = Loc.t("store.autofill_btn")
+				autofill_btn.custom_minimum_size = Vector2(280, 62)
+				BunkerUI.style_button(autofill_btn, "hazard", 18)
+				autofill_btn.pressed.connect(_on_farm_autofill_pressed)
+				autofill_btn.mouse_entered.connect(_play_hover_sound)
+				foot.add_child(autofill_btn)
 
-        var heater_btn := Button.new()
-        heater_btn.text = "КОРМОВАЯ ГРЕЛКА"
-        heater_btn.custom_minimum_size = Vector2(280, 62)
-        BunkerUI.style_button(heater_btn, "steel", 18)
-        heater_btn.pressed.connect(_on_feed_heater_pressed)
-        heater_btn.mouse_entered.connect(_play_hover_sound)
-        foot.add_child(heater_btn)
+		var heater_btn := Button.new()
+		heater_btn.text = "КОРМОВАЯ ГРЕЛКА"
+		heater_btn.custom_minimum_size = Vector2(280, 62)
+		BunkerUI.style_button(heater_btn, "steel", 18)
+		heater_btn.pressed.connect(_on_feed_heater_pressed)
+		heater_btn.mouse_entered.connect(_play_hover_sound)
+		foot.add_child(heater_btn)
 
-        var hint := Label.new()
-        hint.name = "FarmHint"
-        hint.text = "свайпайте карточки ←→ · тап — выбрать\nфильтры сверху · алтарь справа"
-        hint.add_theme_font_override("font", BunkerUI.font_mono())
-        hint.add_theme_font_size_override("font_size", 12)
-        hint.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-        hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        foot.add_child(hint)
+		var hint := Label.new()
+		hint.name = "FarmHint"
+		hint.text = "свайпайте карточки ←→ · тап — выбрать\nфильтры сверху · алтарь справа"
+		hint.add_theme_font_override("font", BunkerUI.font_mono())
+		hint.add_theme_font_size_override("font_size", 12)
+		hint.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+		hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		foot.add_child(hint)
 
 
 func _on_farm_pressed():
-        _play_click_sound()
-        _hide_lab_overlays("farm")
-        _feed_fodder.clear()
-        _farm_mode = "cards"
-        if _farm_selected.is_empty() and lab_data and not lab_data.unlocked_mutants.is_empty():
-                _farm_selected = str(lab_data.unlocked_mutants[0])
-        farm_panel.visible = true
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_hide_lab_overlays("farm")
+		_feed_fodder.clear()
+		_farm_mode = "cards"
+		if _farm_selected.is_empty() and lab_data and not lab_data.unlocked_mutants.is_empty():
+				_farm_selected = str(lab_data.unlocked_mutants[0])
+		farm_panel.visible = true
+		_rebuild_farm_panel()
 
 
 func _on_farm_close_pressed():
-        _play_click_sound()
-        farm_panel.visible = false
+		_play_click_sound()
+		farm_panel.visible = false
 
 
 ## Скрыть все оверлеи лабы, кроме except ("farm"/"shop"/"" и т.п.)
 func _hide_lab_overlays(except: String = "") -> void:
-        for entry in [[shop_panel, "shop"], [star_panel, "shop"], [farm_panel, "farm"],
-                        [gallery_panel, "gallery"], [arena_panel, "arena"], [gates_panel, "gates"],
-                        [defense_panel, "defense"]]:
-                var pnl: Control = entry[0]
-                if pnl and except != entry[1]:
-                        pnl.visible = false
+		for entry in [[shop_panel, "shop"], [star_panel, "shop"], [farm_panel, "farm"],
+						[gallery_panel, "gallery"], [arena_panel, "arena"], [gates_panel, "gates"],
+						[defense_panel, "defense"]]:
+				var pnl: Control = entry[0]
+				if pnl and except != entry[1]:
+						pnl.visible = false
 
 
 func _on_feed_heater_pressed():
-        _play_click_sound()
-        _feed_fodder.clear()
-        _farm_mode = "feed_pick"
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_feed_fodder.clear()
+		_farm_mode = "feed_pick"
+		_rebuild_farm_panel()
 
 
 func _make_farm_card(type: String) -> Control:
         """Вертикальная карточка питомца: свечение редкости, звёзды, бак, множитель"""
-        var stars: int = lab_data.get_mutant_stars(type)
-        var copies: int = lab_data.get_farm_copies(type)
-        var rar: String = GachaData.get_mutant_rarity(type)
-        var rcol: Color = BunkerUI.RARHEX.get(rar, BunkerUI.TEXT)
-        var selected: bool = _farm_selected == type
+		var stars: int = lab_data.get_mutant_stars(type)
+		var copies: int = lab_data.get_farm_copies(type)
+		var rar: String = GachaData.get_mutant_rarity(type)
+		var rcol: Color = BunkerUI.RARHEX.get(rar, BunkerUI.TEXT)
+		var selected: bool = _farm_selected == type
 
-        var card := Button.new()
-        card.custom_minimum_size = Vector2(236, 0)
-        card.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        card.focus_mode = Control.FOCUS_NONE
-        card.set_meta("type", type)
+		var card := Button.new()
+		card.custom_minimum_size = Vector2(236, 0)
+		card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		card.focus_mode = Control.FOCUS_NONE
+		card.set_meta("type", type)
 
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.086, 0.11, 0.062, 1.0)
-        sb.border_color = BunkerUI.HAZARD if selected else Color(rcol, 0.55)
-        sb.set_border_width_all(2)
-        sb.set_corner_radius_all(12)
-        sb.shadow_color = Color(rcol, 0.30) if not selected else Color(BunkerUI.HAZARD, 0.5)
-        sb.shadow_size = 18 if (rar == "legendary" or selected) else 8
-        sb.shadow_offset = Vector2.ZERO
-        sb.content_margin_top = 10.0
-        sb.content_margin_bottom = 10.0
-        sb.content_margin_left = 8.0
-        sb.content_margin_right = 8.0
-        card.add_theme_stylebox_override("normal", sb)
-        var hv := sb.duplicate()
-        hv.border_color = BunkerUI.HAZARD
-        card.add_theme_stylebox_override("hover", hv)
-        card.add_theme_stylebox_override("pressed", sb)
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.086, 0.11, 0.062, 1.0)
+		sb.border_color = BunkerUI.HAZARD if selected else Color(rcol, 0.55)
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(12)
+		sb.shadow_color = Color(rcol, 0.30) if not selected else Color(BunkerUI.HAZARD, 0.5)
+		sb.shadow_size = 18 if (rar == "legendary" or selected) else 8
+		sb.shadow_offset = Vector2.ZERO
+		sb.content_margin_top = 10.0
+		sb.content_margin_bottom = 10.0
+		sb.content_margin_left = 8.0
+		sb.content_margin_right = 8.0
+		card.add_theme_stylebox_override("normal", sb)
+		var hv := sb.duplicate()
+		hv.border_color = BunkerUI.HAZARD
+		card.add_theme_stylebox_override("hover", hv)
+		card.add_theme_stylebox_override("pressed", sb)
 
-        var v := VBoxContainer.new()
-        v.set_anchors_preset(Control.PRESET_FULL_RECT)
-        v.offset_left = 10
-        v.offset_right = -10
-        v.offset_top = 8
-        v.offset_bottom = -10
-        v.add_theme_constant_override("separation", 6)
-        v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        card.add_child(v)
+		var v := VBoxContainer.new()
+		v.set_anchors_preset(Control.PRESET_FULL_RECT)
+		v.offset_left = 10
+		v.offset_right = -10
+		v.offset_top = 8
+		v.offset_bottom = -10
+		v.add_theme_constant_override("separation", 6)
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(v)
 
-        # Верхний чип: копии или бак
-        var chip := Label.new()
-        var feed_cost: int = GachaData.get_star_feed_cost(maxi(stars, 1))
-        if lab_data.get_star_feed(type) >= 1:
-                chip.text = Loc.t("farm.bak_ready")
-                chip.add_theme_color_override("font_color", Color("ffd94d"))
-        elif stars < LabData.MAX_STARS:
-                chip.text = Loc.t("farm.bak", {"a": lab_data.get_star_progress(type), "b": feed_cost})
-                chip.add_theme_color_override("font_color", Color("a8ff7a"))
-        else:
-                chip.text = Loc.t("farm.copies_x", {"n": copies})
-                chip.add_theme_color_override("font_color", Color("a8ff7a"))
-        chip.add_theme_font_override("font", BunkerUI.font_mono())
-        chip.add_theme_font_size_override("font_size", 12)
-        chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(chip)
+		# Верхний чип: копии или бак
+		var chip := Label.new()
+		var feed_cost: int = GachaData.get_star_feed_cost(maxi(stars, 1))
+		if lab_data.get_star_feed(type) >= 1:
+				chip.text = Loc.t("farm.bak_ready")
+				chip.add_theme_color_override("font_color", Color("ffd94d"))
+		elif stars < LabData.MAX_STARS:
+				chip.text = Loc.t("farm.bak", {"a": lab_data.get_star_progress(type), "b": feed_cost})
+				chip.add_theme_color_override("font_color", Color("a8ff7a"))
+		else:
+				chip.text = Loc.t("farm.copies_x", {"n": copies})
+				chip.add_theme_color_override("font_color", Color("a8ff7a"))
+		chip.add_theme_font_override("font", BunkerUI.font_mono())
+		chip.add_theme_font_size_override("font_size", 12)
+		chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(chip)
 
-        # Большой арт карточки питомца (ui/cards); нет файла - буква как фолбэк
-        var art_path: String = GachaData.card_icon_path(type, true)
-        if ResourceLoader.exists(art_path):
-                var art := TextureRect.new()
-                art.texture = load(art_path)
-                art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-                art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-                art.size_flags_vertical = Control.SIZE_EXPAND_FILL
-                art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-                v.add_child(art)
-        else:
-                var letter := Label.new()
-                letter.text = GachaData.display_name(type).substr(0, 1)
-                letter.add_theme_font_override("font", BunkerUI.font_title())
-                letter.add_theme_font_size_override("font_size", 88)
-                letter.add_theme_color_override("font_color", Color(rcol, 0.75))
-                letter.size_flags_vertical = Control.SIZE_EXPAND_FILL
-                letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-                letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-                v.add_child(letter)
+		# Большой арт карточки питомца (ui/cards); нет файла - буква как фолбэк
+		var art_path: String = GachaData.card_icon_path(type, true)
+		if ResourceLoader.exists(art_path):
+				var art := TextureRect.new()
+				art.texture = load(art_path)
+				art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				art.size_flags_vertical = Control.SIZE_EXPAND_FILL
+				art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				v.add_child(art)
+		else:
+				var letter := Label.new()
+				letter.text = GachaData.display_name(type).substr(0, 1)
+				letter.add_theme_font_override("font", BunkerUI.font_title())
+				letter.add_theme_font_size_override("font_size", 88)
+				letter.add_theme_color_override("font_color", Color(rcol, 0.75))
+				letter.size_flags_vertical = Control.SIZE_EXPAND_FILL
+				letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				v.add_child(letter)
 
-        # Звёзды
-        var st := Label.new()
-        if stars >= LabData.MAX_STARS:
-                st.text = "★".repeat(LabData.MAX_STARS)
-        else:
-                st.text = "★".repeat(stars) + "☆".repeat(LabData.MAX_STARS - stars)
-        st.add_theme_font_override("font", BunkerUI.font_mono())
-        st.add_theme_font_size_override("font_size", 19)
-        st.add_theme_color_override("font_color", Color("ffd94d"))
-        st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(st)
+		# Звёзды
+		var st := Label.new()
+		if stars >= LabData.MAX_STARS:
+				st.text = "★".repeat(LabData.MAX_STARS)
+		else:
+				st.text = "★".repeat(stars) + "☆".repeat(LabData.MAX_STARS - stars)
+		st.add_theme_font_override("font", BunkerUI.font_mono())
+		st.add_theme_font_size_override("font_size", 19)
+		st.add_theme_color_override("font_color", Color("ffd94d"))
+		st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(st)
 
-        # D18: ПРОРЫВ у мутанта ровно 5★ (Искры Пробуждения + биомасса x цикл)
-        var awaken: int = lab_data.get_awaken(type)
-        if stars >= LabData.MAX_STARS and awaken == 0:
-            var brk := Button.new()
-            brk.text = Loc.t("farm.awaken_btn")
-            brk.custom_minimum_size = Vector2(0, 40)
-            BunkerUI.style_button(brk, "hazard", 14)
-            brk.pressed.connect(_on_awaken_pressed.bind(type))
-            v.add_child(brk)
+		# D18: ПРОРЫВ у мутанта ровно 5★ (Искры Пробуждения + биомасса x цикл)
+		var awaken: int = lab_data.get_awaken(type)
+		if stars >= LabData.MAX_STARS and awaken == 0:
+			var brk := Button.new()
+			brk.text = Loc.t("farm.awaken_btn")
+			brk.custom_minimum_size = Vector2(0, 40)
+			BunkerUI.style_button(brk, "hazard", 14)
+			brk.pressed.connect(_on_awaken_pressed.bind(type))
+			v.add_child(brk)
 
-        # Бак-полоса (прогресс к следующему корму)
-        if stars < LabData.MAX_STARS:
-            var bak := ProgressBar.new()
-            bak.max_value = maxi(feed_cost, 1)
-            bak.value = lab_data.get_star_progress(type)
-            bak.show_percentage = false
-            bak.custom_minimum_size = Vector2(0, 8)
-            var bbg := StyleBoxFlat.new()
-            bbg.bg_color = Color(0.03, 0.045, 0.024)
-            bbg.border_color = BunkerUI.STEEL_EDGE
-            bbg.set_border_width_all(1)
-            bbg.set_corner_radius_all(4)
-            var bfill := StyleBoxFlat.new()
-            bfill.bg_color = Color("8dff5a")
-            bfill.set_corner_radius_all(4)
-            bak.add_theme_stylebox_override("background", bbg)
-            bak.add_theme_stylebox_override("fill", bfill)
-            v.add_child(bak)
+		# Бак-полоса (прогресс к следующему корму)
+		if stars < LabData.MAX_STARS:
+			var bak := ProgressBar.new()
+			bak.max_value = maxi(feed_cost, 1)
+			bak.value = lab_data.get_star_progress(type)
+			bak.show_percentage = false
+			bak.custom_minimum_size = Vector2(0, 8)
+			var bbg := StyleBoxFlat.new()
+			bbg.bg_color = Color(0.03, 0.045, 0.024)
+			bbg.border_color = BunkerUI.STEEL_EDGE
+			bbg.set_border_width_all(1)
+			bbg.set_corner_radius_all(4)
+			var bfill := StyleBoxFlat.new()
+			bfill.bg_color = Color("8dff5a")
+			bfill.set_corner_radius_all(4)
+			bak.add_theme_stylebox_override("background", bbg)
+			bak.add_theme_stylebox_override("fill", bfill)
+			v.add_child(bak)
 
-        var nm := Label.new()
-        nm.text = GachaData.display_name(type).to_upper()
-        nm.add_theme_font_override("font", BunkerUI.font_title())
-        nm.add_theme_font_size_override("font_size", 15)
-        nm.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(nm)
+		var nm := Label.new()
+		nm.text = GachaData.display_name(type).to_upper()
+		nm.add_theme_font_override("font", BunkerUI.font_title())
+		nm.add_theme_font_size_override("font_size", 15)
+		nm.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(nm)
 
-        var meta := Label.new()
-        if stars < LabData.MAX_STARS:
-                meta.text = Loc.t("farm.copies_bak", {"c": copies, "a": lab_data.get_star_progress(type), "b": maxi(feed_cost, 1)})
-        else:
-                meta.text = Loc.t("farm.copies_x", {"n": copies})
-        meta.add_theme_font_override("font", BunkerUI.font_mono())
-        meta.add_theme_font_size_override("font_size", 11)
-        meta.add_theme_color_override("font_color", Color("8ba06e"))
-        meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(meta)
+		var meta := Label.new()
+		if stars < LabData.MAX_STARS:
+				meta.text = Loc.t("farm.copies_bak", {"c": copies, "a": lab_data.get_star_progress(type), "b": maxi(feed_cost, 1)})
+		else:
+				meta.text = Loc.t("farm.copies_x", {"n": copies})
+		meta.add_theme_font_override("font", BunkerUI.font_mono())
+		meta.add_theme_font_size_override("font_size", 11)
+		meta.add_theme_color_override("font_color", Color("8ba06e"))
+		meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(meta)
 
-        var mult := Label.new()
-        mult.text = "×%.1f к силе" % LabData.get_star_stat_mult(stars)
-        mult.add_theme_font_override("font", BunkerUI.font_mono())
-        mult.add_theme_font_size_override("font_size", 13)
-        mult.add_theme_color_override("font_color", BunkerUI.HAZARD)
-        mult.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(mult)
+		var mult := Label.new()
+		mult.text = "×%.1f к силе" % LabData.get_star_stat_mult(stars)
+		mult.add_theme_font_override("font", BunkerUI.font_mono())
+		mult.add_theme_font_size_override("font_size", 13)
+		mult.add_theme_color_override("font_color", BunkerUI.HAZARD)
+		mult.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(mult)
 
-        card.pressed.connect(_on_farm_card_selected.bind(type))
-        card.mouse_entered.connect(_play_hover_sound)
-        return card
+		card.pressed.connect(_on_farm_card_selected.bind(type))
+		card.mouse_entered.connect(_play_hover_sound)
+		return card
 
 
 func _on_farm_card_selected(type: String):
-        _play_click_sound()
-        _farm_selected = type
-        _farm_mode = "cards"
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_farm_selected = type
+		_farm_mode = "cards"
+		_rebuild_farm_panel()
 
 
 # ==================== ФЕРМА: ФИЛЬТР + СВАЙП ====================
 
 func _process(delta: float) -> void:
         """Инерция свайпа фермы: палец отпущен — список едет и плавно тормозит."""
-        # Инерция свайпа живёт в SwipeHelper (ui/base/swipe_helper.gd, v0.29.2)
-        _tw_tick(delta)
+		# Инерция свайпа живёт в SwipeHelper (ui/base/swipe_helper.gd, v0.29.2)
+		_tw_tick(delta)
 
 
 func _on_farm_filter_pressed(filter: String):
-        _play_click_sound()
-        _farm_filter = filter
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_farm_filter = filter
+		_rebuild_farm_panel()
 
 
 ## Фильтр питомцев фермы (адаптация галерейного): all | ready | exclusive | max
 func _farm_apply_filter(types) -> Array:
-        var out: Array = []
-        for t in types:
-                var tt: String = str(t)
-                if _farm_filter == "ready":
-                        if lab_data.get_star_feed(tt) >= 1:
-                                out.append(tt)
-                elif _farm_filter == "exclusive":
-                        if not GachaData.get_exclusive(tt).is_empty():
-                                out.append(tt)
-                elif _farm_filter == "max":
-                        if lab_data.get_mutant_stars(tt) >= LabData.MAX_STARS:
-                                out.append(tt)
-                else:
-                        out.append(tt)
-        return out
+		var out: Array = []
+		for t in types:
+				var tt: String = str(t)
+				if _farm_filter == "ready":
+						if lab_data.get_star_feed(tt) >= 1:
+								out.append(tt)
+				elif _farm_filter == "exclusive":
+						if not GachaData.get_exclusive(tt).is_empty():
+								out.append(tt)
+				elif _farm_filter == "max":
+						if lab_data.get_mutant_stars(tt) >= LabData.MAX_STARS:
+								out.append(tt)
+				else:
+						out.append(tt)
+		return out
 
 
 ## Сортировка: сильные слева (как в галерее), при равенстве — больше звёзд, потом по имени
 func _farm_sort_cmp(a: String, b: String) -> bool:
-        var sa: float = _mutant_strength(a)
-        var sb: float = _mutant_strength(b)
-        if absf(sa - sb) > 0.01:
-                return sa > sb
-        var sta: int = lab_data.get_mutant_stars(a)
-        var stb: int = lab_data.get_mutant_stars(b)
-        if sta != stb:
-                return sta > stb
-        return GachaData.display_name(a) < GachaData.display_name(b)
+		var sa: float = _mutant_strength(a)
+		var sb: float = _mutant_strength(b)
+		if absf(sa - sb) > 0.01:
+				return sa > sb
+		var sta: int = lab_data.get_mutant_stars(a)
+		var stb: int = lab_data.get_mutant_stars(b)
+		if sta != stb:
+				return sta > stb
+		return GachaData.display_name(a) < GachaData.display_name(b)
 
 
 ## Свайп-обёртка (v0.29.2): единый SwipeHelper (ui/base/swipe_helper.gd) -
 ## свайп 1:1 за пальцем, EMA-инерция, тап кнопки/карточки, скроллбары невидимы.
 ## reserve_bottom/right оставлены в подписи для совместимости (обычно 0.0).
 func _make_swipe_overlay(scroll: ScrollContainer, horiz: bool, reserve_bottom: float = 0.0, reserve_right: float = 0.0) -> Control:
-        return SwipeHelper.attach(scroll, horiz, reserve_bottom, reserve_right, Callable(self, "_swipe_tap"))
+		return SwipeHelper.attach(scroll, horiz, reserve_bottom, reserve_right, Callable(self, "_swipe_tap"))
 
 
 ## Свайп-слой для скроллов с АБСОЛЮТНЫМ позиционированием (v0.29.3):
@@ -1850,413 +1850,413 @@ func _make_swipe_overlay(scroll: ScrollContainer, horiz: bool, reserve_bottom: f
 ## пересёт якоря на FULL_RECT, поэтому слой кладётся сиблингом поверх
 ## той же области. Тапы — общий _swipe_tap (кнопка под пальцем).
 func _add_abs_swipe_layer(parent: Control, scroll: ScrollContainer) -> void:
-        var lay: SwipeHelper = SwipeHelper.new()
-        lay.name = "SwipeLayer"
-        lay.position = scroll.position
-        lay.size = scroll.size
-        lay.mouse_filter = Control.MOUSE_FILTER_STOP
-        lay.scroll = scroll
-        lay.horiz = false
-        lay.tap_cb = Callable(self, "_swipe_tap")
-        lay.hide_scrollbars()
-        parent.add_child(lay)
+		var lay: SwipeHelper = SwipeHelper.new()
+		lay.name = "SwipeLayer"
+		lay.position = scroll.position
+		lay.size = scroll.size
+		lay.mouse_filter = Control.MOUSE_FILTER_STOP
+		lay.scroll = scroll
+		lay.horiz = false
+		lay.tap_cb = Callable(self, "_swipe_tap")
+		lay.hide_scrollbars()
+		parent.add_child(lay)
 
 
 ## Тап по слою: карточка (горизонтальный режим) или кнопка (вертикальные списки)
 func _swipe_tap(scroll: ScrollContainer, gp: Vector2) -> void:
-        if scroll == _farm_cards_scroll:
-                var kids: Array = _farm_cards_box.get_children()
-                kids.reverse()
-                for c in kids:
-                        if c is Control and not c.is_queued_for_deletion() and c.has_meta("type") \
-                                        and (c as Control).get_global_rect().has_point(gp):
-                                _on_farm_card_selected(str(c.get_meta("type")))
-                                return
-                return
-        # Галерея: плитки карточек - не Buttons, данные в метах (v0.31.2)
-        if scroll == _gallery_scroll:
-                var stack: Array = [gallery_list]
-                var tiles: Array = []
-                while not stack.is_empty():
-                        var c: Node = stack.pop_back()
-                        for ch in c.get_children():
-                                        stack.append(ch)
-                        if c is Control and c.has_meta("gal_type"):
-                                        tiles.append(c)
-                for c in tiles:
-                        if (c as Control).get_global_rect().has_point(gp):
-                                        _show_card_detail(str(c.get_meta("gal_type")),
-                                                        bool(c.get_meta("gal_mut")),
-                                                        bool(c.get_meta("gal_unlocked")))
-                                        return
-                return
-        # Общий случай: кнопка под пальцем (режимы фермы, задачи, лента сундуков)
-        var btns: Array = scroll.find_children("*", "Button", true, false)
-        btns.reverse()
-        for b in btns:
-                if b is Button and not b.is_queued_for_deletion() and b.visible \
-                                and not b.disabled \
-                                and (b as Button).get_global_rect().has_point(gp):
-                        (b as Button).pressed.emit()
-                        return
+		if scroll == _farm_cards_scroll:
+				var kids: Array = _farm_cards_box.get_children()
+				kids.reverse()
+				for c in kids:
+						if c is Control and not c.is_queued_for_deletion() and c.has_meta("type") \
+										and (c as Control).get_global_rect().has_point(gp):
+								_on_farm_card_selected(str(c.get_meta("type")))
+								return
+				return
+		# Галерея: плитки карточек - не Buttons, данные в метах (v0.31.2)
+		if scroll == _gallery_scroll:
+				var stack: Array = [gallery_list]
+				var tiles: Array = []
+				while not stack.is_empty():
+						var c: Node = stack.pop_back()
+						for ch in c.get_children():
+										stack.append(ch)
+						if c is Control and c.has_meta("gal_type"):
+										tiles.append(c)
+				for c in tiles:
+						if (c as Control).get_global_rect().has_point(gp):
+										_show_card_detail(str(c.get_meta("gal_type")),
+														bool(c.get_meta("gal_mut")),
+														bool(c.get_meta("gal_unlocked")))
+										return
+				return
+		# Общий случай: кнопка под пальцем (режимы фермы, задачи, лента сундуков)
+		var btns: Array = scroll.find_children("*", "Button", true, false)
+		btns.reverse()
+		for b in btns:
+				if b is Button and not b.is_queued_for_deletion() and b.visible \
+								and not b.disabled \
+								and (b as Button).get_global_rect().has_point(gp):
+						(b as Button).pressed.emit()
+						return
 
 
 ## Жирный скроллбар — палец попадает (старый был ~8 px, «неуловимый»)
 func _style_fat_scrollbar(bar: ScrollBar, horizontal: bool) -> void:
-        if bar == null:
-                return
-        bar.custom_minimum_size = Vector2(0, 24) if horizontal else Vector2(24, 0)
-        var track := StyleBoxFlat.new()
-        track.bg_color = Color(0.05, 0.07, 0.04, 0.7)
-        track.set_corner_radius_all(6)
-        var grab := StyleBoxFlat.new()
-        grab.bg_color = Color("7d9a52")
-        grab.set_corner_radius_all(5)
-        var grabh := StyleBoxFlat.new()
-        grabh.bg_color = Color("a4c46e")
-        grabh.set_corner_radius_all(5)
-        bar.add_theme_stylebox_override("scroll", track)
-        bar.add_theme_stylebox_override("grabber", grab)
-        bar.add_theme_stylebox_override("grabber_highlight", grabh)
-        bar.add_theme_stylebox_override("grabber_pressed", grabh)
+		if bar == null:
+				return
+		bar.custom_minimum_size = Vector2(0, 24) if horizontal else Vector2(24, 0)
+		var track := StyleBoxFlat.new()
+		track.bg_color = Color(0.05, 0.07, 0.04, 0.7)
+		track.set_corner_radius_all(6)
+		var grab := StyleBoxFlat.new()
+		grab.bg_color = Color("7d9a52")
+		grab.set_corner_radius_all(5)
+		var grabh := StyleBoxFlat.new()
+		grabh.bg_color = Color("a4c46e")
+		grabh.set_corner_radius_all(5)
+		bar.add_theme_stylebox_override("scroll", track)
+		bar.add_theme_stylebox_override("grabber", grab)
+		bar.add_theme_stylebox_override("grabber_highlight", grabh)
+		bar.add_theme_stylebox_override("grabber_pressed", grabh)
 
 
 ## Невидимый скроллбар (v0.29.1): Godot 4 рисует полосы ScrollContainer ПОВЕРХ
 ## контента, поэтому у краёв полоса перекрывала подписи. Прокрутка остаётся,
 ## полоса становится нулевой ширины и прозрачной.
 func _hide_scrollbar(bar: ScrollBar) -> void:
-        if bar == null:
-                return
-        bar.custom_minimum_size = Vector2(0, 0)
-        bar.modulate = Color(1, 1, 1, 0)
-        bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if bar == null:
+				return
+		bar.custom_minimum_size = Vector2(0, 0)
+		bar.modulate = Color(1, 1, 1, 0)
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 ## Одна строка «ключ — значение» алтаря
 func _make_altar_kv(k: String, v: String, vcol: Color = BunkerUI.TEXT_LIGHT) -> HBoxContainer:
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 8)
-        var kl := BunkerUI.make_mono_label(k, 14, Color("a9bd8d"))
-        kl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.add_child(kl)
-        var vl := BunkerUI.make_mono_label(v, 14, vcol)
-        vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        row.add_child(vl)
-        return row
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var kl := BunkerUI.make_mono_label(k, 14, Color("a9bd8d"))
+		kl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(kl)
+		var vl := BunkerUI.make_mono_label(v, 14, vcol)
+		vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row.add_child(vl)
+		return row
 
 
 func _rebuild_farm_altar():
         """АЛТАРЬ ЗВЁЗД справа: выбранный питомец, бак, кнопки прокачки без выхода"""
-        for child in _farm_altar_box.get_children():
-                child.queue_free()
-        if _farm_selected.is_empty() or lab_data == null or lab_data.unlocked_mutants.is_empty():
-                return
+		for child in _farm_altar_box.get_children():
+				child.queue_free()
+		if _farm_selected.is_empty() or lab_data == null or lab_data.unlocked_mutants.is_empty():
+				return
 
-        var head := Label.new()
-        head.text = "АЛТАРЬ ЗВЁЗД"
-        head.add_theme_font_override("font", BunkerUI.font_title())
-        head.add_theme_font_size_override("font_size", 24)
-        head.add_theme_color_override("font_color", BunkerUI.HAZARD)
-        head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        _farm_altar_box.add_child(head)
+		var head := Label.new()
+		head.text = "АЛТАРЬ ЗВЁЗД"
+		head.add_theme_font_override("font", BunkerUI.font_title())
+		head.add_theme_font_size_override("font_size", 24)
+		head.add_theme_color_override("font_color", BunkerUI.HAZARD)
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_farm_altar_box.add_child(head)
 
-        var sub := Label.new()
-        sub.text = Loc.t("farm.sub")
-        sub.add_theme_font_override("font", BunkerUI.font_body())
-        sub.add_theme_font_size_override("font_size", 13)
-        sub.add_theme_color_override("font_color", Color("7d8f6a"))
-        sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        _farm_altar_box.add_child(sub)
+		var sub := Label.new()
+		sub.text = Loc.t("farm.sub")
+		sub.add_theme_font_override("font", BunkerUI.font_body())
+		sub.add_theme_font_size_override("font_size", 13)
+		sub.add_theme_color_override("font_color", Color("7d8f6a"))
+		sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_farm_altar_box.add_child(sub)
 
-        var type := _farm_selected
-        var stars: int = lab_data.get_mutant_stars(type)
-        var req: Dictionary = game_manager.get_star_requirements(type) if game_manager else {}
-        var rar: String = GachaData.get_mutant_rarity(type)
-        var rcol: Color = BunkerUI.RARHEX.get(rar, BunkerUI.TEXT)
+		var type := _farm_selected
+		var stars: int = lab_data.get_mutant_stars(type)
+		var req: Dictionary = game_manager.get_star_requirements(type) if game_manager else {}
+		var rar: String = GachaData.get_mutant_rarity(type)
+		var rcol: Color = BunkerUI.RARHEX.get(rar, BunkerUI.TEXT)
 
-        # Круг питомца: арт карточки по кругу; нет файла - буква как фолбэк
-        var big := Panel.new()
-        big.custom_minimum_size = Vector2(140, 140)
-        big.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-        var bsb := StyleBoxFlat.new()
-        bsb.set_corner_radius_all(70)
-        bsb.bg_color = Color(0.06, 0.09, 0.045)
-        bsb.border_color = Color(rcol, 0.7)
-        bsb.set_border_width_all(2)
-        bsb.shadow_color = Color(rcol, 0.25)
-        bsb.shadow_size = 26
-        bsb.shadow_offset = Vector2.ZERO
-        big.add_theme_stylebox_override("panel", bsb)
-        _farm_altar_box.add_child(big)
+		# Круг питомца: арт карточки по кругу; нет файла - буква как фолбэк
+		var big := Panel.new()
+		big.custom_minimum_size = Vector2(140, 140)
+		big.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		var bsb := StyleBoxFlat.new()
+		bsb.set_corner_radius_all(70)
+		bsb.bg_color = Color(0.06, 0.09, 0.045)
+		bsb.border_color = Color(rcol, 0.7)
+		bsb.set_border_width_all(2)
+		bsb.shadow_color = Color(rcol, 0.25)
+		bsb.shadow_size = 26
+		bsb.shadow_offset = Vector2.ZERO
+		big.add_theme_stylebox_override("panel", bsb)
+		_farm_altar_box.add_child(big)
 
-        var altar_art_path: String = GachaData.card_icon_path(type, true)
-        if ResourceLoader.exists(altar_art_path):
-                var big_art := TextureRect.new()
-                big_art.set_anchors_preset(Control.PRESET_FULL_RECT)
-                big_art.offset_left = 10
-                big_art.offset_top = 10
-                big_art.offset_right = -10
-                big_art.offset_bottom = -10
-                big_art.texture = load(altar_art_path)
-                big_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-                big_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-                big_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-                big.add_child(big_art)
-        else:
-                var big_l := Label.new()
-                big_l.set_anchors_preset(Control.PRESET_FULL_RECT)
-                big_l.text = GachaData.display_name(type).substr(0, 1)
-                big_l.add_theme_font_override("font", BunkerUI.font_title())
-                big_l.add_theme_font_size_override("font_size", 64)
-                big_l.add_theme_color_override("font_color", Color(rcol, 0.6))
-                big_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-                big_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-                big.add_child(big_l)
+		var altar_art_path: String = GachaData.card_icon_path(type, true)
+		if ResourceLoader.exists(altar_art_path):
+				var big_art := TextureRect.new()
+				big_art.set_anchors_preset(Control.PRESET_FULL_RECT)
+				big_art.offset_left = 10
+				big_art.offset_top = 10
+				big_art.offset_right = -10
+				big_art.offset_bottom = -10
+				big_art.texture = load(altar_art_path)
+				big_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				big_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				big_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				big.add_child(big_art)
+		else:
+				var big_l := Label.new()
+				big_l.set_anchors_preset(Control.PRESET_FULL_RECT)
+				big_l.text = GachaData.display_name(type).substr(0, 1)
+				big_l.add_theme_font_override("font", BunkerUI.font_title())
+				big_l.add_theme_font_size_override("font_size", 64)
+				big_l.add_theme_color_override("font_color", Color(rcol, 0.6))
+				big_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				big_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				big.add_child(big_l)
 
-        var big_st := Label.new()
-        if stars >= LabData.MAX_STARS:
-                big_st.text = "★".repeat(LabData.MAX_STARS)
-        else:
-                big_st.text = "★".repeat(stars) + "☆".repeat(LabData.MAX_STARS - stars)
-        big_st.add_theme_font_override("font", BunkerUI.font_mono())
-        big_st.add_theme_font_size_override("font_size", 17)
-        big_st.add_theme_color_override("font_color", Color("ffd94d"))
-        big_st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        _farm_altar_box.add_child(big_st)
+		var big_st := Label.new()
+		if stars >= LabData.MAX_STARS:
+				big_st.text = "★".repeat(LabData.MAX_STARS)
+		else:
+				big_st.text = "★".repeat(stars) + "☆".repeat(LabData.MAX_STARS - stars)
+		big_st.add_theme_font_override("font", BunkerUI.font_mono())
+		big_st.add_theme_font_size_override("font_size", 17)
+		big_st.add_theme_color_override("font_color", Color("ffd94d"))
+		big_st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_farm_altar_box.add_child(big_st)
 
-        # Характеристики
-        var next_mult: float = LabData.get_star_stat_mult(mini(stars + 1, LabData.MAX_STARS))
-        _farm_altar_box.add_child(_make_altar_kv("Мутант", GachaData.display_name(type).to_upper(), rcol))
-        _farm_altar_box.add_child(_make_altar_kv("Сила отряда", "×%.1f → ×%.1f" % [LabData.get_star_stat_mult(stars), next_mult]))
-        _farm_altar_box.add_child(_make_altar_kv("Бонус звезды", "+%d%% статов" % roundi(LabData.STAR_STAT_BONUS * 100.0), Color("a8ff7a")))
+		# Характеристики
+		var next_mult: float = LabData.get_star_stat_mult(mini(stars + 1, LabData.MAX_STARS))
+		_farm_altar_box.add_child(_make_altar_kv("Мутант", GachaData.display_name(type).to_upper(), rcol))
+		_farm_altar_box.add_child(_make_altar_kv("Сила отряда", "×%.1f → ×%.1f" % [LabData.get_star_stat_mult(stars), next_mult]))
+		_farm_altar_box.add_child(_make_altar_kv("Бонус звезды", "+%d%% статов" % roundi(LabData.STAR_STAT_BONUS * 100.0), Color("a8ff7a")))
 
-        # Бак прогресс
-        if stars < LabData.MAX_STARS:
-                var feed_cost: int = GachaData.get_star_feed_cost(stars)
-                var bar := ProgressBar.new()
-                bar.max_value = maxi(feed_cost, 1)
-                bar.value = lab_data.get_star_progress(type)
-                bar.show_percentage = false
-                bar.custom_minimum_size = Vector2(0, 12)
-                var bbg := StyleBoxFlat.new()
-                bbg.bg_color = Color(0.03, 0.045, 0.024)
-                bbg.border_color = BunkerUI.STEEL_EDGE
-                bbg.set_border_width_all(1)
-                bbg.set_corner_radius_all(6)
-                var bfill := StyleBoxFlat.new()
-                bfill.bg_color = Color("8dff5a")
-                bfill.set_corner_radius_all(6)
-                bar.add_theme_stylebox_override("background", bbg)
-                bar.add_theme_stylebox_override("fill", bfill)
-                _farm_altar_box.add_child(bar)
+		# Бак прогресс
+		if stars < LabData.MAX_STARS:
+				var feed_cost: int = GachaData.get_star_feed_cost(stars)
+				var bar := ProgressBar.new()
+				bar.max_value = maxi(feed_cost, 1)
+				bar.value = lab_data.get_star_progress(type)
+				bar.show_percentage = false
+				bar.custom_minimum_size = Vector2(0, 12)
+				var bbg := StyleBoxFlat.new()
+				bbg.bg_color = Color(0.03, 0.045, 0.024)
+				bbg.border_color = BunkerUI.STEEL_EDGE
+				bbg.set_border_width_all(1)
+				bbg.set_corner_radius_all(6)
+				var bfill := StyleBoxFlat.new()
+				bfill.bg_color = Color("8dff5a")
+				bfill.set_corner_radius_all(6)
+				bar.add_theme_stylebox_override("background", bbg)
+				bar.add_theme_stylebox_override("fill", bfill)
+				_farm_altar_box.add_child(bar)
 
-                var bak_lbl := BunkerUI.make_mono_label(
-                        "ЗВЁЗДНЫЙ БАК %d/%d" % [lab_data.get_star_progress(type), feed_cost],
-                        13, Color("a8ff7a"))
-                bak_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-                _farm_altar_box.add_child(bak_lbl)
+				var bak_lbl := BunkerUI.make_mono_label(
+						"ЗВЁЗДНЫЙ БАК %d/%d" % [lab_data.get_star_progress(type), feed_cost],
+						13, Color("a8ff7a"))
+				bak_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				_farm_altar_box.add_child(bak_lbl)
 
-                # Копии/корм для рецепта
-                if not req.is_empty():
-                        _farm_altar_box.add_child(_make_altar_kv(
-                                "Копии той же ★",
-                                "%d/%d" % [int(req.get("tier_copies_have", 0)), int(req.get("copies_need", 0))],
-                                Color("e8f5d0") if int(req.get("tier_copies_have", 0)) >= int(req.get("copies_need", 0)) else BunkerUI.HAZARD))
-                        _farm_altar_box.add_child(_make_altar_kv(
-                                "Простой корм",
-                                "%d/%d" % [int(req.get("simple_have", 0)), int(req.get("simple_need", 0))],
-                                Color("e8f5d0") if int(req.get("simple_have", 0)) >= int(req.get("simple_need", 0)) else BunkerUI.HAZARD))
-        else:
-                var maxl := Label.new()
-                maxl.text = Loc.t("farm.max_stars")
-                maxl.add_theme_font_override("font", BunkerUI.font_title())
-                maxl.add_theme_font_size_override("font_size", 18)
-                maxl.add_theme_color_override("font_color", Color("ffd94d"))
-                maxl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-                _farm_altar_box.add_child(maxl)
+				# Копии/корм для рецепта
+				if not req.is_empty():
+						_farm_altar_box.add_child(_make_altar_kv(
+								"Копии той же ★",
+								"%d/%d" % [int(req.get("tier_copies_have", 0)), int(req.get("copies_need", 0))],
+								Color("e8f5d0") if int(req.get("tier_copies_have", 0)) >= int(req.get("copies_need", 0)) else BunkerUI.HAZARD))
+						_farm_altar_box.add_child(_make_altar_kv(
+								"Простой корм",
+								"%d/%d" % [int(req.get("simple_have", 0)), int(req.get("simple_need", 0))],
+								Color("e8f5d0") if int(req.get("simple_have", 0)) >= int(req.get("simple_need", 0)) else BunkerUI.HAZARD))
+		else:
+				var maxl := Label.new()
+				maxl.text = Loc.t("farm.max_stars")
+				maxl.add_theme_font_override("font", BunkerUI.font_title())
+				maxl.add_theme_font_size_override("font_size", 18)
+				maxl.add_theme_color_override("font_color", Color("ffd94d"))
+				maxl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				_farm_altar_box.add_child(maxl)
 
-        var push := Control.new()
-        push.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        _farm_altar_box.add_child(push)
+		var push := Control.new()
+		push.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_farm_altar_box.add_child(push)
 
-        # Кнопки: повысить разом (выбор готового) + собрать рецепт + кормить
-        if stars < LabData.MAX_STARS:
-                var now_btn := Button.new()
-                now_btn.text = Loc.t("up.boost_now")
-                now_btn.custom_minimum_size = Vector2(0, 58)
-                BunkerUI.style_button(now_btn, "primary", 18, true)
-                now_btn.pressed.connect(_on_boost_now_pressed)
-                now_btn.mouse_entered.connect(_play_hover_sound)
-                _farm_altar_box.add_child(now_btn)
+		# Кнопки: повысить разом (выбор готового) + собрать рецепт + кормить
+		if stars < LabData.MAX_STARS:
+				var now_btn := Button.new()
+				now_btn.text = Loc.t("up.boost_now")
+				now_btn.custom_minimum_size = Vector2(0, 58)
+				BunkerUI.style_button(now_btn, "primary", 18, true)
+				now_btn.pressed.connect(_on_boost_now_pressed)
+				now_btn.mouse_entered.connect(_play_hover_sound)
+				_farm_altar_box.add_child(now_btn)
 
-                var up_btn := Button.new()
-                up_btn.text = "СОБРАТЬ РЕЦЕПТ · ★%d" % (stars + 1)
-                up_btn.custom_minimum_size = Vector2(0, 58)
-                BunkerUI.style_button(up_btn, "hazard", 19, true)
-                up_btn.pressed.connect(_on_farm_upgrade.bind(type))
-                up_btn.mouse_entered.connect(_play_hover_sound)
-                _farm_altar_box.add_child(up_btn)
+				var up_btn := Button.new()
+				up_btn.text = "СОБРАТЬ РЕЦЕПТ · ★%d" % (stars + 1)
+				up_btn.custom_minimum_size = Vector2(0, 58)
+				BunkerUI.style_button(up_btn, "hazard", 19, true)
+				up_btn.pressed.connect(_on_farm_upgrade.bind(type))
+				up_btn.mouse_entered.connect(_play_hover_sound)
+				_farm_altar_box.add_child(up_btn)
 
-        if lab_data.get_farm_copies(type) > 0 and stars < LabData.MAX_STARS:
-                var feed_btn := Button.new()
-                feed_btn.text = "КОРМИТЬ (выбрать копию-корм)"
-                feed_btn.custom_minimum_size = Vector2(0, 48)
-                BunkerUI.style_button(feed_btn, "steel", 15)
-                feed_btn.pressed.connect(_on_farm_feed_pressed.bind(type))
-                feed_btn.mouse_entered.connect(_play_hover_sound)
-                _farm_altar_box.add_child(feed_btn)
+		if lab_data.get_farm_copies(type) > 0 and stars < LabData.MAX_STARS:
+				var feed_btn := Button.new()
+				feed_btn.text = "КОРМИТЬ (выбрать копию-корм)"
+				feed_btn.custom_minimum_size = Vector2(0, 48)
+				BunkerUI.style_button(feed_btn, "steel", 15)
+				feed_btn.pressed.connect(_on_farm_feed_pressed.bind(type))
+				feed_btn.mouse_entered.connect(_play_hover_sound)
+				_farm_altar_box.add_child(feed_btn)
 
 
 func _rebuild_farm_panel():
         """Карточки питомцев + алтарь. Режимы: cards / feed_pick / кормление / утилизация"""
-        for child in farm_list.get_children():
-                child.queue_free()
-        if not lab_data:
-                return
-        if _farm_biomass_chip:
-                _farm_biomass_chip.text = _format_number(lab_data.biomass)
-        if _farm_rolls_chip:
-                _farm_rolls_chip.text = str(lab_data.gacha_rolls_mutants)
-        _farm_altar_panel.visible = _farm_mode == "cards" and _feed_fodder.is_empty() and not _recycle_mode
-        var cards_mode: bool = _farm_mode == "cards" and _feed_fodder.is_empty() and not _recycle_mode
-        if _farm_cards_wrap:
-                _farm_cards_wrap.visible = cards_mode
-        if _farm_modes_wrap:
-                _farm_modes_wrap.visible = not cards_mode
-        _farm_cards_scroll.visible = cards_mode
-        _farm_modes_scroll.visible = not cards_mode
+		for child in farm_list.get_children():
+				child.queue_free()
+		if not lab_data:
+				return
+		if _farm_biomass_chip:
+				_farm_biomass_chip.text = _format_number(lab_data.biomass)
+		if _farm_rolls_chip:
+				_farm_rolls_chip.text = str(lab_data.gacha_rolls_mutants)
+		_farm_altar_panel.visible = _farm_mode == "cards" and _feed_fodder.is_empty() and not _recycle_mode
+		var cards_mode: bool = _farm_mode == "cards" and _feed_fodder.is_empty() and not _recycle_mode
+		if _farm_cards_wrap:
+				_farm_cards_wrap.visible = cards_mode
+		if _farm_modes_wrap:
+				_farm_modes_wrap.visible = not cards_mode
+		_farm_cards_scroll.visible = cards_mode
+		_farm_modes_scroll.visible = not cards_mode
 
-        # Режим кормления: выбор цели для выбранного корма
-        if not _feed_fodder.is_empty():
-                var fodder_type: String = _feed_fodder[0]
-                var fodder_stars: int = lab_data.get_mutant_stars(fodder_type)
-                farm_list.add_child(_make_farm_section(Loc.t("farm.pick_fodder", {"n": Loc.type_name(fodder_type).to_upper()})))
-                var cancel := Button.new()
-                cancel.text = Loc.t("lab.back")
-                cancel.custom_minimum_size = Vector2(0, 40)
-                BunkerUI.style_button(cancel, "steel", 15)
-                cancel.pressed.connect(_on_feed_cancel)
-                farm_list.add_child(cancel)
-                var found := false
-                for type in lab_data.unlocked_mutants:
-                        if type == fodder_type or lab_data.get_farm_copies(type) <= 0:
-                                continue
-                        found = true
-                        var t_stars: int = lab_data.get_mutant_stars(type)
-                        var to_star_bucket: bool = fodder_stars == t_stars and lab_data.get_star_feed(type) < 1
-                        var row := HBoxContainer.new()
-                        row.add_theme_constant_override("separation", 10)
-                        row.add_child(_make_icon_rect(type, true, 30))
-                        var name_label := Label.new()
-                        name_label.text = "%s  %s   (%s)" % [
-                                Loc.type_name(type), LabData.stars_text(t_stars),
-                                Loc.t("farm.progress", {"cur": lab_data.get_star_progress(type), "need": GachaData.get_star_feed_cost(t_stars)})]
-                        name_label.add_theme_color_override("font_color", Color("ffd94d") if to_star_bucket else BunkerUI.TEXT)
-                        name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                        row.add_child(name_label)
-                        var mark := BunkerUI.make_mono_label("→ ЗВЁЗДНЫЙ БАК" if to_star_bucket else "→ ПРОСТОЙ КОРМ", 12,
-                                Color("ffd94d") if to_star_bucket else Color("8ba06e"))
-                        row.add_child(mark)
-                        var btn := Button.new()
-                        btn.text = "КОРМИТЬ"
-                        btn.custom_minimum_size = Vector2(130, 40)
-                        BunkerUI.style_button(btn, "primary", 14)
-                        btn.pressed.connect(_on_feed_confirm.bind(type))
-                        row.add_child(btn)
-                        farm_list.add_child(row)
-                if not found:
-                        var none := Label.new()
-                        none.text = Loc.t("farm.empty")
-                        farm_list.add_child(none)
-                return
+		# Режим кормления: выбор цели для выбранного корма
+		if not _feed_fodder.is_empty():
+				var fodder_type: String = _feed_fodder[0]
+				var fodder_stars: int = lab_data.get_mutant_stars(fodder_type)
+				farm_list.add_child(_make_farm_section(Loc.t("farm.pick_fodder", {"n": Loc.type_name(fodder_type).to_upper()})))
+				var cancel := Button.new()
+				cancel.text = Loc.t("lab.back")
+				cancel.custom_minimum_size = Vector2(0, 40)
+				BunkerUI.style_button(cancel, "steel", 15)
+				cancel.pressed.connect(_on_feed_cancel)
+				farm_list.add_child(cancel)
+				var found := false
+				for type in lab_data.unlocked_mutants:
+						if type == fodder_type or lab_data.get_farm_copies(type) <= 0:
+								continue
+						found = true
+						var t_stars: int = lab_data.get_mutant_stars(type)
+						var to_star_bucket: bool = fodder_stars == t_stars and lab_data.get_star_feed(type) < 1
+						var row := HBoxContainer.new()
+						row.add_theme_constant_override("separation", 10)
+						row.add_child(_make_icon_rect(type, true, 30))
+						var name_label := Label.new()
+						name_label.text = "%s  %s   (%s)" % [
+								Loc.type_name(type), LabData.stars_text(t_stars),
+								Loc.t("farm.progress", {"cur": lab_data.get_star_progress(type), "need": GachaData.get_star_feed_cost(t_stars)})]
+						name_label.add_theme_color_override("font_color", Color("ffd94d") if to_star_bucket else BunkerUI.TEXT)
+						name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+						row.add_child(name_label)
+						var mark := BunkerUI.make_mono_label("→ ЗВЁЗДНЫЙ БАК" if to_star_bucket else "→ ПРОСТОЙ КОРМ", 12,
+								Color("ffd94d") if to_star_bucket else Color("8ba06e"))
+						row.add_child(mark)
+						var btn := Button.new()
+						btn.text = "КОРМИТЬ"
+						btn.custom_minimum_size = Vector2(130, 40)
+						BunkerUI.style_button(btn, "primary", 14)
+						btn.pressed.connect(_on_feed_confirm.bind(type))
+						row.add_child(btn)
+						farm_list.add_child(row)
+				if not found:
+						var none := Label.new()
+						none.text = Loc.t("farm.empty")
+						farm_list.add_child(none)
+				return
 
-        # Режим утилизации
-        if _recycle_mode:
-                _rebuild_farm_recycle()
-                return
+		# Режим утилизации
+		if _recycle_mode:
+				_rebuild_farm_recycle()
+				return
 
-        # Режим «кормовая грелка»: выбрать копию-корм
-        if _farm_mode == "feed_pick":
-                farm_list.add_child(_make_farm_section(Loc.t("farm.pick_feed")))
-                var cancel2 := Button.new()
-                cancel2.text = Loc.t("lab.back")
-                cancel2.custom_minimum_size = Vector2(0, 40)
-                BunkerUI.style_button(cancel2, "steel", 15)
-                cancel2.pressed.connect(func():
-                        _farm_mode = "cards"
-                        _rebuild_farm_panel())
-                farm_list.add_child(cancel2)
-                var any_fodder := false
-                for type in lab_data.unlocked_mutants:
-                        if lab_data.get_farm_copies(type) <= 0:
-                                continue
-                        any_fodder = true
-                        var row2 := HBoxContainer.new()
-                        row2.add_theme_constant_override("separation", 10)
-                        row2.add_child(_make_icon_rect(type, true, 30))
-                        var lbl := Label.new()
-                        lbl.text = "%s  %s  ·  копий: %d" % [Loc.type_name(type), LabData.stars_text(lab_data.get_mutant_stars(type)), lab_data.get_farm_copies(type)]
-                        lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                        row2.add_child(lbl)
-                        var pick := Button.new()
-                        pick.text = "КОРМИТЬ ЭТОЙ"
-                        pick.custom_minimum_size = Vector2(170, 40)
-                        BunkerUI.style_button(pick, "steel", 13)
-                        pick.pressed.connect(_on_farm_feed_pressed.bind(type))
-                        row2.add_child(pick)
-                        farm_list.add_child(row2)
-                if not any_fodder:
-                        var empty2 := Label.new()
-                        empty2.text = Loc.t("farm.empty")
-                        farm_list.add_child(empty2)
-                return
+		# Режим «кормовая грелка»: выбрать копию-корм
+		if _farm_mode == "feed_pick":
+				farm_list.add_child(_make_farm_section(Loc.t("farm.pick_feed")))
+				var cancel2 := Button.new()
+				cancel2.text = Loc.t("lab.back")
+				cancel2.custom_minimum_size = Vector2(0, 40)
+				BunkerUI.style_button(cancel2, "steel", 15)
+				cancel2.pressed.connect(func():
+						_farm_mode = "cards"
+						_rebuild_farm_panel())
+				farm_list.add_child(cancel2)
+				var any_fodder := false
+				for type in lab_data.unlocked_mutants:
+						if lab_data.get_farm_copies(type) <= 0:
+								continue
+						any_fodder = true
+						var row2 := HBoxContainer.new()
+						row2.add_theme_constant_override("separation", 10)
+						row2.add_child(_make_icon_rect(type, true, 30))
+						var lbl := Label.new()
+						lbl.text = "%s  %s  ·  копий: %d" % [Loc.type_name(type), LabData.stars_text(lab_data.get_mutant_stars(type)), lab_data.get_farm_copies(type)]
+						lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+						row2.add_child(lbl)
+						var pick := Button.new()
+						pick.text = "КОРМИТЬ ЭТОЙ"
+						pick.custom_minimum_size = Vector2(170, 40)
+						BunkerUI.style_button(pick, "steel", 13)
+						pick.pressed.connect(_on_farm_feed_pressed.bind(type))
+						row2.add_child(pick)
+						farm_list.add_child(row2)
+				if not any_fodder:
+						var empty2 := Label.new()
+						empty2.text = Loc.t("farm.empty")
+						farm_list.add_child(empty2)
+				return
 
-        # Обычный режим: карточки питомцев в ряд — фильтр + сортировка по силе (как в галерее)
-        for child in _farm_cards_box.get_children():
-                child.queue_free()
-        var pets: Array = _farm_apply_filter(lab_data.unlocked_mutants)
-        pets.sort_custom(_farm_sort_cmp)
-        for type in pets:
-                _farm_cards_box.add_child(_make_farm_card(str(type)))
-        if pets.is_empty():
-                var empty3 := Label.new()
-                empty3.text = Loc.t("farm.empty")
-                _farm_cards_box.add_child(empty3)
-        if _farm_filter_count:
-                _farm_filter_count.text = "ПИТОМЦЕВ: %d/%d" % [pets.size(), lab_data.unlocked_mutants.size()]
+		# Обычный режим: карточки питомцев в ряд — фильтр + сортировка по силе (как в галерее)
+		for child in _farm_cards_box.get_children():
+				child.queue_free()
+		var pets: Array = _farm_apply_filter(lab_data.unlocked_mutants)
+		pets.sort_custom(_farm_sort_cmp)
+		for type in pets:
+				_farm_cards_box.add_child(_make_farm_card(str(type)))
+		if pets.is_empty():
+				var empty3 := Label.new()
+				empty3.text = Loc.t("farm.empty")
+				_farm_cards_box.add_child(empty3)
+		if _farm_filter_count:
+				_farm_filter_count.text = "ПИТОМЦЕВ: %d/%d" % [pets.size(), lab_data.unlocked_mutants.size()]
 
-        _rebuild_farm_altar()
+		_rebuild_farm_altar()
 
 
 func _make_farm_section(text: String) -> Label:
-        var label := Label.new()
-        label.text = text
-        label.add_theme_font_override("font", BunkerUI.font_title())
-        label.add_theme_font_size_override("font_size", 16)
-        label.add_theme_color_override("font_color", BunkerUI.HAZARD)
-        return label
+		var label := Label.new()
+		label.text = text
+		label.add_theme_font_override("font", BunkerUI.font_title())
+		label.add_theme_font_size_override("font_size", 16)
+		label.add_theme_color_override("font_color", BunkerUI.HAZARD)
+		return label
 
 
 func _on_farm_feed_pressed(type: String):
-        _play_click_sound()
-        _feed_fodder = [type]
-        _farm_mode = "cards"
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_feed_fodder = [type]
+		_farm_mode = "cards"
+		_rebuild_farm_panel()
 
 
 func _on_feed_cancel():
-        _play_click_sound()
-        _feed_fodder.clear()
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_feed_fodder.clear()
+		_rebuild_farm_panel()
 
 
 func _on_feed_confirm(target_type: String):
-        _play_click_sound()
-        var msg: String = game_manager.feed_fodder(_feed_fodder[0], target_type)
-        _show_message(msg, 2.0)
-        _feed_fodder.clear()
-        _rebuild_farm_panel()
-        _refresh_ui()
+		_play_click_sound()
+		var msg: String = game_manager.feed_fodder(_feed_fodder[0], target_type)
+		_show_message(msg, 2.0)
+		_feed_fodder.clear()
+		_rebuild_farm_panel()
+		_refresh_ui()
 
 
 # ==================== ЯЗЫК ====================
@@ -2266,23 +2266,23 @@ var _lang_button: Button = null
 
 func _build_language_button():
         """Кнопка RU/EN в настройках лаборатории"""
-        var panel = get_node_or_null("SettingsScreen/Panel")
-        if not panel:
-                return
-        _lang_button = Button.new()
-        _lang_button.text = Loc.t("menu.language")
-        _lang_button.position = Vector2(30, 282)
-        _lang_button.size = Vector2(340, 34)
-        _lang_button.pressed.connect(_on_language_pressed)
-        _lang_button.mouse_entered.connect(_play_hover_sound)
-        panel.add_child(_lang_button)
+		var panel = get_node_or_null("SettingsScreen/Panel")
+		if not panel:
+				return
+		_lang_button = Button.new()
+		_lang_button.text = Loc.t("menu.language")
+		_lang_button.position = Vector2(30, 282)
+		_lang_button.size = Vector2(340, 34)
+		_lang_button.pressed.connect(_on_language_pressed)
+		_lang_button.mouse_entered.connect(_play_hover_sound)
+		panel.add_child(_lang_button)
 
 
 func _on_language_pressed():
-        _play_click_sound()
-        Loc.toggle()
-        if _lang_button:
-                _lang_button.text = Loc.t("menu.language")
+		_play_click_sound()
+		Loc.toggle()
+		if _lang_button:
+				_lang_button.text = Loc.t("menu.language")
 
 
 # ==================== ГАЧА ====================
@@ -2300,181 +2300,181 @@ var _artifact_last_drops: Array = []
 func _build_gacha_ui():
         """ДЕКА ГАЧИ (БУНКЕР): большая жёлтая 3D-кнопка ГАЧА ЗОНЫ + пластины круток.
         Гача - ОТДЕЛЬНЫЙ полноэкранный узел: change_scene("gacha")."""
-        var vbox: VBoxContainer = get_node_or_null("VBox")
-        if vbox:
-                var deck := PanelContainer.new()
-                deck.name = "GachaDeck"
-                vbox.add_child(deck)
-                vbox.move_child(deck, 3)
+		var vbox: VBoxContainer = get_node_or_null("VBox")
+		if vbox:
+				var deck := PanelContainer.new()
+				deck.name = "GachaDeck"
+				vbox.add_child(deck)
+				vbox.move_child(deck, 3)
 
-                var dk := HBoxContainer.new()
-                dk.name = "DeckRow"
-                dk.add_theme_constant_override("separation", 16)
-                deck.add_child(dk)
+				var dk := HBoxContainer.new()
+				dk.name = "DeckRow"
+				dk.add_theme_constant_override("separation", 16)
+				deck.add_child(dk)
 
-                var gacha_btn := Button.new()
-                gacha_btn.name = "GachaButton"
-                gacha_btn.text = Loc.t("gacha.bunker_entry")
-                gacha_btn.custom_minimum_size = Vector2(320, 84)
-                BunkerUI.style_button(gacha_btn, "hazard", 24, true)
-                gacha_btn.pressed.connect(_on_gacha_pressed)
-                gacha_btn.mouse_entered.connect(_play_hover_sound)
-                dk.add_child(gacha_btn)
+				var gacha_btn := Button.new()
+				gacha_btn.name = "GachaButton"
+				gacha_btn.text = Loc.t("gacha.bunker_entry")
+				gacha_btn.custom_minimum_size = Vector2(320, 84)
+				BunkerUI.style_button(gacha_btn, "hazard", 24, true)
+				gacha_btn.pressed.connect(_on_gacha_pressed)
+				gacha_btn.mouse_entered.connect(_play_hover_sound)
+				dk.add_child(gacha_btn)
 
-                var mut_plate := BunkerUI.make_plate("0", Loc.t("gacha.plate_mut_rolls"), 120.0, "res://assets/ui/currency/icon_pull.png")
-                mut_plate.name = "MutRollsPlate"
-                dk.add_child(mut_plate)
-                var art_plate := BunkerUI.make_plate("0", Loc.t("gacha.plate_art_rolls"), 120.0, "res://assets/ui/currency/icon_pull.png")
-                art_plate.name = "ArtRollsPlate"
-                dk.add_child(art_plate)
+				var mut_plate := BunkerUI.make_plate("0", Loc.t("gacha.plate_mut_rolls"), 120.0, "res://assets/ui/currency/icon_pull.png")
+				mut_plate.name = "MutRollsPlate"
+				dk.add_child(mut_plate)
+				var art_plate := BunkerUI.make_plate("0", Loc.t("gacha.plate_art_rolls"), 120.0, "res://assets/ui/currency/icon_pull.png")
+				art_plate.name = "ArtRollsPlate"
+				dk.add_child(art_plate)
 
-                var hint := Label.new()
-                hint.name = "GachaHint"
-                hint.text = Loc.t("gacha.deck_hint")
-                hint.add_theme_font_override("font", BunkerUI.font_body())
-                hint.add_theme_font_size_override("font_size", 15)
-                hint.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-                hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-                hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-                dk.add_child(hint)
+				var hint := Label.new()
+				hint.name = "GachaHint"
+				hint.text = Loc.t("gacha.deck_hint")
+				hint.add_theme_font_override("font", BunkerUI.font_body())
+				hint.add_theme_font_size_override("font_size", 15)
+				hint.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+				hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+				hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				dk.add_child(hint)
 
-        # Старая панель круток не используется (гача - отдельная сцена),
-        # оставляем скрытую заглушку для совместимости старых ссылок.
-        gacha_panel = Control.new()
-        gacha_panel.name = "GachaPanel"
-        gacha_panel.visible = false
-        add_child(gacha_panel)
+		# Старая панель круток не используется (гача - отдельная сцена),
+		# оставляем скрытую заглушку для совместимости старых ссылок.
+		gacha_panel = Control.new()
+		gacha_panel.name = "GachaPanel"
+		gacha_panel.visible = false
+		add_child(gacha_panel)
 
 
 func _on_gacha_pressed():
-        _play_click_sound()
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        if game_manager:
-                game_manager.change_scene("gacha")
+		_play_click_sound()
+		if not game_manager:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
+		if game_manager:
+				game_manager.change_scene("gacha")
 
 
 func _on_gacha_close_pressed():
-        _play_click_sound()
-        gacha_panel.visible = false
+		_play_click_sound()
+		gacha_panel.visible = false
 
 
 func _gacha_spin_buttons(kind: String) -> Control:
         """Ряд кнопок круток x1/x10/x100/x1000"""
-        var row := HBoxContainer.new()
-        for times in [1, 10, 100, 1000]:
-                var btn := Button.new()
-                btn.text = "x%d" % times
-                btn.custom_minimum_size = Vector2(70, 30)
-                btn.pressed.connect(_on_gacha_spin.bind(kind, times))
-                btn.mouse_entered.connect(_play_hover_sound)
-                row.add_child(btn)
-        return row
+		var row := HBoxContainer.new()
+		for times in [1, 10, 100, 1000]:
+				var btn := Button.new()
+				btn.text = "x%d" % times
+				btn.custom_minimum_size = Vector2(70, 30)
+				btn.pressed.connect(_on_gacha_spin.bind(kind, times))
+				btn.mouse_entered.connect(_play_hover_sound)
+				row.add_child(btn)
+		return row
 
 
 func _on_gacha_spin(kind: String, times: int):
-        _play_click_sound()
-        var results: Array = []
-        if kind == "mutants":
-                results = game_manager.spin_mutant_gacha(times)
-                for r in results:
-                        _mutant_spin_stats[0] += 1
-                        var idx: int = {"common": 1, "uncommon": 2, "rare": 3, "legendary": 4}.get(str(r.get("rarity")), 1)
-                        _mutant_spin_stats[idx] += 1
-                        _mutant_last_drops.push_front(r)
-                        while _mutant_last_drops.size() > 8:
-                                _mutant_last_drops.pop_back()
-        else:
-                results = game_manager.spin_artifact_gacha(times)
-                for r in results:
-                        _artifact_spin_stats[0] += 1
-                        var idx: int = {"common": 1, "uncommon": 2, "rare": 3, "legendary": 4}.get(str(r.get("rarity")), 1)
-                        _artifact_spin_stats[idx] += 1
-                        _artifact_last_drops.push_front(r)
-                        while _artifact_last_drops.size() > 8:
-                                _artifact_last_drops.pop_back()
-        if results.is_empty():
-                _show_message(Loc.t("gacha.no_rolls"), 1.5)
-        _rebuild_gacha_panel()
-        _refresh_ui()
+		_play_click_sound()
+		var results: Array = []
+		if kind == "mutants":
+				results = game_manager.spin_mutant_gacha(times)
+				for r in results:
+						_mutant_spin_stats[0] += 1
+						var idx: int = {"common": 1, "uncommon": 2, "rare": 3, "legendary": 4}.get(str(r.get("rarity")), 1)
+						_mutant_spin_stats[idx] += 1
+						_mutant_last_drops.push_front(r)
+						while _mutant_last_drops.size() > 8:
+								_mutant_last_drops.pop_back()
+		else:
+				results = game_manager.spin_artifact_gacha(times)
+				for r in results:
+						_artifact_spin_stats[0] += 1
+						var idx: int = {"common": 1, "uncommon": 2, "rare": 3, "legendary": 4}.get(str(r.get("rarity")), 1)
+						_artifact_spin_stats[idx] += 1
+						_artifact_last_drops.push_front(r)
+						while _artifact_last_drops.size() > 8:
+								_artifact_last_drops.pop_back()
+		if results.is_empty():
+				_show_message(Loc.t("gacha.no_rolls"), 1.5)
+		_rebuild_gacha_panel()
+		_refresh_ui()
 
 
 func _make_drop_row(r: Dictionary, is_mutant: bool) -> Control:
         """Строка дропа гачи: карточка-иконка + имя, окрашенное по редкости"""
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 6)
-        row.add_child(_make_icon_rect(str(r.get("type", "")), is_mutant, 24))
-        var label := Label.new()
-        label.text = _format_drop(r)
-        label.add_theme_color_override("font_color", GachaData.rarity_color(str(r.get("rarity", "common"))))
-        return row
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row.add_child(_make_icon_rect(str(r.get("type", "")), is_mutant, 24))
+		var label := Label.new()
+		label.text = _format_drop(r)
+		label.add_theme_color_override("font_color", GachaData.rarity_color(str(r.get("rarity", "common"))))
+		return row
 
 
 func _format_drop(r: Dictionary) -> String:
-        var rarity: String = str(r.get("rarity", "common"))
-        var line: String = "[%s] %s" % [Loc.t("rarity." + rarity), Loc.type_name(str(r.get("type")))]
-        match str(r.get("status", "")):
-                "new":
-                        line += " - " + Loc.t("gacha.new_mark")
-                "dup":
-                        line += " - " + Loc.t("gacha.dup_mark")
-                "star":
-                        line += " - " + Loc.t("gacha.star_mark")
-        return line
+		var rarity: String = str(r.get("rarity", "common"))
+		var line: String = "[%s] %s" % [Loc.t("rarity." + rarity), Loc.type_name(str(r.get("type")))]
+		match str(r.get("status", "")):
+				"new":
+						line += " - " + Loc.t("gacha.new_mark")
+				"dup":
+						line += " - " + Loc.t("gacha.dup_mark")
+				"star":
+						line += " - " + Loc.t("gacha.star_mark")
+		return line
 
 
 func _gacha_stats_line(stats: Array, has_uncommon: bool) -> String:
-        var total: int = stats[0]
-        if total <= 0:
-                return ""
-        var pct := func(n: int) -> String:
-                return "%.1f" % (100.0 * float(n) / float(total))
-        if has_uncommon:
-                return Loc.t("gacha.stats", {"n": total, "cp": pct.call(stats[1]), "up": pct.call(stats[2]), "rp": pct.call(stats[3]), "lp": pct.call(stats[4])})
-        return Loc.t("gacha.stats_short", {"n": total, "cp": pct.call(stats[1]), "rp": pct.call(stats[3]), "lp": pct.call(stats[4])})
+		var total: int = stats[0]
+		if total <= 0:
+				return ""
+		var pct := func(n: int) -> String:
+				return "%.1f" % (100.0 * float(n) / float(total))
+		if has_uncommon:
+				return Loc.t("gacha.stats", {"n": total, "cp": pct.call(stats[1]), "up": pct.call(stats[2]), "rp": pct.call(stats[3]), "lp": pct.call(stats[4])})
+		return Loc.t("gacha.stats_short", {"n": total, "cp": pct.call(stats[1]), "rp": pct.call(stats[3]), "lp": pct.call(stats[4])})
 
 
 func _rebuild_gacha_panel():
         """Два рукава гачи: крутки, кнопки, статистика шансов, последние дропы"""
-        for child in gacha_list.get_children():
-                child.queue_free()
-        if not lab_data or not game_manager:
-                return
+		for child in gacha_list.get_children():
+				child.queue_free()
+		if not lab_data or not game_manager:
+				return
 
-        var level_line := Label.new()
-        level_line.text = Loc.t("gacha.level_used", {"n": game_manager.get_campaign_level()})
-        gacha_list.add_child(level_line)
+		var level_line := Label.new()
+		level_line.text = Loc.t("gacha.level_used", {"n": game_manager.get_campaign_level()})
+		gacha_list.add_child(level_line)
 
-        # === МУТАНТЫ ===
-        gacha_list.add_child(_make_star_section(Loc.t("gacha.mutants_header")))
-        var mut_rolls := Label.new()
-        mut_rolls.text = Loc.t("gacha.rolls", {"n": lab_data.gacha_rolls_mutants})
-        gacha_list.add_child(mut_rolls)
-        gacha_list.add_child(_gacha_spin_buttons("mutants"))
-        var mut_stats := Label.new()
-        mut_stats.text = _gacha_stats_line(_mutant_spin_stats, true)
-        if not mut_stats.text.is_empty():
-                gacha_list.add_child(mut_stats)
-        if not _mutant_last_drops.is_empty():
-                gacha_list.add_child(_make_star_section(Loc.t("gacha.last_drops")))
-                for r in _mutant_last_drops:
-                        gacha_list.add_child(_make_drop_row(r, true))
+		# === МУТАНТЫ ===
+		gacha_list.add_child(_make_star_section(Loc.t("gacha.mutants_header")))
+		var mut_rolls := Label.new()
+		mut_rolls.text = Loc.t("gacha.rolls", {"n": lab_data.gacha_rolls_mutants})
+		gacha_list.add_child(mut_rolls)
+		gacha_list.add_child(_gacha_spin_buttons("mutants"))
+		var mut_stats := Label.new()
+		mut_stats.text = _gacha_stats_line(_mutant_spin_stats, true)
+		if not mut_stats.text.is_empty():
+				gacha_list.add_child(mut_stats)
+		if not _mutant_last_drops.is_empty():
+				gacha_list.add_child(_make_star_section(Loc.t("gacha.last_drops")))
+				for r in _mutant_last_drops:
+						gacha_list.add_child(_make_drop_row(r, true))
 
-        # === АРТЕФАКТЫ ===
-        gacha_list.add_child(_make_star_section(Loc.t("gacha.artifacts_header")))
-        var art_rolls := Label.new()
-        art_rolls.text = Loc.t("gacha.rolls", {"n": lab_data.gacha_rolls_artifacts})
-        gacha_list.add_child(art_rolls)
-        gacha_list.add_child(_gacha_spin_buttons("artifacts"))
-        var art_stats := Label.new()
-        art_stats.text = _gacha_stats_line(_artifact_spin_stats, false)
-        if not art_stats.text.is_empty():
-                gacha_list.add_child(art_stats)
-        if not _artifact_last_drops.is_empty():
-                gacha_list.add_child(_make_star_section(Loc.t("gacha.last_drops")))
-                for r in _artifact_last_drops:
-                        gacha_list.add_child(_make_drop_row(r, false))
+		# === АРТЕФАКТЫ ===
+		gacha_list.add_child(_make_star_section(Loc.t("gacha.artifacts_header")))
+		var art_rolls := Label.new()
+		art_rolls.text = Loc.t("gacha.rolls", {"n": lab_data.gacha_rolls_artifacts})
+		gacha_list.add_child(art_rolls)
+		gacha_list.add_child(_gacha_spin_buttons("artifacts"))
+		var art_stats := Label.new()
+		art_stats.text = _gacha_stats_line(_artifact_spin_stats, false)
+		if not art_stats.text.is_empty():
+				gacha_list.add_child(art_stats)
+		if not _artifact_last_drops.is_empty():
+				gacha_list.add_child(_make_star_section(Loc.t("gacha.last_drops")))
+				for r in _artifact_last_drops:
+						gacha_list.add_child(_make_drop_row(r, false))
 
 
 # ==================== ГАЛЕРЕЯ ====================
@@ -2490,310 +2490,310 @@ var _gallery_scroll: ScrollContainer = null
 func _build_profile_ui():
         """Кнопка ПРОФИЛЬ: терминал «Сканер личности» — отдельная сцена
         (как гача): аватары из коллекции, рамки/титулы/статусы за прогресс."""
-        var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
-        if bottom:
-                var prof_btn := Button.new()
-                prof_btn.name = "ProfileButton"
-                prof_btn.text = Loc.t("profile.title_btn")
-                prof_btn.custom_minimum_size = Vector2(0, 62)
-                prof_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(prof_btn, "steel", 18)
-                prof_btn.pressed.connect(_on_profile_pressed)
-                prof_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(prof_btn)
+		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
+		if bottom:
+				var prof_btn := Button.new()
+				prof_btn.name = "ProfileButton"
+				prof_btn.text = Loc.t("profile.title_btn")
+				prof_btn.custom_minimum_size = Vector2(0, 62)
+				prof_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(prof_btn, "steel", 18)
+				prof_btn.pressed.connect(_on_profile_pressed)
+				prof_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(prof_btn)
 
 
 func _on_profile_pressed():
-        _play_click_sound()
-        if not game_manager:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        if game_manager:
-                game_manager.change_scene("profile")
+		_play_click_sound()
+		if not game_manager:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
+		if game_manager:
+				game_manager.change_scene("profile")
 
 
 func _build_gallery_ui():
         """Кнопка ГАЛЕРЕЯ + панель коллекции: фильтры (все/мутанты/арты/эксклюзивы/мои),
         плитки от самых сильных к слабым"""
-        var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
-        if bottom:
-                var gal_btn := Button.new()
-                gal_btn.name = "GalleryButton"
-                gal_btn.text = Loc.t("lab.gallery")
-                gal_btn.custom_minimum_size = Vector2(0, 62)
-                gal_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(gal_btn, "steel", 18)
-                gal_btn.pressed.connect(_on_gallery_pressed)
-                gal_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(gal_btn)
+		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
+		if bottom:
+				var gal_btn := Button.new()
+				gal_btn.name = "GalleryButton"
+				gal_btn.text = Loc.t("lab.gallery")
+				gal_btn.custom_minimum_size = Vector2(0, 62)
+				gal_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(gal_btn, "steel", 18)
+				gal_btn.pressed.connect(_on_gallery_pressed)
+				gal_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(gal_btn)
 
-                # ПОЧТА (D25): письма с наградами (сезоны арены и пр.)
-                var mail_btn := Button.new()
-                mail_btn.name = "MailButton"
-                mail_btn.text = Loc.t("mail.button")
-                mail_btn.custom_minimum_size = Vector2(0, 62)
-                mail_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(mail_btn, "steel", 18)
-                # конверт (поставка mail_pack): файла нет — кнопка текстовая
-                var mail_icon := "res://assets/ui/mail/mail_envelope.png"
-                if ResourceLoader.exists(mail_icon):
-                        mail_btn.icon = load(mail_icon)
-                        mail_btn.expand_icon = true
-                        mail_btn.add_theme_constant_override("icon_max_width", 30)
-                mail_btn.pressed.connect(_on_mail_pressed)
-                mail_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(mail_btn)
+				# ПОЧТА (D25): письма с наградами (сезоны арены и пр.)
+				var mail_btn := Button.new()
+				mail_btn.name = "MailButton"
+				mail_btn.text = Loc.t("mail.button")
+				mail_btn.custom_minimum_size = Vector2(0, 62)
+				mail_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(mail_btn, "steel", 18)
+				# конверт (поставка mail_pack): файла нет — кнопка текстовая
+				var mail_icon := "res://assets/ui/mail/mail_envelope.png"
+				if ResourceLoader.exists(mail_icon):
+						mail_btn.icon = load(mail_icon)
+						mail_btn.expand_icon = true
+						mail_btn.add_theme_constant_override("icon_max_width", 30)
+				mail_btn.pressed.connect(_on_mail_pressed)
+				mail_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(mail_btn)
 
-                # СКЛАД (задача владельца): сундуки и расходники
-                var stor_btn := Button.new()
-                stor_btn.name = "StorageButton"
-                stor_btn.text = Loc.t("stor.title")
-                stor_btn.custom_minimum_size = Vector2(0, 62)
-                stor_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(stor_btn, "steel", 18)
-                stor_btn.pressed.connect(_on_lab_storage_pressed)
-                stor_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(stor_btn)
+				# СКЛАД (задача владельца): сундуки и расходники
+				var stor_btn := Button.new()
+				stor_btn.name = "StorageButton"
+				stor_btn.text = Loc.t("stor.title")
+				stor_btn.custom_minimum_size = Vector2(0, 62)
+				stor_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(stor_btn, "steel", 18)
+				stor_btn.pressed.connect(_on_lab_storage_pressed)
+				stor_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(stor_btn)
 
-                # ИВЕНТ (D24): циклические события live-ops
-                var ev_btn := Button.new()
-                ev_btn.name = "EventButton"
-                ev_btn.text = Loc.t("evt.button")
-                var ev_now := EventsData.current_event(int(Time.get_unix_time_from_system()))
-                var ev_icon_path := "res://assets/ui/events/" + str(ev_now["base"]) + "_icon.png"
-                if ResourceLoader.exists(ev_icon_path):
-                        ev_btn.icon = load(ev_icon_path)
-                        ev_btn.expand_icon = true
-                ev_btn.custom_minimum_size = Vector2(0, 62)
-                ev_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(ev_btn, "hazard", 18)
-                ev_btn.pressed.connect(_on_event_pressed)
-                ev_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(ev_btn)
+				# ИВЕНТ (D24): циклические события live-ops
+				var ev_btn := Button.new()
+				ev_btn.name = "EventButton"
+				ev_btn.text = Loc.t("evt.button")
+				var ev_now := EventsData.current_event(int(Time.get_unix_time_from_system()))
+				var ev_icon_path := "res://assets/ui/events/" + str(ev_now["base"]) + "_icon.png"
+				if ResourceLoader.exists(ev_icon_path):
+						ev_btn.icon = load(ev_icon_path)
+						ev_btn.expand_icon = true
+				ev_btn.custom_minimum_size = Vector2(0, 62)
+				ev_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(ev_btn, "hazard", 18)
+				ev_btn.pressed.connect(_on_event_pressed)
+				ev_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(ev_btn)
 
-        gallery_panel = Control.new()
-        gallery_panel.name = "GalleryPanel"
-        gallery_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        gallery_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        gallery_panel.visible = false
-        add_child(gallery_panel)
+		gallery_panel = Control.new()
+		gallery_panel.name = "GalleryPanel"
+		gallery_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		gallery_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		gallery_panel.visible = false
+		add_child(gallery_panel)
 
-        var shade := ColorRect.new()
-        shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-        shade.color = Color(0, 0, 0, 0.6)
-        gallery_panel.add_child(shade)
+		var shade := ColorRect.new()
+		shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+		shade.color = Color(0, 0, 0, 0.6)
+		gallery_panel.add_child(shade)
 
-        var panel := Panel.new()
-        panel.anchor_left = 0.5
-        panel.anchor_top = 0.5
-        panel.anchor_right = 0.5
-        panel.anchor_bottom = 0.5
-        panel.offset_left = -280.0
-        panel.offset_top = -210.0
-        panel.offset_right = 280.0
-        panel.offset_bottom = 210.0
-        gallery_panel.add_child(panel)
+		var panel := Panel.new()
+		panel.anchor_left = 0.5
+		panel.anchor_top = 0.5
+		panel.anchor_right = 0.5
+		panel.anchor_bottom = 0.5
+		panel.offset_left = -280.0
+		panel.offset_top = -210.0
+		panel.offset_right = 280.0
+		panel.offset_bottom = 210.0
+		gallery_panel.add_child(panel)
 
-        var title := Label.new()
-        title.text = Loc.t("gallery.title")
-        title.position = Vector2(0, 10)
-        title.size = Vector2(560, 25)
-        title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        panel.add_child(title)
+		var title := Label.new()
+		title.text = Loc.t("gallery.title")
+		title.position = Vector2(0, 10)
+		title.size = Vector2(560, 25)
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		panel.add_child(title)
 
-        var row := HBoxContainer.new()
-        row.name = "FilterRow"
-        row.position = Vector2(20, 38)
-        row.size = Vector2(520, 28)
-        row.add_theme_constant_override("separation", 4)
-        panel.add_child(row)
+		var row := HBoxContainer.new()
+		row.name = "FilterRow"
+		row.position = Vector2(20, 38)
+		row.size = Vector2(520, 28)
+		row.add_theme_constant_override("separation", 4)
+		panel.add_child(row)
 
-        _gallery_filter_group = ButtonGroup.new()
-        for fdef in [["all", "gallery.f_all"], ["mutants", "gallery.f_mut"], ["artifacts", "gallery.f_art"], ["exclusive", "gallery.f_ex"], ["owned", "gallery.f_owned"]]:
-                var fb := Button.new()
-                fb.text = Loc.t(fdef[1])
-                fb.toggle_mode = true
-                fb.button_group = _gallery_filter_group
-                fb.button_pressed = fdef[0] == _gallery_filter
-                fb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(fb, "steel", 11)
-                fb.pressed.connect(_on_gallery_filter_pressed.bind(fdef[0]))
-                row.add_child(fb)
+		_gallery_filter_group = ButtonGroup.new()
+		for fdef in [["all", "gallery.f_all"], ["mutants", "gallery.f_mut"], ["artifacts", "gallery.f_art"], ["exclusive", "gallery.f_ex"], ["owned", "gallery.f_owned"]]:
+				var fb := Button.new()
+				fb.text = Loc.t(fdef[1])
+				fb.toggle_mode = true
+				fb.button_group = _gallery_filter_group
+				fb.button_pressed = fdef[0] == _gallery_filter
+				fb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(fb, "steel", 11)
+				fb.pressed.connect(_on_gallery_filter_pressed.bind(fdef[0]))
+				row.add_child(fb)
 
-        var scroll := ScrollContainer.new()
-        scroll.position = Vector2(20, 74)
-        scroll.size = Vector2(520, 278)
-        panel.add_child(scroll)
-        _gallery_scroll = scroll
-        # v0.29.3: свайп-слой поверх (attach пересёт якоря — тут слой-сиблинг)
-        _add_abs_swipe_layer(panel, scroll)
+		var scroll := ScrollContainer.new()
+		scroll.position = Vector2(20, 74)
+		scroll.size = Vector2(520, 278)
+		panel.add_child(scroll)
+		_gallery_scroll = scroll
+		# v0.29.3: свайп-слой поверх (attach пересёт якоря — тут слой-сиблинг)
+		_add_abs_swipe_layer(panel, scroll)
 
-        gallery_list = VBoxContainer.new()
-        gallery_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        gallery_list.add_theme_constant_override("separation", 6)
-        scroll.add_child(gallery_list)
+		gallery_list = VBoxContainer.new()
+		gallery_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		gallery_list.add_theme_constant_override("separation", 6)
+		scroll.add_child(gallery_list)
 
-        var close_btn := Button.new()
-        close_btn.text = Loc.t("lab.back")
-        close_btn.position = Vector2(200, 362)
-        close_btn.size = Vector2(160, 35)
-        close_btn.pressed.connect(_on_gallery_close_pressed)
-        close_btn.mouse_entered.connect(_play_hover_sound)
-        panel.add_child(close_btn)
+		var close_btn := Button.new()
+		close_btn.text = Loc.t("lab.back")
+		close_btn.position = Vector2(200, 362)
+		close_btn.size = Vector2(160, 35)
+		close_btn.pressed.connect(_on_gallery_close_pressed)
+		close_btn.mouse_entered.connect(_play_hover_sound)
+		panel.add_child(close_btn)
 
 
 func _on_gallery_pressed():
-        _play_click_sound()
-        _hide_lab_overlays("")
-        gallery_panel.visible = true
-        _rebuild_gallery_panel()
+		_play_click_sound()
+		_hide_lab_overlays("")
+		gallery_panel.visible = true
+		_rebuild_gallery_panel()
 
 
 func _on_gallery_close_pressed():
-        _play_click_sound()
-        gallery_panel.visible = false
+		_play_click_sound()
+		gallery_panel.visible = false
 
 
 func _on_gallery_filter_pressed(filter: String):
-        _play_click_sound()
-        _gallery_filter = filter
-        _rebuild_gallery_panel()
+		_play_click_sound()
+		_gallery_filter = filter
+		_rebuild_gallery_panel()
 
 
 ## Сила мутанта: тир редкости, внутри тира - реже выпадает = сильнее.
 ## Эксклюзив = сила базы + бонус за множители статов (hp*dmg).
 func _mutant_strength(type: String) -> float:
-        var ex := GachaData.get_exclusive(type)
-        if not ex.is_empty():
-                var bonus: float = float(ex.get("hp", 1.0)) * float(ex.get("dmg", 1.0)) - 1.0
-                return _mutant_strength(str(ex["base"])) + bonus * 25.0
-        var rank: float = {"common": 100.0, "uncommon": 200.0, "rare": 300.0, "legendary": 400.0}.get(GachaData.get_mutant_rarity(type), 100.0)
-        return rank - _mutant_drop_weight(type)
+		var ex := GachaData.get_exclusive(type)
+		if not ex.is_empty():
+				var bonus: float = float(ex.get("hp", 1.0)) * float(ex.get("dmg", 1.0)) - 1.0
+				return _mutant_strength(str(ex["base"])) + bonus * 25.0
+		var rank: float = {"common": 100.0, "uncommon": 200.0, "rare": 300.0, "legendary": 400.0}.get(GachaData.get_mutant_rarity(type), 100.0)
+		return rank - _mutant_drop_weight(type)
 
 
 func _mutant_drop_weight(type: String) -> float:
-        for rarity in GachaData.MUTANT_POOL:
-                for e in GachaData.MUTANT_POOL[rarity]:
-                        if str(e[0]) == type:
-                                return float(e[1])
-        return 0.0
+		for rarity in GachaData.MUTANT_POOL:
+				for e in GachaData.MUTANT_POOL[rarity]:
+						if str(e[0]) == type:
+								return float(e[1])
+		return 0.0
 
 
 ## Сила артефакта: тир редкости, внутри тира - уровень кампании открытия
 func _artifact_strength(type: String) -> float:
-        var rank: float = {"common": 1000.0, "rare": 2000.0, "legendary": 3000.0}.get(GachaData.get_artifact_rarity(type), 1000.0)
-        return rank + float(GachaData.get_unlock_campaign_level(type))
+		var rank: float = {"common": 1000.0, "rare": 2000.0, "legendary": 3000.0}.get(GachaData.get_artifact_rarity(type), 1000.0)
+		return rank + float(GachaData.get_unlock_campaign_level(type))
 
 
 func _gallery_all_mutant_types() -> Array:
-        var out: Array = []
-        for rarity in GachaData.MUTANT_POOL:
-                for e in GachaData.MUTANT_POOL[rarity]:
-                        out.append(str(e[0]))
-        for ex in GachaData.EXCLUSIVE_MUTANTS:
-                out.append(str(ex["type"]))
-        return out
+		var out: Array = []
+		for rarity in GachaData.MUTANT_POOL:
+				for e in GachaData.MUTANT_POOL[rarity]:
+						out.append(str(e[0]))
+		for ex in GachaData.EXCLUSIVE_MUTANTS:
+				out.append(str(ex["type"]))
+		return out
 
 
 func _gallery_all_artifact_types() -> Array:
-        var out: Array = []
-        for rarity in GachaData.ARTIFACT_POOL:
-                for t in GachaData.ARTIFACT_POOL[rarity]:
-                        out.append(str(t))
-        for ax in GachaData.EXCLUSIVE_ANOMALIES:
-                out.append(str(ax["type"]))
-        return out
+		var out: Array = []
+		for rarity in GachaData.ARTIFACT_POOL:
+				for t in GachaData.ARTIFACT_POOL[rarity]:
+						out.append(str(t))
+		for ax in GachaData.EXCLUSIVE_ANOMALIES:
+				out.append(str(ax["type"]))
+		return out
 
 
 func _gallery_owned_count() -> int:
-        var n := 0
-        for t in _gallery_all_mutant_types():
-                if lab_data.unlocked_mutants.has(t):
-                        n += 1
-        for t in _gallery_all_artifact_types():
-                if lab_data.won_artifacts.has(t) or lab_data.exclusive_anomalies.has(t):
-                        n += 1
-        return n
+		var n := 0
+		for t in _gallery_all_mutant_types():
+				if lab_data.unlocked_mutants.has(t):
+						n += 1
+		for t in _gallery_all_artifact_types():
+				if lab_data.won_artifacts.has(t) or lab_data.exclusive_anomalies.has(t):
+						n += 1
+		return n
 
 
 
 func _gallery_tile(type: String, is_mutant: bool) -> Control:
         """Плитка карточки: цветная если открыто, серая если нет"""
-        var unlocked: bool = lab_data.unlocked_mutants.has(type) if is_mutant else (lab_data.won_artifacts.has(type) or lab_data.exclusive_anomalies.has(type))
-        var tile := VBoxContainer.new()
-        tile.custom_minimum_size = Vector2(82, 0)
-        tile.add_theme_constant_override("separation", 2)
-        tile.alignment = BoxContainer.ALIGNMENT_BEGIN
+		var unlocked: bool = lab_data.unlocked_mutants.has(type) if is_mutant else (lab_data.won_artifacts.has(type) or lab_data.exclusive_anomalies.has(type))
+		var tile := VBoxContainer.new()
+		tile.custom_minimum_size = Vector2(82, 0)
+		tile.add_theme_constant_override("separation", 2)
+		tile.alignment = BoxContainer.ALIGNMENT_BEGIN
 
-        var rect := TextureRect.new()
-        rect.texture = load(GachaData.card_icon_path(type, is_mutant, not unlocked))
-        rect.custom_minimum_size = Vector2(72, 72)
-        rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-        rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-        # Клик по арту должен открывать карточку: игнорируем мышь, иначе
-        # TextureRect съедает нажатие и gui_input плитки не срабатывает
-        rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        if not unlocked:
-                rect.modulate = Color(0.85, 0.85, 0.9, 0.9)
-        tile.add_child(rect)
+		var rect := TextureRect.new()
+		rect.texture = load(GachaData.card_icon_path(type, is_mutant, not unlocked))
+		rect.custom_minimum_size = Vector2(72, 72)
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		# Клик по арту должен открывать карточку: игнорируем мышь, иначе
+		# TextureRect съедает нажатие и gui_input плитки не срабатывает
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if not unlocked:
+				rect.modulate = Color(0.85, 0.85, 0.9, 0.9)
+		tile.add_child(rect)
 
-        var name_label := Label.new()
-        name_label.text = Loc.type_name(type)
-        name_label.add_theme_font_size_override("font_size", 9)
-        name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-        name_label.custom_minimum_size = Vector2(82, 0)
-        name_label.add_theme_color_override("font_color", GachaData.rarity_color(GachaData.get_artifact_rarity(type) if not is_mutant else GachaData.get_mutant_rarity(type)) if unlocked else Color(0.5, 0.5, 0.55))
-        tile.add_child(name_label)
+		var name_label := Label.new()
+		name_label.text = Loc.type_name(type)
+		name_label.add_theme_font_size_override("font_size", 9)
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		name_label.custom_minimum_size = Vector2(82, 0)
+		name_label.add_theme_color_override("font_color", GachaData.rarity_color(GachaData.get_artifact_rarity(type) if not is_mutant else GachaData.get_mutant_rarity(type)) if unlocked else Color(0.5, 0.5, 0.55))
+		tile.add_child(name_label)
 
-        var stars_label := Label.new()
-        var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
-        var awaken: int = lab_data.get_awaken(type) if is_mutant else 0
-        stars_label.text = LabData.stars_text(stars, awaken) if unlocked else "🔒"
-        stars_label.add_theme_font_size_override("font_size", 9)
-        stars_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        if awaken > 0:
-                stars_label.add_theme_color_override("font_color", LabData.AWAKEN_COLOR)
-        else:
-                stars_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25) if unlocked else Color(0.5, 0.5, 0.55))
-        tile.add_child(stars_label)
+		var stars_label := Label.new()
+		var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
+		var awaken: int = lab_data.get_awaken(type) if is_mutant else 0
+		stars_label.text = LabData.stars_text(stars, awaken) if unlocked else "🔒"
+		stars_label.add_theme_font_size_override("font_size", 9)
+		stars_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if awaken > 0:
+				stars_label.add_theme_color_override("font_color", LabData.AWAKEN_COLOR)
+		else:
+				stars_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25) if unlocked else Color(0.5, 0.5, 0.55))
+		tile.add_child(stars_label)
 
-        var unlock_level: int = GachaData.get_unlock_campaign_level(type)
-        if unlocked:
-                tile.tooltip_text = Loc.t("gallery.unlocked_tip")
-        elif GachaData.is_exclusive_anomaly(type) or GachaData.is_exclusive(type):
-                tile.tooltip_text = "Эксклюзив Чёрных ящиков: ступени 10/20/30 трека наград"
-        else:
-                tile.tooltip_text = Loc.t("gallery.locked_tip", {"n": unlock_level})
-        tile.mouse_filter = Control.MOUSE_FILTER_STOP
-        # Тапы до плитки не доезжают (слои свайпа пересылают только кнопкам):
-        # данные карточки кладём в меты - их читает _swipe_tap
-        tile.set_meta("gal_type", type)
-        tile.set_meta("gal_mut", is_mutant)
-        tile.set_meta("gal_unlocked", unlocked)
-        tile.gui_input.connect(_on_gallery_tile_input.bind(type, is_mutant, unlocked))
-        return tile
+		var unlock_level: int = GachaData.get_unlock_campaign_level(type)
+		if unlocked:
+				tile.tooltip_text = Loc.t("gallery.unlocked_tip")
+		elif GachaData.is_exclusive_anomaly(type) or GachaData.is_exclusive(type):
+				tile.tooltip_text = "Эксклюзив Чёрных ящиков: ступени 10/20/30 трека наград"
+		else:
+				tile.tooltip_text = Loc.t("gallery.locked_tip", {"n": unlock_level})
+		tile.mouse_filter = Control.MOUSE_FILTER_STOP
+		# Тапы до плитки не доезжают (слои свайпа пересылают только кнопкам):
+		# данные карточки кладём в меты - их читает _swipe_tap
+		tile.set_meta("gal_type", type)
+		tile.set_meta("gal_mut", is_mutant)
+		tile.set_meta("gal_unlocked", unlocked)
+		tile.gui_input.connect(_on_gallery_tile_input.bind(type, is_mutant, unlocked))
+		return tile
 
 
 func _gallery_ex_tile(type: String, is_mutant: bool) -> Control:
         """Плитка эксклюзива Чёрного ящика: фиолетовая рамка, серый силуэт если не получен"""
-        var wrap_box := PanelContainer.new()
-        wrap_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color("0a100b")
-        sb.set_border_width_all(2)
-        sb.set_corner_radius_all(8)
-        sb.border_color = Color("b48cff")
-        sb.set_content_margin_all(3)
-        wrap_box.add_theme_stylebox_override("panel", sb)
-        wrap_box.add_child(_gallery_tile(type, is_mutant))
-        return wrap_box
+		var wrap_box := PanelContainer.new()
+		wrap_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color("0a100b")
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(8)
+		sb.border_color = Color("b48cff")
+		sb.set_content_margin_all(3)
+		wrap_box.add_theme_stylebox_override("panel", sb)
+		wrap_box.add_child(_gallery_tile(type, is_mutant))
+		return wrap_box
 
 
 func _on_gallery_tile_input(event: InputEvent, type: String, is_mutant: bool, unlocked: bool):
-        if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-                _play_click_sound()
-                _show_card_detail(type, is_mutant, unlocked)
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+				_play_click_sound()
+				_show_card_detail(type, is_mutant, unlocked)
 
 
 # ==================== КАРТОЧКА-ПРОСМОТР ====================
@@ -2808,262 +2808,262 @@ var detail_desc: Label
 
 func _build_card_detail():
         """Большая карточка: арт художника (PNG) + описание. Открывается кликом по плитке"""
-        detail_panel = Control.new()
-        detail_panel.name = "CardDetail"
-        detail_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        detail_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        detail_panel.visible = false
-        add_child(detail_panel)
+		detail_panel = Control.new()
+		detail_panel.name = "CardDetail"
+		detail_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		detail_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		detail_panel.visible = false
+		add_child(detail_panel)
 
-        var shade := ColorRect.new()
-        shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-        shade.color = Color(0, 0, 0, 0.7)
-        shade.gui_input.connect(func(ev):
-                if ev is InputEventMouseButton and ev.pressed:
-                        detail_panel.visible = false)
-        detail_panel.add_child(shade)
+		var shade := ColorRect.new()
+		shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+		shade.color = Color(0, 0, 0, 0.7)
+		shade.gui_input.connect(func(ev):
+				if ev is InputEventMouseButton and ev.pressed:
+						detail_panel.visible = false)
+		detail_panel.add_child(shade)
 
-        var panel := Panel.new()
-        panel.anchor_left = 0.5
-        panel.anchor_top = 0.5
-        panel.anchor_right = 0.5
-        panel.anchor_bottom = 0.5
-        panel.offset_left = -280.0
-        panel.offset_top = -290.0
-        panel.offset_right = 280.0
-        panel.offset_bottom = 290.0
-        var psb := StyleBoxFlat.new()
-        psb.bg_color = Color(0.031, 0.045, 0.026, 0.99)
-        psb.border_color = BunkerUI.GREEN
-        psb.set_border_width_all(2)
-        psb.set_corner_radius_all(12)
-        psb.shadow_color = Color(0, 0, 0, 0.55)
-        psb.shadow_size = 20
-        panel.add_theme_stylebox_override("panel", psb)
-        detail_panel.add_child(panel)
+		var panel := Panel.new()
+		panel.anchor_left = 0.5
+		panel.anchor_top = 0.5
+		panel.anchor_right = 0.5
+		panel.anchor_bottom = 0.5
+		panel.offset_left = -280.0
+		panel.offset_top = -290.0
+		panel.offset_right = 280.0
+		panel.offset_bottom = 290.0
+		var psb := StyleBoxFlat.new()
+		psb.bg_color = Color(0.031, 0.045, 0.026, 0.99)
+		psb.border_color = BunkerUI.GREEN
+		psb.set_border_width_all(2)
+		psb.set_corner_radius_all(12)
+		psb.shadow_color = Color(0, 0, 0, 0.55)
+		psb.shadow_size = 20
+		panel.add_theme_stylebox_override("panel", psb)
+		detail_panel.add_child(panel)
 
-        detail_image = TextureRect.new()
-        detail_image.position = Vector2(130, 20)
-        detail_image.size = Vector2(300, 300)
-        detail_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-        detail_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        panel.add_child(detail_image)
+		detail_image = TextureRect.new()
+		detail_image.position = Vector2(130, 20)
+		detail_image.size = Vector2(300, 300)
+		detail_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		detail_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		panel.add_child(detail_image)
 
-        detail_name = Label.new()
-        detail_name.position = Vector2(20, 330)
-        detail_name.size = Vector2(520, 30)
-        detail_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        detail_name.add_theme_font_size_override("font_size", 19)
-        panel.add_child(detail_name)
+		detail_name = Label.new()
+		detail_name.position = Vector2(20, 330)
+		detail_name.size = Vector2(520, 30)
+		detail_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		detail_name.add_theme_font_size_override("font_size", 19)
+		panel.add_child(detail_name)
 
-        detail_meta = Label.new()
-        detail_meta.position = Vector2(60, 364)
-        detail_meta.size = Vector2(440, 22)
-        detail_meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        detail_meta.add_theme_font_size_override("font_size", 12)
-        panel.add_child(detail_meta)
+		detail_meta = Label.new()
+		detail_meta.position = Vector2(60, 364)
+		detail_meta.size = Vector2(440, 22)
+		detail_meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		detail_meta.add_theme_font_size_override("font_size", 12)
+		panel.add_child(detail_meta)
 
-        # Бейдж роли (пак pack_role_badges): ТАНК/ЛЕЧ/ДД/БАФ - только у видов
-        # с ролью из этих четырёх; УРОН/КОНТР - без бейджа (глифов нет)
-        detail_badge = TextureRect.new()
-        detail_badge.position = Vector2(24, 358)
-        detail_badge.size = Vector2(30, 30)
-        detail_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-        detail_badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        detail_badge.visible = false
-        panel.add_child(detail_badge)
+		# Бейдж роли (пак pack_role_badges): ТАНК/ЛЕЧ/ДД/БАФ - только у видов
+		# с ролью из этих четырёх; УРОН/КОНТР - без бейджа (глифов нет)
+		detail_badge = TextureRect.new()
+		detail_badge.position = Vector2(24, 358)
+		detail_badge.size = Vector2(30, 30)
+		detail_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		detail_badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		detail_badge.visible = false
+		panel.add_child(detail_badge)
 
-        detail_desc = Label.new()
-        detail_desc.position = Vector2(40, 396)
-        detail_desc.size = Vector2(480, 120)
-        detail_desc.autowrap_mode = TextServer.AUTOWRAP_WORD
-        detail_desc.add_theme_font_size_override("font_size", 12)
-        detail_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        panel.add_child(detail_desc)
+		detail_desc = Label.new()
+		detail_desc.position = Vector2(40, 396)
+		detail_desc.size = Vector2(480, 120)
+		detail_desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+		detail_desc.add_theme_font_size_override("font_size", 12)
+		detail_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		panel.add_child(detail_desc)
 
-        var close := Button.new()
-        close.text = Loc.t("lab.back")
-        close.position = Vector2(190, 526)
-        close.size = Vector2(180, 40)
-        close.pressed.connect(func(): _play_click_sound(); detail_panel.visible = false)
-        panel.add_child(close)
+		var close := Button.new()
+		close.text = Loc.t("lab.back")
+		close.position = Vector2(190, 526)
+		close.size = Vector2(180, 40)
+		close.pressed.connect(func(): _play_click_sound(); detail_panel.visible = false)
+		panel.add_child(close)
 
 
 func _show_card_detail(type: String, is_mutant: bool, unlocked: bool):
         """Заполнить карточку: большой арт (PNG художника или SVG), имя, редкость,
         звёзды, описание, открываемая аномалия"""
-        if not detail_panel:
-                _build_card_detail()
-        var rarity: String = GachaData.get_mutant_rarity(type) if is_mutant else GachaData.get_artifact_rarity(type)
-        var rarity_color: Color = GachaData.rarity_color(rarity)
+		if not detail_panel:
+				_build_card_detail()
+		var rarity: String = GachaData.get_mutant_rarity(type) if is_mutant else GachaData.get_artifact_rarity(type)
+		var rarity_color: Color = GachaData.rarity_color(rarity)
 
-        detail_image.texture = load(GachaData.card_icon_path(type, is_mutant, not unlocked))
-        detail_image.modulate = Color(1, 1, 1, 1) if unlocked else Color(0.85, 0.85, 0.9, 0.9)
+		detail_image.texture = load(GachaData.card_icon_path(type, is_mutant, not unlocked))
+		detail_image.modulate = Color(1, 1, 1, 1) if unlocked else Color(0.85, 0.85, 0.9, 0.9)
 
-        detail_name.text = Loc.type_name(type)
-        detail_name.add_theme_color_override("font_color", rarity_color if unlocked else Color(0.6, 0.6, 0.65))
+		detail_name.text = Loc.type_name(type)
+		detail_name.add_theme_color_override("font_color", rarity_color if unlocked else Color(0.6, 0.6, 0.65))
 
-        var meta_parts: Array[String] = [Loc.t("card.rarity", {"r": Loc.t("rarity." + rarity)})]
-        if unlocked:
-                var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
-                meta_parts.append("%s %s" % [LabData.stars_text(stars), Loc.t("stars.mult_tip", {"n": "%.1f" % LabData.get_star_stat_mult(stars)})])
-                # Показатели вида: ХП/урон с учётом звёзд, эксклюзива и роли вида
-                if is_mutant:
-                        var ds: Dictionary = MutantRoles.display_stats(type, stars, lab_data.get_awaken(type))
-                        meta_parts.append(Loc.t("card.stats", {"hp": str(int(ds["hp"])), "dmg": str(int(ds["dmg"]))}))
-        else:
-                meta_parts.append(Loc.t("card.locked"))
-        if not is_mutant:
-                var anomaly: String = GachaData.get_anomaly_for_artifact(type)
-                if not anomaly.is_empty():
-                        meta_parts.append(Loc.t("card.opens_anomaly", {"n": Loc.t("an." + _anomaly_loc_key(anomaly))}))
-        detail_meta.text = "   ".join(meta_parts)
-        detail_meta.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
+		var meta_parts: Array[String] = [Loc.t("card.rarity", {"r": Loc.t("rarity." + rarity)})]
+		if unlocked:
+				var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
+				meta_parts.append("%s %s" % [LabData.stars_text(stars), Loc.t("stars.mult_tip", {"n": "%.1f" % LabData.get_star_stat_mult(stars)})])
+				# Показатели вида: ХП/урон с учётом звёзд, эксклюзива и роли вида
+				if is_mutant:
+						var ds: Dictionary = MutantRoles.display_stats(type, stars, lab_data.get_awaken(type))
+						meta_parts.append(Loc.t("card.stats", {"hp": str(int(ds["hp"])), "dmg": str(int(ds["dmg"]))}))
+		else:
+				meta_parts.append(Loc.t("card.locked"))
+		if not is_mutant:
+				var anomaly: String = GachaData.get_anomaly_for_artifact(type)
+				if not anomaly.is_empty():
+						meta_parts.append(Loc.t("card.opens_anomaly", {"n": Loc.t("an." + _anomaly_loc_key(anomaly))}))
+		detail_meta.text = "   ".join(meta_parts)
+		detail_meta.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
 
-        # Описание: у вариантов/новых видов фолбэк на базу; роль - всегда
-        var desc_txt: String = Loc.t("desc." + type)
-        if desc_txt == "desc." + type:
-                var base_t: String = type
-                var ex_d: Dictionary = GachaData.get_exclusive(type) if is_mutant else {}
-                if not ex_d.is_empty() and ex_d.has("base"):
-                        base_t = str(ex_d["base"])
-                var fb: String = Loc.t("desc." + base_t)
-                if fb != "desc." + base_t:
-                        desc_txt = fb
-                else:
-                        desc_txt = Loc.t("role.line", {"n": Loc.type_name(type), "r": MutantRoles.role_tag(type)})
-        # Бейдж роли рядом с метой (k remetну: файлы role_tank/heal/dmg/buff)
-        var badge_map := {"ТАНК": "tank", "ЛЕЧ": "heal", "ДД": "dmg", "БАФ": "buff"}
-        var role_tag: String = MutantRoles.role_tag(type) if is_mutant else ""
-        var badge_file: String = str(badge_map.get(role_tag, ""))
-        if is_mutant and not badge_file.is_empty():
-                var bp := "res://assets/ui/icons/roles/role_%s.png" % badge_file
-                if ResourceLoader.exists(bp):
-                        detail_badge.texture = load(bp)
-                        detail_badge.visible = true
-        else:
-                detail_badge.visible = false
-        detail_desc.text = desc_txt
-        if is_mutant:
-                detail_meta.text += "  ·  " + Loc.t("role.line_short", {"r": MutantRoles.role_tag(type)})
-                # Скилл/аура новых видов (D20) - отдельной строкой под описанием
-                var aura_key := "aura." + type
-                if Loc.t(aura_key) != aura_key:
-                        detail_desc.text += "
+		# Описание: у вариантов/новых видов фолбэк на базу; роль - всегда
+		var desc_txt: String = Loc.t("desc." + type)
+		if desc_txt == "desc." + type:
+				var base_t: String = type
+				var ex_d: Dictionary = GachaData.get_exclusive(type) if is_mutant else {}
+				if not ex_d.is_empty() and ex_d.has("base"):
+						base_t = str(ex_d["base"])
+				var fb: String = Loc.t("desc." + base_t)
+				if fb != "desc." + base_t:
+						desc_txt = fb
+				else:
+						desc_txt = Loc.t("role.line", {"n": Loc.type_name(type), "r": MutantRoles.role_tag(type)})
+		# Бейдж роли рядом с метой (k remetну: файлы role_tank/heal/dmg/buff)
+		var badge_map := {"ТАНК": "tank", "ЛЕЧ": "heal", "ДД": "dmg", "БАФ": "buff"}
+		var role_tag: String = MutantRoles.role_tag(type) if is_mutant else ""
+		var badge_file: String = str(badge_map.get(role_tag, ""))
+		if is_mutant and not badge_file.is_empty():
+				var bp := "res://assets/ui/icons/roles/role_%s.png" % badge_file
+				if ResourceLoader.exists(bp):
+						detail_badge.texture = load(bp)
+						detail_badge.visible = true
+		else:
+				detail_badge.visible = false
+		detail_desc.text = desc_txt
+		if is_mutant:
+				detail_meta.text += "  ·  " + Loc.t("role.line_short", {"r": MutantRoles.role_tag(type)})
+				# Скилл/аура новых видов (D20) - отдельной строкой под описанием
+				var aura_key := "aura." + type
+				if Loc.t(aura_key) != aura_key:
+						detail_desc.text += "
 " + Loc.t(aura_key)
-        detail_panel.visible = true
+		detail_panel.visible = true
 
 
 ## anomaly_type "heat_anomaly" -> ключ локализации "heat"
 func _anomaly_loc_key(anomaly_type: String) -> String:
-        var key: String = anomaly_type
-        for suf in ["gravity_", "thermal_", "chemical_", "electric_", "bio_"]:
-                key = key.trim_prefix(suf)
-        key = key.trim_suffix("_anomaly")
-        match key:
-                "radiation_hotspot":
-                        key = "radiation"
-                "time_dilation":
-                        key = "time"
-                "teleport":
-                        key = "teleport"
-                "acid_cloud":
-                        key = "acid_cloud"
-        return key
+		var key: String = anomaly_type
+		for suf in ["gravity_", "thermal_", "chemical_", "electric_", "bio_"]:
+				key = key.trim_prefix(suf)
+		key = key.trim_suffix("_anomaly")
+		match key:
+				"radiation_hotspot":
+						key = "radiation"
+				"time_dilation":
+						key = "time"
+				"teleport":
+						key = "teleport"
+				"acid_cloud":
+						key = "acid_cloud"
+		return key
 
 
 func _rebuild_gallery_panel():
         """Коллекция по активному фильтру, от самых сильных к слабым: счётчик + секции"""
-        for child in gallery_list.get_children():
-                child.queue_free()
-        if not lab_data:
-                return
+		for child in gallery_list.get_children():
+				child.queue_free()
+		if not lab_data:
+				return
 
-        var count := Label.new()
-        count.text = "%s %d/%d" % [Loc.t("gallery.count"), _gallery_owned_count(), GachaData.total_collection_size()]
-        count.add_theme_font_override("font", BunkerUI.font_title())
-        count.add_theme_font_size_override("font_size", 12)
-        count.add_theme_color_override("font_color", BunkerUI.HAZARD)
-        gallery_list.add_child(count)
+		var count := Label.new()
+		count.text = "%s %d/%d" % [Loc.t("gallery.count"), _gallery_owned_count(), GachaData.total_collection_size()]
+		count.add_theme_font_override("font", BunkerUI.font_title())
+		count.add_theme_font_size_override("font_size", 12)
+		count.add_theme_color_override("font_color", BunkerUI.HAZARD)
+		gallery_list.add_child(count)
 
-        # Сеты артефактов (v0.27.0): 5 элементов, стадии 2/3
-        _gallery_sets_block()
+		# Сеты артефактов (v0.27.0): 5 элементов, стадии 2/3
+		_gallery_sets_block()
 
-        var owned_only := _gallery_filter == "owned"
-        var filled := false
-        if _gallery_filter in ["all", "mutants", "owned"]:
-                filled = _gallery_fill_mutants(owned_only) or filled
-        if _gallery_filter in ["all", "artifacts", "owned"]:
-                filled = _gallery_fill_artifacts(owned_only) or filled
-        if _gallery_filter in ["all", "exclusive", "owned"]:
-                filled = _gallery_fill_exclusives(owned_only) or filled
-        if not filled:
-                gallery_list.add_child(_gallery_section(Loc.t("gallery.empty")))
+		var owned_only := _gallery_filter == "owned"
+		var filled := false
+		if _gallery_filter in ["all", "mutants", "owned"]:
+				filled = _gallery_fill_mutants(owned_only) or filled
+		if _gallery_filter in ["all", "artifacts", "owned"]:
+				filled = _gallery_fill_artifacts(owned_only) or filled
+		if _gallery_filter in ["all", "exclusive", "owned"]:
+				filled = _gallery_fill_exclusives(owned_only) or filled
+		if not filled:
+				gallery_list.add_child(_gallery_section(Loc.t("gallery.empty")))
 
 
 func _gallery_make_grid(columns: int) -> GridContainer:
-        var grid := GridContainer.new()
-        grid.columns = columns
-        grid.add_theme_constant_override("h_separation", 4)
-        grid.add_theme_constant_override("v_separation", 4)
-        return grid
+		var grid := GridContainer.new()
+		grid.columns = columns
+		grid.add_theme_constant_override("h_separation", 4)
+		grid.add_theme_constant_override("v_separation", 4)
+		return grid
 
 
 func _gallery_fill_mutants(owned_only: bool) -> bool:
-        var types := _gallery_all_mutant_types()
-        types.sort_custom(func(a, b): return _mutant_strength(a) > _mutant_strength(b))
-        var grid: GridContainer = null
-        for t in types:
-                if owned_only and not lab_data.unlocked_mutants.has(t):
-                        continue
-                if grid == null:
-                        gallery_list.add_child(_make_farm_section(Loc.t("lab.mutants")))
-                        grid = _gallery_make_grid(6)
-                        gallery_list.add_child(grid)
-                grid.add_child(_gallery_tile(t, true))
-        return grid != null
+		var types := _gallery_all_mutant_types()
+		types.sort_custom(func(a, b): return _mutant_strength(a) > _mutant_strength(b))
+		var grid: GridContainer = null
+		for t in types:
+				if owned_only and not lab_data.unlocked_mutants.has(t):
+						continue
+				if grid == null:
+						gallery_list.add_child(_make_farm_section(Loc.t("lab.mutants")))
+						grid = _gallery_make_grid(6)
+						gallery_list.add_child(grid)
+				grid.add_child(_gallery_tile(t, true))
+		return grid != null
 
 
 func _gallery_fill_artifacts(owned_only: bool) -> bool:
-        var types := _gallery_all_artifact_types()
-        types.sort_custom(func(a, b): return _artifact_strength(a) > _artifact_strength(b))
-        var grid: GridContainer = null
-        for t in types:
-                if owned_only and not (lab_data.won_artifacts.has(t) or lab_data.exclusive_anomalies.has(t)):
-                        continue
-                if grid == null:
-                        gallery_list.add_child(_make_farm_section(Loc.t("shop.artifacts_header").split(" (")[0]))
-                        grid = _gallery_make_grid(6)
-                        gallery_list.add_child(grid)
-                grid.add_child(_gallery_tile(t, false))
-        return grid != null
+		var types := _gallery_all_artifact_types()
+		types.sort_custom(func(a, b): return _artifact_strength(a) > _artifact_strength(b))
+		var grid: GridContainer = null
+		for t in types:
+				if owned_only and not (lab_data.won_artifacts.has(t) or lab_data.exclusive_anomalies.has(t)):
+						continue
+				if grid == null:
+						gallery_list.add_child(_make_farm_section(Loc.t("shop.artifacts_header").split(" (")[0]))
+						grid = _gallery_make_grid(6)
+						gallery_list.add_child(grid)
+				grid.add_child(_gallery_tile(t, false))
+		return grid != null
 
 
 func _gallery_fill_exclusives(owned_only: bool) -> bool:
-        var entries: Array = []
-        for ex in GachaData.EXCLUSIVE_MUTANTS:
-                entries.append({"t": str(ex["type"]), "mut": true, "s": float(ex.get("hp", 1.0)) * float(ex.get("dmg", 1.0))})
-        for ax in GachaData.EXCLUSIVE_ANOMALIES:
-                entries.append({"t": str(ax["type"]), "mut": false, "s": float(ax.get("dmg", 1.0)) * float(ax.get("rad", 1.0))})
-        entries.sort_custom(func(a, b): return float(a["s"]) > float(b["s"]))
-        var grid: GridContainer = null
-        for e in entries:
-                var t: String = e["t"]
-                var unlocked: bool = lab_data.unlocked_mutants.has(t) if bool(e["mut"]) else (lab_data.won_artifacts.has(t) or lab_data.exclusive_anomalies.has(t))
-                if owned_only and not unlocked:
-                        continue
-                if grid == null:
-                        gallery_list.add_child(_make_farm_section(Loc.t("gallery.ex_header")))
-                        grid = _gallery_make_grid(3)
-                        gallery_list.add_child(grid)
-                grid.add_child(_gallery_ex_tile(t, bool(e["mut"])))
-        return grid != null
+		var entries: Array = []
+		for ex in GachaData.EXCLUSIVE_MUTANTS:
+				entries.append({"t": str(ex["type"]), "mut": true, "s": float(ex.get("hp", 1.0)) * float(ex.get("dmg", 1.0))})
+		for ax in GachaData.EXCLUSIVE_ANOMALIES:
+				entries.append({"t": str(ax["type"]), "mut": false, "s": float(ax.get("dmg", 1.0)) * float(ax.get("rad", 1.0))})
+		entries.sort_custom(func(a, b): return float(a["s"]) > float(b["s"]))
+		var grid: GridContainer = null
+		for e in entries:
+				var t: String = e["t"]
+				var unlocked: bool = lab_data.unlocked_mutants.has(t) if bool(e["mut"]) else (lab_data.won_artifacts.has(t) or lab_data.exclusive_anomalies.has(t))
+				if owned_only and not unlocked:
+						continue
+				if grid == null:
+						gallery_list.add_child(_make_farm_section(Loc.t("gallery.ex_header")))
+						grid = _gallery_make_grid(3)
+						gallery_list.add_child(grid)
+				grid.add_child(_gallery_ex_tile(t, bool(e["mut"])))
+		return grid != null
 
 
 func _gallery_section(text: String) -> Label:
-        var label := Label.new()
-        label.text = text
-        return label
+		var label := Label.new()
+		label.text = text
+		return label
 
 
 # ==================== ДИАЛОГ ПОВЫШЕНИЯ ЗВЕЗДЫ ====================
@@ -3083,580 +3083,580 @@ var _boost_cands: Array = []
 
 func _build_upgrade_dialog():
         """Окно повышения: слоты копий/звёздного/простого корма с '+', ОК применяет"""
-        up_panel = Control.new()
-        up_panel.name = "UpgradeStarDialog"
-        up_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        up_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        up_panel.visible = false
-        add_child(up_panel)
+		up_panel = Control.new()
+		up_panel.name = "UpgradeStarDialog"
+		up_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		up_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		up_panel.visible = false
+		add_child(up_panel)
 
-        var shade := ColorRect.new()
-        shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-        shade.color = Color(0, 0, 0, 0.7)
-        shade.gui_input.connect(func(ev):
-                if ev is InputEventMouseButton and ev.pressed:
-                        _close_upgrade_dialog())
-        up_panel.add_child(shade)
+		var shade := ColorRect.new()
+		shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+		shade.color = Color(0, 0, 0, 0.7)
+		shade.gui_input.connect(func(ev):
+				if ev is InputEventMouseButton and ev.pressed:
+						_close_upgrade_dialog())
+		up_panel.add_child(shade)
 
-        var panel := Panel.new()
-        panel.anchor_left = 0.5
-        panel.anchor_top = 0.5
-        panel.anchor_right = 0.5
-        panel.anchor_bottom = 0.5
-        panel.offset_left = -240.0
-        panel.offset_top = -210.0
-        panel.offset_right = 240.0
-        panel.offset_bottom = 210.0
-        up_panel.add_child(panel)
+		var panel := Panel.new()
+		panel.anchor_left = 0.5
+		panel.anchor_top = 0.5
+		panel.anchor_right = 0.5
+		panel.anchor_bottom = 0.5
+		panel.offset_left = -240.0
+		panel.offset_top = -210.0
+		panel.offset_right = 240.0
+		panel.offset_bottom = 210.0
+		up_panel.add_child(panel)
 
-        up_title = Label.new()
-        up_title.position = Vector2(20, 12)
-        up_title.size = Vector2(440, 24)
-        up_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        up_title.add_theme_font_size_override("font_size", 14)
-        panel.add_child(up_title)
+		up_title = Label.new()
+		up_title.position = Vector2(20, 12)
+		up_title.size = Vector2(440, 24)
+		up_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		up_title.add_theme_font_size_override("font_size", 14)
+		panel.add_child(up_title)
 
-        var scroll := ScrollContainer.new()
-        scroll.position = Vector2(20, 44)
-        scroll.size = Vector2(440, 300)
-        panel.add_child(scroll)
-        # v0.29.3: свайп-слой поверх (attach пересёт якоря — тут слой-сиблинг)
-        _add_abs_swipe_layer(panel, scroll)
+		var scroll := ScrollContainer.new()
+		scroll.position = Vector2(20, 44)
+		scroll.size = Vector2(440, 300)
+		panel.add_child(scroll)
+		# v0.29.3: свайп-слой поверх (attach пересёт якоря — тут слой-сиблинг)
+		_add_abs_swipe_layer(panel, scroll)
 
-        up_body = VBoxContainer.new()
-        up_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        up_body.add_theme_constant_override("separation", 6)
-        scroll.add_child(up_body)
+		up_body = VBoxContainer.new()
+		up_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		up_body.add_theme_constant_override("separation", 6)
+		scroll.add_child(up_body)
 
-        var back := Button.new()
-        back.text = Loc.t("lab.back")
-        back.position = Vector2(160, 356)
-        back.size = Vector2(160, 34)
-        back.pressed.connect(_close_upgrade_dialog)
-        panel.add_child(back)
+		var back := Button.new()
+		back.text = Loc.t("lab.back")
+		back.position = Vector2(160, 356)
+		back.size = Vector2(160, 34)
+		back.pressed.connect(_close_upgrade_dialog)
+		panel.add_child(back)
 
 
 ## Задача 44: скан "кого можно повысить ПРЯМО СЕЙЧАС" - симуляция АВТО
 ## на клоне сейва (с цепочкой доращивания корма)
 func _boost_scan() -> Array:
-        var out: Array = []
-        var lab = game_manager.get_lab_data()
-        for t in lab.unlocked_mutants:
-                var st: int = lab.get_mutant_stars(str(t))
-                if st >= LabData.MAX_STARS:
-                        continue
-                if game_manager.can_auto_boost(str(t)):
-                        out.append(str(t))
-        return out
+		var out: Array = []
+		var lab = game_manager.get_lab_data()
+		for t in lab.unlocked_mutants:
+				var st: int = lab.get_mutant_stars(str(t))
+				if st >= LabData.MAX_STARS:
+						continue
+				if game_manager.can_auto_boost(str(t)):
+						out.append(str(t))
+		return out
 
 
 func _on_boost_now_pressed():
-        _play_click_sound()
-        var cands: Array = _boost_scan()
-        if cands.is_empty():
-                _show_message(Loc.t("up.boost_none"), 2.0)
-                return
-        if cands.size() == 1:
-                _boost_apply(str(cands[0]))
-                return
-        # Выбор из нескольких готовых
-        _up_chooser = "boost"
-        _boost_cands = cands
-        _up_target = str(cands[0])
-        if not up_panel:
-                _build_upgrade_dialog()
-        up_panel.visible = true
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		var cands: Array = _boost_scan()
+		if cands.is_empty():
+				_show_message(Loc.t("up.boost_none"), 2.0)
+				return
+		if cands.size() == 1:
+				_boost_apply(str(cands[0]))
+				return
+		# Выбор из нескольких готовых
+		_up_chooser = "boost"
+		_boost_cands = cands
+		_up_target = str(cands[0])
+		if not up_panel:
+				_build_upgrade_dialog()
+		up_panel.visible = true
+		_rebuild_upgrade_dialog()
 
 
 ## Повысить разом: цепочка (дорастить корм если надо) + применение
 func _boost_apply(target: String) -> void:
-        var msg: String = game_manager.auto_boost(target)
-        _show_message(msg, 2.5)
-        _close_upgrade_dialog()
-        _rebuild_farm_panel()
-        _refresh_ui()
+		var msg: String = game_manager.auto_boost(target)
+		_show_message(msg, 2.5)
+		_close_upgrade_dialog()
+		_rebuild_farm_panel()
+		_refresh_ui()
 
 
 ## Список кандидатов "повысить разом"
 func _rebuild_boost_chooser():
-        for child in up_body.get_children():
-                child.queue_free()
-        var header := Label.new()
-        header.text = Loc.t("up.boost_pick")
-        header.add_theme_font_override("font", BunkerUI.font_title())
-        header.add_theme_font_size_override("font_size", 16)
-        up_body.add_child(header)
-        for t in _boost_cands:
-                var lab = game_manager.get_lab_data()
-                var st: int = lab.get_mutant_stars(str(t))
-                var row := HBoxContainer.new()
-                row.add_theme_constant_override("separation", 6)
-                row.add_child(_make_icon_rect(str(t), true, 26))
-                var name_label := Label.new()
-                name_label.text = "%s  %s -> %s" % [Loc.type_name(str(t)), LabData.stars_text(st), LabData.stars_text(st + 1)]
-                name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                row.add_child(name_label)
-                var go := Button.new()
-                go.text = Loc.t("up.boost_go")
-                go.pressed.connect(_boost_apply.bind(str(t)))
-                row.add_child(go)
-                up_body.add_child(row)
-        var cancel := Button.new()
-        cancel.text = Loc.t("lab.back")
-        cancel.pressed.connect(_on_up_cancel_chooser)
-        up_body.add_child(cancel)
+		for child in up_body.get_children():
+				child.queue_free()
+		var header := Label.new()
+		header.text = Loc.t("up.boost_pick")
+		header.add_theme_font_override("font", BunkerUI.font_title())
+		header.add_theme_font_size_override("font_size", 16)
+		up_body.add_child(header)
+		for t in _boost_cands:
+				var lab = game_manager.get_lab_data()
+				var st: int = lab.get_mutant_stars(str(t))
+				var row := HBoxContainer.new()
+				row.add_theme_constant_override("separation", 6)
+				row.add_child(_make_icon_rect(str(t), true, 26))
+				var name_label := Label.new()
+				name_label.text = "%s  %s -> %s" % [Loc.type_name(str(t)), LabData.stars_text(st), LabData.stars_text(st + 1)]
+				name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				row.add_child(name_label)
+				var go := Button.new()
+				go.text = Loc.t("up.boost_go")
+				go.pressed.connect(_boost_apply.bind(str(t)))
+				row.add_child(go)
+				up_body.add_child(row)
+		var cancel := Button.new()
+		cancel.text = Loc.t("lab.back")
+		cancel.pressed.connect(_on_up_cancel_chooser)
+		up_body.add_child(cancel)
 
 
 func _on_farm_upgrade(type: String):
         """↑N★ - открыть окно сбора рецепта по этому мутанту (ПОВЕРХ фермы)"""
-        _play_click_sound()
-        _up_target = type
-        _up_copies = 0
-        _up_star_feed = ""
-        _up_simple.clear()
-        _up_chooser = ""
-        if not up_panel:
-                _build_upgrade_dialog()
-        # Ферму НЕ прячем: алтарь звёзд живёт внутри фермы, диалог рисуется поверх
-        up_panel.visible = true
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_target = type
+		_up_copies = 0
+		_up_star_feed = ""
+		_up_simple.clear()
+		_up_chooser = ""
+		if not up_panel:
+				_build_upgrade_dialog()
+		# Ферму НЕ прячем: алтарь звёзд живёт внутри фермы, диалог рисуется поверх
+		up_panel.visible = true
+		_rebuild_upgrade_dialog()
 
 
 func _close_upgrade_dialog():
-        up_panel.visible = false
-        _up_target = ""
-        _up_chooser = ""
+		up_panel.visible = false
+		_up_target = ""
+		_up_chooser = ""
 
 
 func _up_remaining_simple() -> int:
-        var req: Dictionary = game_manager.get_star_requirements(_up_target)
-        return maxi(0, int(req.get("simple_need")) - int(req.get("simple_have")))
+		var req: Dictionary = game_manager.get_star_requirements(_up_target)
+		return maxi(0, int(req.get("simple_need")) - int(req.get("simple_have")))
 
 
 func _up_pending_simple_total() -> int:
-        var total := 0
-        for t in _up_simple:
-                total += int(_up_simple[t])
-        return total
+		var total := 0
+		for t in _up_simple:
+				total += int(_up_simple[t])
+		return total
 
 
 func _rebuild_upgrade_dialog():
-        for child in up_body.get_children():
-                child.queue_free()
-        if _up_target.is_empty():
-                return
-        var lab = get_tree().get_first_node_in_group("game_manager").get_lab_data()
-        var stars: int = lab.get_mutant_stars(_up_target)
-        var req: Dictionary = game_manager.get_star_requirements(_up_target)
-        up_title.text = Loc.t("up.title", {"name": Loc.type_name(_up_target), "n": stars + 1})
+		for child in up_body.get_children():
+				child.queue_free()
+		if _up_target.is_empty():
+				return
+		var lab = get_tree().get_first_node_in_group("game_manager").get_lab_data()
+		var stars: int = lab.get_mutant_stars(_up_target)
+		var req: Dictionary = game_manager.get_star_requirements(_up_target)
+		up_title.text = Loc.t("up.title", {"name": Loc.type_name(_up_target), "n": stars + 1})
 
-        # Режим выбора корма / кандидата повышения
-        if _up_chooser == "boost":
-                _rebuild_boost_chooser()
-                return
-        if _up_chooser != "":
-                _rebuild_upgrade_chooser()
-                return
+		# Режим выбора корма / кандидата повышения
+		if _up_chooser == "boost":
+				_rebuild_boost_chooser()
+				return
+		if _up_chooser != "":
+				_rebuild_upgrade_chooser()
+				return
 
-        # --- Слот 1: копии ЛЮБОГО мутанта той же звёздности (задача 44) ---
-        var copies_row := HBoxContainer.new()
-        copies_row.add_theme_constant_override("separation", 6)
-        var copies_label := Label.new()
-        var tier_have: int = int(req.get("tier_copies_have"))
-        var tier_committed: int = _up_copies + _up_tier_total()
-        var copies_detail: String = "%s x%d" % [Loc.type_name(_up_target), _up_copies]
-        for t in _up_tier:
-                copies_detail += "   %s x%d" % [Loc.type_name(str(t)), int(_up_tier[t])]
-        copies_label.text = Loc.t("up.copies_slot", {"have": tier_committed, "need": stars + 1}) \
-                + "   (" + Loc.t("up.copies_pool", {"have": tier_have}) + ")   " + copies_detail
-        copies_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        copies_label.clip_text = true
-        copies_row.add_child(copies_label)
-        if tier_committed < stars + 1:
-                var add_copies := Button.new()
-                add_copies.text = Loc.t("up.copies_btn", {"n": stars + 1})
-                add_copies.tooltip_text = Loc.t("up.copies_pool", {"have": tier_have})
-                add_copies.pressed.connect(_on_up_pick_tier)
-                copies_row.add_child(add_copies)
-        else:
-                var done1 := Label.new()
-                done1.text = Loc.t("up.done_mark")
-                copies_row.add_child(done1)
-        if tier_committed > 0:
-                var reset_c := Button.new()
-                reset_c.text = Loc.t("up.reset")
-                reset_c.pressed.connect(_on_up_reset_tier)
-                copies_row.add_child(reset_c)
-        up_body.add_child(copies_row)
+		# --- Слот 1: копии ЛЮБОГО мутанта той же звёздности (задача 44) ---
+		var copies_row := HBoxContainer.new()
+		copies_row.add_theme_constant_override("separation", 6)
+		var copies_label := Label.new()
+		var tier_have: int = int(req.get("tier_copies_have"))
+		var tier_committed: int = _up_copies + _up_tier_total()
+		var copies_detail: String = "%s x%d" % [Loc.type_name(_up_target), _up_copies]
+		for t in _up_tier:
+				copies_detail += "   %s x%d" % [Loc.type_name(str(t)), int(_up_tier[t])]
+		copies_label.text = Loc.t("up.copies_slot", {"have": tier_committed, "need": stars + 1}) \
+				+ "   (" + Loc.t("up.copies_pool", {"have": tier_have}) + ")   " + copies_detail
+		copies_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		copies_label.clip_text = true
+		copies_row.add_child(copies_label)
+		if tier_committed < stars + 1:
+				var add_copies := Button.new()
+				add_copies.text = Loc.t("up.copies_btn", {"n": stars + 1})
+				add_copies.tooltip_text = Loc.t("up.copies_pool", {"have": tier_have})
+				add_copies.pressed.connect(_on_up_pick_tier)
+				copies_row.add_child(add_copies)
+		else:
+				var done1 := Label.new()
+				done1.text = Loc.t("up.done_mark")
+				copies_row.add_child(done1)
+		if tier_committed > 0:
+				var reset_c := Button.new()
+				reset_c.text = Loc.t("up.reset")
+				reset_c.pressed.connect(_on_up_reset_tier)
+				copies_row.add_child(reset_c)
+		up_body.add_child(copies_row)
 
-        # --- Слот 2: звёздный корм ---
-        var star_row := HBoxContainer.new()
-        star_row.add_theme_constant_override("separation", 6)
-        var star_label := Label.new()
-        var star_text: String = Loc.t("up.star_slot", {"n": stars})
-        if int(req.get("star_have")) >= 1:
-                star_text += Loc.t("up.star_filled")
-        elif not _up_star_feed.is_empty():
-                star_text += Loc.type_name(_up_star_feed)
-        star_label.text = star_text
-        star_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        star_row.add_child(star_label)
-        if int(req.get("star_have")) < 1:
-                var add_star := Button.new()
-                add_star.text = Loc.t("farm.star_btn")
-                add_star.pressed.connect(_on_up_pick_star)
-                star_row.add_child(add_star)
-        up_body.add_child(star_row)
+		# --- Слот 2: звёздный корм ---
+		var star_row := HBoxContainer.new()
+		star_row.add_theme_constant_override("separation", 6)
+		var star_label := Label.new()
+		var star_text: String = Loc.t("up.star_slot", {"n": stars})
+		if int(req.get("star_have")) >= 1:
+				star_text += Loc.t("up.star_filled")
+		elif not _up_star_feed.is_empty():
+				star_text += Loc.type_name(_up_star_feed)
+		star_label.text = star_text
+		star_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		star_row.add_child(star_label)
+		if int(req.get("star_have")) < 1:
+				var add_star := Button.new()
+				add_star.text = Loc.t("farm.star_btn")
+				add_star.pressed.connect(_on_up_pick_star)
+				star_row.add_child(add_star)
+		up_body.add_child(star_row)
 
-        # --- Слот 3: простой корм ---
-        var simple_row := HBoxContainer.new()
-        simple_row.add_theme_constant_override("separation", 6)
-        var simple_label := Label.new()
-        var simple_total: int = int(req.get("simple_have")) + _up_pending_simple_total()
-        var simple_text: String = Loc.t("up.simple_slot", {"have": simple_total, "need": int(req.get("simple_need"))})
-        var parts := []
-        for t in _up_simple:
-                parts.append("%s x%d" % [Loc.type_name(str(t)), int(_up_simple[t])])
-        if not parts.is_empty():
-                simple_text += "   " + " · ".join(parts)
-        simple_label.text = simple_text
-        simple_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        simple_row.add_child(simple_label)
-        var add_simple := Button.new()
-        add_simple.text = Loc.t("farm.star_btn")
-        add_simple.pressed.connect(_on_up_pick_simple)
-        simple_row.add_child(add_simple)
-        if not _up_simple.is_empty():
-                var reset_btn := Button.new()
-                reset_btn.text = Loc.t("up.reset")
-                reset_btn.pressed.connect(_on_up_reset_simple)
-                simple_row.add_child(reset_btn)
-        up_body.add_child(simple_row)
+		# --- Слот 3: простой корм ---
+		var simple_row := HBoxContainer.new()
+		simple_row.add_theme_constant_override("separation", 6)
+		var simple_label := Label.new()
+		var simple_total: int = int(req.get("simple_have")) + _up_pending_simple_total()
+		var simple_text: String = Loc.t("up.simple_slot", {"have": simple_total, "need": int(req.get("simple_need"))})
+		var parts := []
+		for t in _up_simple:
+				parts.append("%s x%d" % [Loc.type_name(str(t)), int(_up_simple[t])])
+		if not parts.is_empty():
+				simple_text += "   " + " · ".join(parts)
+		simple_label.text = simple_text
+		simple_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		simple_row.add_child(simple_label)
+		var add_simple := Button.new()
+		add_simple.text = Loc.t("farm.star_btn")
+		add_simple.pressed.connect(_on_up_pick_simple)
+		simple_row.add_child(add_simple)
+		if not _up_simple.is_empty():
+				var reset_btn := Button.new()
+				reset_btn.text = Loc.t("up.reset")
+				reset_btn.pressed.connect(_on_up_reset_simple)
+				simple_row.add_child(reset_btn)
+		up_body.add_child(simple_row)
 
-        # --- АВТО: заполнить всё из слабых и многочисленных ---
-        var auto_btn := Button.new()
-        auto_btn.text = Loc.t("up.auto")
-        auto_btn.custom_minimum_size = Vector2(0, 34)
-        auto_btn.pressed.connect(_on_up_auto)
-        up_body.add_child(auto_btn)
+		# --- АВТО: заполнить всё из слабых и многочисленных ---
+		var auto_btn := Button.new()
+		auto_btn.text = Loc.t("up.auto")
+		auto_btn.custom_minimum_size = Vector2(0, 34)
+		auto_btn.pressed.connect(_on_up_auto)
+		up_body.add_child(auto_btn)
 
-        # --- ОК ---
-        var ok_btn := Button.new()
-        ok_btn.text = Loc.t("up.ok")
-        ok_btn.custom_minimum_size = Vector2(0, 40)
-        var copies_need: int = stars + 1
-        var has_enough: bool = _up_copies + _up_tier_total() >= copies_need \
-                        and (int(req.get("star_have")) >= 1 or not _up_star_feed.is_empty()) \
-                        and simple_total >= int(req.get("simple_need"))
-        ok_btn.disabled = not has_enough
-        ok_btn.pressed.connect(_on_up_confirm)
-        up_body.add_child(ok_btn)
-        if not ready:
-                var hint := Label.new()
-                hint.text = Loc.t("up.not_ready")
-                hint.add_theme_font_size_override("font_size", 9)
-                hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-                up_body.add_child(hint)
+		# --- ОК ---
+		var ok_btn := Button.new()
+		ok_btn.text = Loc.t("up.ok")
+		ok_btn.custom_minimum_size = Vector2(0, 40)
+		var copies_need: int = stars + 1
+		var has_enough: bool = _up_copies + _up_tier_total() >= copies_need \
+						and (int(req.get("star_have")) >= 1 or not _up_star_feed.is_empty()) \
+						and simple_total >= int(req.get("simple_need"))
+		ok_btn.disabled = not has_enough
+		ok_btn.pressed.connect(_on_up_confirm)
+		up_body.add_child(ok_btn)
+		if not ready:
+				var hint := Label.new()
+				hint.text = Loc.t("up.not_ready")
+				hint.add_theme_font_size_override("font_size", 9)
+				hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				up_body.add_child(hint)
 
 
 ## Сумма чужих копий той же ★, committed в копийный слот
 func _up_tier_total() -> int:
-        var total := 0
-        for t in _up_tier:
-                total += int(_up_tier[t])
-        return total
+		var total := 0
+		for t in _up_tier:
+				total += int(_up_tier[t])
+		return total
 
 
 func _on_up_pick_tier():
-        _play_click_sound()
-        _up_chooser = "tier"
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_chooser = "tier"
+		_rebuild_upgrade_dialog()
 
 
 func _on_up_reset_tier():
-        _play_click_sound()
-        _up_tier.clear()
-        _up_copies = 0
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_tier.clear()
+		_up_copies = 0
+		_rebuild_upgrade_dialog()
 
 
 func _on_up_pick_star():
-        _play_click_sound()
-        _up_chooser = "star"
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_chooser = "star"
+		_rebuild_upgrade_dialog()
 
 
 func _on_up_pick_simple():
-        _play_click_sound()
-        _up_chooser = "simple"
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_chooser = "simple"
+		_rebuild_upgrade_dialog()
 
 
 func _on_up_reset_simple():
-        _play_click_sound()
-        _up_simple.clear()
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_simple.clear()
+		_rebuild_upgrade_dialog()
 
 
 func _on_up_confirm():
-        _play_click_sound()
-        var msg: String = game_manager.apply_star_recipe(_up_target, _up_copies, _up_star_feed, _up_simple, _up_tier)
-        _show_message(msg, 2.5)
-        _close_upgrade_dialog()
-        _rebuild_farm_panel()
-        _refresh_ui()
+		_play_click_sound()
+		var msg: String = game_manager.apply_star_recipe(_up_target, _up_copies, _up_star_feed, _up_simple, _up_tier)
+		_show_message(msg, 2.5)
+		_close_upgrade_dialog()
+		_rebuild_farm_panel()
+		_refresh_ui()
 
 
 func _rebuild_upgrade_chooser():
-        var lab = get_tree().get_first_node_in_group("game_manager").get_lab_data()
-        var target_stars: int = lab.get_mutant_stars(_up_target)
-        var header := Label.new()
-        if _up_chooser == "star":
-                header.text = Loc.t("up.pick_star", {"n": target_stars})
-        elif _up_chooser == "tier":
-                header.text = Loc.t("up.pick_tier", {"n": target_stars})
-        else:
-                header.text = Loc.t("up.pick_simple")
-        up_body.add_child(header)
+		var lab = get_tree().get_first_node_in_group("game_manager").get_lab_data()
+		var target_stars: int = lab.get_mutant_stars(_up_target)
+		var header := Label.new()
+		if _up_chooser == "star":
+				header.text = Loc.t("up.pick_star", {"n": target_stars})
+		elif _up_chooser == "tier":
+				header.text = Loc.t("up.pick_tier", {"n": target_stars})
+		else:
+				header.text = Loc.t("up.pick_simple")
+		up_body.add_child(header)
 
-        var found := false
-        for type in lab.unlocked_mutants:
-                if type == _up_target or lab.get_farm_copies(type) <= 0:
-                        continue
-                var t_stars: int = lab.get_mutant_stars(type)
-                if _up_chooser == "star" and t_stars != target_stars:
-                        continue
-                found = true
-                var row := HBoxContainer.new()
-                row.add_theme_constant_override("separation", 6)
-                row.add_child(_make_icon_rect(type, true, 26))
-                var name_label := Label.new()
-                name_label.text = "%s %s - %s" % [Loc.type_name(type), LabData.stars_text(t_stars), Loc.t("farm.copies", {"n": lab.get_farm_copies(type)})]
-                name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                row.add_child(name_label)
-                if _up_chooser == "star":
-                        var pick := Button.new()
-                        pick.text = Loc.t("up.ok").replace("★ ", "")
-                        pick.pressed.connect(_on_up_choose_star.bind(type))
-                        row.add_child(pick)
-                elif _up_chooser == "tier":
-                        var t_free: int = lab.get_farm_copies(type)
-                        var c_need: int = target_stars + 1 - _up_copies - _up_tier_total()
-                        for qty in [1, 5]:
-                                if qty <= t_free and qty <= c_need:
-                                        var tq := Button.new()
-                                        tq.text = "+%d" % qty
-                                        tq.pressed.connect(_on_up_choose_tier.bind(type, qty))
-                                        row.add_child(tq)
-                        if t_free > 0 and c_need > 0:
-                                var tmax := Button.new()
-                                tmax.text = Loc.t("up.qty_max")
-                                tmax.pressed.connect(_on_up_choose_tier.bind(type, mini(t_free, c_need)))
-                                row.add_child(tmax)
-                else:
-                        var available: int = lab.get_farm_copies(type)
-                        var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
-                        for qty in [1, 5]:
-                                if qty <= available and qty <= remaining:
-                                        var q_btn := Button.new()
-                                        q_btn.text = "+%d" % qty
-                                        q_btn.pressed.connect(_on_up_choose_simple.bind(type, qty))
-                                        row.add_child(q_btn)
-                        if available > 0 and remaining > 0:
-                                var max_btn := Button.new()
-                                max_btn.text = Loc.t("up.qty_max")
-                                max_btn.pressed.connect(_on_up_choose_simple.bind(type, mini(available, remaining)))
-                                row.add_child(max_btn)
-                up_body.add_child(row)
-        # Копии самого мутанта тоже годятся в корм (бюджет проверит ОК)
-        var self_copies: int = lab.get_farm_copies(_up_target)
-        var self_ok := false
-        if self_copies > 0:
-                if _up_chooser == "simple":
-                        self_ok = true
-                elif _up_chooser == "star" and target_stars == lab.get_mutant_stars(_up_target):
-                        self_ok = true  # цель всегда своей звёздности
-        if self_ok:
-                var srow := HBoxContainer.new()
-                srow.add_theme_constant_override("separation", 6)
-                srow.add_child(_make_icon_rect(_up_target, true, 26))
-                var slabel := Label.new()
-                slabel.text = "%s %s - %s %s" % [Loc.type_name(_up_target), LabData.stars_text(lab.get_mutant_stars(_up_target)), Loc.t("farm.copies", {"n": self_copies}), Loc.t("up.self_mark")]
-                slabel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                srow.add_child(slabel)
-                if _up_chooser == "star":
-                        var pick := Button.new()
-                        pick.text = Loc.t("up.ok").replace("★ ", "")
-                        pick.pressed.connect(_on_up_choose_star.bind(_up_target))
-                        srow.add_child(pick)
-                else:
-                        var available: int = lab.get_farm_copies(_up_target)
-                        var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
-                        for qty in [1, 5]:
-                                if qty <= available and qty <= remaining:
-                                        var q_btn := Button.new()
-                                        q_btn.text = "+%d" % qty
-                                        q_btn.pressed.connect(_on_up_choose_simple.bind(_up_target, qty))
-                                        srow.add_child(q_btn)
-                        if available > 0 and remaining > 0:
-                                var max_btn := Button.new()
-                                max_btn.text = Loc.t("up.qty_max")
-                                max_btn.pressed.connect(_on_up_choose_simple.bind(_up_target, mini(available, remaining)))
-                                srow.add_child(max_btn)
-                up_body.add_child(srow)
-                found = true
-        if not found:
-                var none := Label.new()
-                none.text = Loc.t("farm.empty")
-                up_body.add_child(none)
+		var found := false
+		for type in lab.unlocked_mutants:
+				if type == _up_target or lab.get_farm_copies(type) <= 0:
+						continue
+				var t_stars: int = lab.get_mutant_stars(type)
+				if _up_chooser == "star" and t_stars != target_stars:
+						continue
+				found = true
+				var row := HBoxContainer.new()
+				row.add_theme_constant_override("separation", 6)
+				row.add_child(_make_icon_rect(type, true, 26))
+				var name_label := Label.new()
+				name_label.text = "%s %s - %s" % [Loc.type_name(type), LabData.stars_text(t_stars), Loc.t("farm.copies", {"n": lab.get_farm_copies(type)})]
+				name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				row.add_child(name_label)
+				if _up_chooser == "star":
+						var pick := Button.new()
+						pick.text = Loc.t("up.ok").replace("★ ", "")
+						pick.pressed.connect(_on_up_choose_star.bind(type))
+						row.add_child(pick)
+				elif _up_chooser == "tier":
+						var t_free: int = lab.get_farm_copies(type)
+						var c_need: int = target_stars + 1 - _up_copies - _up_tier_total()
+						for qty in [1, 5]:
+								if qty <= t_free and qty <= c_need:
+										var tq := Button.new()
+										tq.text = "+%d" % qty
+										tq.pressed.connect(_on_up_choose_tier.bind(type, qty))
+										row.add_child(tq)
+						if t_free > 0 and c_need > 0:
+								var tmax := Button.new()
+								tmax.text = Loc.t("up.qty_max")
+								tmax.pressed.connect(_on_up_choose_tier.bind(type, mini(t_free, c_need)))
+								row.add_child(tmax)
+				else:
+						var available: int = lab.get_farm_copies(type)
+						var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
+						for qty in [1, 5]:
+								if qty <= available and qty <= remaining:
+										var q_btn := Button.new()
+										q_btn.text = "+%d" % qty
+										q_btn.pressed.connect(_on_up_choose_simple.bind(type, qty))
+										row.add_child(q_btn)
+						if available > 0 and remaining > 0:
+								var max_btn := Button.new()
+								max_btn.text = Loc.t("up.qty_max")
+								max_btn.pressed.connect(_on_up_choose_simple.bind(type, mini(available, remaining)))
+								row.add_child(max_btn)
+				up_body.add_child(row)
+		# Копии самого мутанта тоже годятся в корм (бюджет проверит ОК)
+		var self_copies: int = lab.get_farm_copies(_up_target)
+		var self_ok := false
+		if self_copies > 0:
+				if _up_chooser == "simple":
+						self_ok = true
+				elif _up_chooser == "star" and target_stars == lab.get_mutant_stars(_up_target):
+						self_ok = true  # цель всегда своей звёздности
+		if self_ok:
+				var srow := HBoxContainer.new()
+				srow.add_theme_constant_override("separation", 6)
+				srow.add_child(_make_icon_rect(_up_target, true, 26))
+				var slabel := Label.new()
+				slabel.text = "%s %s - %s %s" % [Loc.type_name(_up_target), LabData.stars_text(lab.get_mutant_stars(_up_target)), Loc.t("farm.copies", {"n": self_copies}), Loc.t("up.self_mark")]
+				slabel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				srow.add_child(slabel)
+				if _up_chooser == "star":
+						var pick := Button.new()
+						pick.text = Loc.t("up.ok").replace("★ ", "")
+						pick.pressed.connect(_on_up_choose_star.bind(_up_target))
+						srow.add_child(pick)
+				else:
+						var available: int = lab.get_farm_copies(_up_target)
+						var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
+						for qty in [1, 5]:
+								if qty <= available and qty <= remaining:
+										var q_btn := Button.new()
+										q_btn.text = "+%d" % qty
+										q_btn.pressed.connect(_on_up_choose_simple.bind(_up_target, qty))
+										srow.add_child(q_btn)
+						if available > 0 and remaining > 0:
+								var max_btn := Button.new()
+								max_btn.text = Loc.t("up.qty_max")
+								max_btn.pressed.connect(_on_up_choose_simple.bind(_up_target, mini(available, remaining)))
+								srow.add_child(max_btn)
+				up_body.add_child(srow)
+				found = true
+		if not found:
+				var none := Label.new()
+				none.text = Loc.t("farm.empty")
+				up_body.add_child(none)
 
-        var cancel := Button.new()
-        cancel.text = Loc.t("lab.back")
-        cancel.pressed.connect(_on_up_cancel_chooser)
-        up_body.add_child(cancel)
+		var cancel := Button.new()
+		cancel.text = Loc.t("lab.back")
+		cancel.pressed.connect(_on_up_cancel_chooser)
+		up_body.add_child(cancel)
 
 
 func _on_up_choose_star(type: String):
-        _play_click_sound()
-        _up_star_feed = type
-        _up_chooser = ""
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_star_feed = type
+		_up_chooser = ""
+		_rebuild_upgrade_dialog()
 
 
 func _on_up_choose_tier(type: String, qty: int):
-        _play_click_sound()
-        _up_tier[type] = int(_up_tier.get(type, 0)) + qty
-        # Слот полон - вернуться к слотам
-        var stars_t: int = game_manager.get_lab_data().get_mutant_stars(_up_target)
-        if _up_copies + _up_tier_total() >= stars_t + 1:
-                _up_chooser = ""
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_tier[type] = int(_up_tier.get(type, 0)) + qty
+		# Слот полон - вернуться к слотам
+		var stars_t: int = game_manager.get_lab_data().get_mutant_stars(_up_target)
+		if _up_copies + _up_tier_total() >= stars_t + 1:
+				_up_chooser = ""
+		_rebuild_upgrade_dialog()
 
 
 func _on_up_choose_simple(type: String, qty: int):
-        _play_click_sound()
-        _up_simple[type] = int(_up_simple.get(type, 0)) + qty
-        # Если больше нечего выбирать - вернуться к слотам
-        var lab = get_tree().get_first_node_in_group("game_manager").get_lab_data()
-        var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
-        var any_left := false
-        for t in lab.unlocked_mutants:
-                if t != _up_target and lab.get_farm_copies(t) > 0:
-                        any_left = true
-                        break
-        if remaining <= 0 or not any_left:
-                _up_chooser = ""
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_simple[type] = int(_up_simple.get(type, 0)) + qty
+		# Если больше нечего выбирать - вернуться к слотам
+		var lab = get_tree().get_first_node_in_group("game_manager").get_lab_data()
+		var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
+		var any_left := false
+		for t in lab.unlocked_mutants:
+				if t != _up_target and lab.get_farm_copies(t) > 0:
+						any_left = true
+						break
+		if remaining <= 0 or not any_left:
+				_up_chooser = ""
+		_rebuild_upgrade_dialog()
 
 
 func _on_up_cancel_chooser():
-        _play_click_sound()
-        _up_chooser = ""
-        _rebuild_upgrade_dialog()
+		_play_click_sound()
+		_up_chooser = ""
+		_rebuild_upgrade_dialog()
 
 
 ## АВТО: копии цели + слабейший звёздный корм + простой корм из 1★ по запасам
 func _on_up_auto():
-        _play_click_sound()
-        var lab = game_manager.get_lab_data()
-        if _up_target.is_empty():
-                return
-        var stars: int = lab.get_mutant_stars(_up_target)
-        var req: Dictionary = game_manager.get_star_requirements(_up_target)
+		_play_click_sound()
+		var lab = game_manager.get_lab_data()
+		if _up_target.is_empty():
+				return
+		var stars: int = lab.get_mutant_stars(_up_target)
+		var req: Dictionary = game_manager.get_star_requirements(_up_target)
 
-        # 0. Сброс коммитов слота копий
-        _up_tier.clear()
-        _up_copies = 0
+		# 0. Сброс коммитов слота копий
+		_up_tier.clear()
+		_up_copies = 0
 
-        # 1. Копийный слот: ЧУЖИЕ той же ★ слабейшие первыми (задача 44),
-        #    свои копии цели - только резервом, если чужих не хватило
-        var copies_left: int = stars + 1
-        var pool: Array[String] = []
-        for t in lab.unlocked_mutants:
-                if str(t) != _up_target and lab.get_mutant_stars(t) == stars and lab.get_farm_copies(t) > 0:
-                        pool.append(str(t))
-        pool.sort_custom(func(a, b):
-                var fa: int = GachaData.get_fodder_value(a, true)
-                var fb: int = GachaData.get_fodder_value(b, true)
-                if fa != fb:
-                        return fa < fb
-                return a < b)
-        for t in pool:
-                if copies_left <= 0:
-                        break
-                var take: int = mini(lab.get_farm_copies(t), copies_left)
-                if take > 0:
-                        _up_tier[t] = take
-                        copies_left -= take
-        if copies_left > 0:
-                _up_copies = mini(lab.get_farm_copies(_up_target), copies_left)
-                copies_left -= _up_copies
+		# 1. Копийный слот: ЧУЖИЕ той же ★ слабейшие первыми (задача 44),
+		#    свои копии цели - только резервом, если чужих не хватило
+		var copies_left: int = stars + 1
+		var pool: Array[String] = []
+		for t in lab.unlocked_mutants:
+				if str(t) != _up_target and lab.get_mutant_stars(t) == stars and lab.get_farm_copies(t) > 0:
+						pool.append(str(t))
+		pool.sort_custom(func(a, b):
+				var fa: int = GachaData.get_fodder_value(a, true)
+				var fb: int = GachaData.get_fodder_value(b, true)
+				if fa != fb:
+						return fa < fb
+				return a < b)
+		for t in pool:
+				if copies_left <= 0:
+						break
+				var take: int = mini(lab.get_farm_copies(t), copies_left)
+				if take > 0:
+						_up_tier[t] = take
+						copies_left -= take
+		if copies_left > 0:
+				_up_copies = mini(lab.get_farm_copies(_up_target), copies_left)
+				copies_left -= _up_copies
 
-        # 2. Звёздный корм: чужие той же ★ ИЗ ОСТАТКА пула (не занятые слотом копий);
-        #    если пусто - копия цели, если и её нет - любой свободный той же ★
-        if int(req.get("star_have")) < 1:
-                var cands: Array[String] = []
-                for t in lab.unlocked_mutants:
-                        if t == _up_target or lab.get_mutant_stars(t) != stars or lab.get_farm_copies(t) <= 0:
-                                continue
-                        var used: int = int(_up_tier.get(t, 0))
-                        if lab.get_farm_copies(t) - used > 0:
-                                cands.append(str(t))
-                cands.sort_custom(func(a, b):
-                        var ca: int = lab.get_farm_copies(a) - int(_up_tier.get(a, 0))
-                        var cb: int = lab.get_farm_copies(b) - int(_up_tier.get(b, 0))
-                        if ca != cb:
-                                return ca < cb   # наименее ценные остатки - в бак
-                        return GachaData.get_fodder_value(a, true) < GachaData.get_fodder_value(b, true))
-                if not cands.is_empty():
-                        _up_star_feed = cands[0]
-                elif lab.get_farm_copies(_up_target) > _up_copies:
-                        _up_star_feed = _up_target  # свои копии в звёздный бак
+		# 2. Звёздный корм: чужие той же ★ ИЗ ОСТАТКА пула (не занятые слотом копий);
+		#    если пусто - копия цели, если и её нет - любой свободный той же ★
+		if int(req.get("star_have")) < 1:
+				var cands: Array[String] = []
+				for t in lab.unlocked_mutants:
+						if t == _up_target or lab.get_mutant_stars(t) != stars or lab.get_farm_copies(t) <= 0:
+								continue
+						var used: int = int(_up_tier.get(t, 0))
+						if lab.get_farm_copies(t) - used > 0:
+								cands.append(str(t))
+				cands.sort_custom(func(a, b):
+						var ca: int = lab.get_farm_copies(a) - int(_up_tier.get(a, 0))
+						var cb: int = lab.get_farm_copies(b) - int(_up_tier.get(b, 0))
+						if ca != cb:
+								return ca < cb   # наименее ценные остатки - в бак
+						return GachaData.get_fodder_value(a, true) < GachaData.get_fodder_value(b, true))
+				if not cands.is_empty():
+						_up_star_feed = cands[0]
+				elif lab.get_farm_copies(_up_target) > _up_copies:
+						_up_star_feed = _up_target  # свои копии в звёздный бак
 
-        # 3. Простой корм: сначала 1★-кормовые по запасам, затем прочие не-звёздные
-        var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
-        var simple_cands: Array[String] = []
-        var other_cands: Array[String] = []
-        for t in lab.unlocked_mutants:
-                if t == _up_target or t == _up_star_feed or lab.get_farm_copies(t) <= 0:
-                        continue
-                if lab.get_mutant_stars(t) == 1:
-                        simple_cands.append(str(t))
-                elif lab.get_mutant_stars(t) != stars:
-                        other_cands.append(str(t))
-        simple_cands.sort_custom(func(a, b):
-                var ca: int = lab.get_farm_copies(a)
-                var cb: int = lab.get_farm_copies(b)
-                if ca != cb:
-                        return ca > cb
-                return GachaData.get_fodder_value(a, true) < GachaData.get_fodder_value(b, true))
-        other_cands.sort_custom(func(a, b):
-                var ca: int = lab.get_farm_copies(a)
-                var cb: int = lab.get_farm_copies(b)
-                if ca != cb:
-                        return ca > cb
-                return GachaData.get_fodder_value(a, true) < GachaData.get_fodder_value(b, true))
-        for t in simple_cands + other_cands:
-                if remaining <= 0:
-                        break
-                var reserved: int = int(_up_tier.get(t, 0))
-                if t == _up_star_feed:
-                        reserved += 1
-                var take: int = mini(lab.get_farm_copies(t) - reserved, remaining)
-                if take > 0:
-                        _up_simple[t] = int(_up_simple.get(t, 0)) + take
-                        remaining -= take
-        # Резерв: копии самого мутанта (не занятые слотом копий и звёздным)
-        if remaining > 0:
-                var self_used: int = int(_up_simple.get(_up_target, 0))
-                if _up_star_feed == _up_target:
-                        self_used += 1
-                var spare: int = lab.get_farm_copies(_up_target) - _up_copies - self_used
-                if spare > 0:
-                        _up_simple[_up_target] = int(_up_simple.get(_up_target, 0)) + mini(spare, remaining)
+		# 3. Простой корм: сначала 1★-кормовые по запасам, затем прочие не-звёздные
+		var remaining: int = _up_remaining_simple() - _up_pending_simple_total()
+		var simple_cands: Array[String] = []
+		var other_cands: Array[String] = []
+		for t in lab.unlocked_mutants:
+				if t == _up_target or t == _up_star_feed or lab.get_farm_copies(t) <= 0:
+						continue
+				if lab.get_mutant_stars(t) == 1:
+						simple_cands.append(str(t))
+				elif lab.get_mutant_stars(t) != stars:
+						other_cands.append(str(t))
+		simple_cands.sort_custom(func(a, b):
+				var ca: int = lab.get_farm_copies(a)
+				var cb: int = lab.get_farm_copies(b)
+				if ca != cb:
+						return ca > cb
+				return GachaData.get_fodder_value(a, true) < GachaData.get_fodder_value(b, true))
+		other_cands.sort_custom(func(a, b):
+				var ca: int = lab.get_farm_copies(a)
+				var cb: int = lab.get_farm_copies(b)
+				if ca != cb:
+						return ca > cb
+				return GachaData.get_fodder_value(a, true) < GachaData.get_fodder_value(b, true))
+		for t in simple_cands + other_cands:
+				if remaining <= 0:
+						break
+				var reserved: int = int(_up_tier.get(t, 0))
+				if t == _up_star_feed:
+						reserved += 1
+				var take: int = mini(lab.get_farm_copies(t) - reserved, remaining)
+				if take > 0:
+						_up_simple[t] = int(_up_simple.get(t, 0)) + take
+						remaining -= take
+		# Резерв: копии самого мутанта (не занятые слотом копий и звёздным)
+		if remaining > 0:
+				var self_used: int = int(_up_simple.get(_up_target, 0))
+				if _up_star_feed == _up_target:
+						self_used += 1
+				var spare: int = lab.get_farm_copies(_up_target) - _up_copies - self_used
+				if spare > 0:
+						_up_simple[_up_target] = int(_up_simple.get(_up_target, 0)) + mini(spare, remaining)
 
-        _rebuild_upgrade_dialog()
+		_rebuild_upgrade_dialog()
 
 
 # ==================== УТИЛИЗАЦИЯ КОПИЙ ====================
@@ -3675,403 +3675,403 @@ var _recycle_filter: Array = []  # фильтр редкости (1/2/3/5); пу
 var _tasks_prem_btn: Button = null
 
 func _prem_pending_count(owned: Dictionary, cycle: int) -> int:
-        var n: int = 0
-        for t in range(1, Prog.TRACK_TIERS + 1):
-                if Prog.tier_claimed(t) and not owned.has("prem_%d_%d" % [cycle, t]):
-                        n += 1
-        return n
+		var n: int = 0
+		for t in range(1, Prog.TRACK_TIERS + 1):
+				if Prog.tier_claimed(t) and not owned.has("prem_%d_%d" % [cycle, t]):
+						n += 1
+		return n
 
 func _on_prem_claim_all() -> void:
-        _play_click_sound()
-        if game_manager == null or game_manager.current_save_data == null:
-                return
-        var owned: Dictionary = game_manager.current_save_data.owned
-        var cyc: int = Prog.track_cycle()
-        var granted: int = 0
-        for t in range(1, Prog.TRACK_TIERS + 1):
-                if Prog.tier_claimed(t) and not owned.has("prem_%d_%d" % [cyc, t]):
-                        var prem: Dictionary = StoreData.premium_reward(t, cyc)
-                        if int(prem.get("rolls_mut", 0)) > 0:
-                                game_manager.grant_mutant_rolls(int(prem["rolls_mut"]), "пропуск сезона")
-                        if int(prem.get("rolls_art", 0)) > 0:
-                                game_manager.grant_anomaly_rolls(int(prem["rolls_art"]), "пропуск сезона")
-                        if float(prem.get("bio", 0.0)) > 0.0 and game_manager.get_lab_data():
-                                game_manager.get_lab_data().biomass += float(prem["bio"])
-                        for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
-                                if prem.has(cos_key):
-                                        owned["cos_" + str(prem[cos_key])] = true
-                        owned["prem_%d_%d" % [cyc, t]] = true
-                        granted += 1
-        game_manager.save_to_active_slot()
-        if granted > 0:
-                var sm = get_tree().get_first_node_in_group("sound_manager")
-                if sm and sm.has_method("play_sound"):
-                        sm.play_sound("upgrade", 0.95, 1.05)
-                _show_message(Loc.t("store.claimed_all", {"n": granted}))
-        _tw_refresh()
+		_play_click_sound()
+		if game_manager == null or game_manager.current_save_data == null:
+				return
+		var owned: Dictionary = game_manager.current_save_data.owned
+		var cyc: int = Prog.track_cycle()
+		var granted: int = 0
+		for t in range(1, Prog.TRACK_TIERS + 1):
+				if Prog.tier_claimed(t) and not owned.has("prem_%d_%d" % [cyc, t]):
+						var prem: Dictionary = StoreData.premium_reward(t, cyc)
+						if int(prem.get("rolls_mut", 0)) > 0:
+								game_manager.grant_mutant_rolls(int(prem["rolls_mut"]), "пропуск сезона")
+						if int(prem.get("rolls_art", 0)) > 0:
+								game_manager.grant_anomaly_rolls(int(prem["rolls_art"]), "пропуск сезона")
+						if float(prem.get("bio", 0.0)) > 0.0 and game_manager.get_lab_data():
+								game_manager.get_lab_data().biomass += float(prem["bio"])
+						for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
+								if prem.has(cos_key):
+										owned["cos_" + str(prem[cos_key])] = true
+						owned["prem_%d_%d" % [cyc, t]] = true
+						granted += 1
+		game_manager.save_to_active_slot()
+		if granted > 0:
+				var sm = get_tree().get_first_node_in_group("sound_manager")
+				if sm and sm.has_method("play_sound"):
+						sm.play_sound("upgrade", 0.95, 1.05)
+				_show_message(Loc.t("store.claimed_all", {"n": granted}))
+		_tw_refresh()
 
 
 ## Кнопка на треке: пока пропуска нет — открыть магазин (CTA покупки);
 ## когда есть — забрать всё накопленное премиум-содержимое
 func _on_prem_track_button() -> void:
-        if game_manager and game_manager.current_save_data \
-                        and StoreData.pass_active(Prog.track_cycle(), game_manager.current_save_data.owned):
-                _on_prem_claim_all()
-        else:
-                _play_click_sound()
-                _on_store_pressed()
+		if game_manager and game_manager.current_save_data \
+						and StoreData.pass_active(Prog.track_cycle(), game_manager.current_save_data.owned):
+				_on_prem_claim_all()
+		else:
+				_play_click_sound()
+				_on_store_pressed()
 
 
 ## D18 Прорыв: 5★ -> 6★ за Искры Пробуждения
 func _on_awaken_pressed(type: String) -> void:
-        _play_click_sound()
-        if game_manager == null:
-                return
-        var res: String = game_manager.apply_awaken(type)
-        if res.is_empty():
-                _show_message(Loc.t("farm.awaken_ok"))
-        else:
-                _show_message(Loc.t("farm.awaken_fail") + ": " + res)
-        _refresh_ui()
+		_play_click_sound()
+		if game_manager == null:
+				return
+		var res: String = game_manager.apply_awaken(type)
+		if res.is_empty():
+				_show_message(Loc.t("farm.awaken_ok"))
+		else:
+				_show_message(Loc.t("farm.awaken_fail") + ": " + res)
+		_refresh_ui()
 
 
 
 func _on_farm_autofill_pressed() -> void:
-        _play_click_sound()
-        if game_manager == null:
-                return
-        var res: Dictionary = game_manager.exchange_all_farm_copies_to_sp()
-        if res.is_empty():
-                _show_message(Loc.t("store.autofill_empty"))
-        else:
-                _show_message(Loc.t("store.autofill_done", {"n": int(res.get("sp", 0))}))
-                _refresh_ui()
+		_play_click_sound()
+		if game_manager == null:
+				return
+		var res: Dictionary = game_manager.exchange_all_farm_copies_to_sp()
+		if res.is_empty():
+				_show_message(Loc.t("store.autofill_empty"))
+		else:
+				_show_message(Loc.t("store.autofill_done", {"n": int(res.get("sp", 0))}))
+				_refresh_ui()
 
 func _on_recycle_pressed():
-        _play_click_sound()
-        _recycle_mode = true
-        _recycle_batch.clear()
-        _recycle_filter.clear()
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_recycle_mode = true
+		_recycle_batch.clear()
+		_recycle_filter.clear()
+		_rebuild_farm_panel()
 
 
 func _on_recycle_cancel():
-        _play_click_sound()
-        _recycle_mode = false
-        _recycle_batch.clear()
-        _recycle_filter.clear()
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_recycle_mode = false
+		_recycle_batch.clear()
+		_recycle_filter.clear()
+		_rebuild_farm_panel()
 
 
 func _recycle_pending_points() -> int:
-        var points: int = 0
-        for t in _recycle_batch:
-                points += GachaData.get_fodder_value(str(t), true) * int(_recycle_batch[t])
-        return points
+		var points: int = 0
+		for t in _recycle_batch:
+				points += GachaData.get_fodder_value(str(t), true) * int(_recycle_batch[t])
+		return points
 
 
 func _rebuild_farm_recycle():
         """Сдача копий: очки по редкости, 10 очков = 1 крутка артефактов"""
-        for child in farm_list.get_children():
-                child.queue_free()
-        if not lab_data:
-                return
+		for child in farm_list.get_children():
+				child.queue_free()
+		if not lab_data:
+				return
 
-        var pending: int = _recycle_pending_points()
-        var total: int = lab_data.recycle_points + pending
-        var header := Label.new()
-        header.text = Loc.t("farm.recycle_title")
-        farm_list.add_child(header)
-        var progress := Label.new()
-        progress.text = Loc.t("farm.recycle_progress", {"points": total % 10 if total < 10 else 10, "consumed": pending, "left": lab_data.recycle_points})
-        progress.add_theme_font_size_override("font_size", 10)
-        farm_list.add_child(progress)
-        # Прогресс полосой
-        var bar := ProgressBar.new()
-        bar.min_value = 0
-        bar.max_value = 10
-        bar.value = total % 10
-        bar.custom_minimum_size = Vector2(0, 16)
-        farm_list.add_child(bar)
-        # Уже гарантированные крутки из партии
-        var ready_rolls := int(total / 10.0)
-        if ready_rolls > 0:
-                var ready_label := Label.new()
-                ready_label.text = Loc.t("farm.recycle_confirm", {"n": ready_rolls})
-                ready_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25))
-                farm_list.add_child(ready_label)
+		var pending: int = _recycle_pending_points()
+		var total: int = lab_data.recycle_points + pending
+		var header := Label.new()
+		header.text = Loc.t("farm.recycle_title")
+		farm_list.add_child(header)
+		var progress := Label.new()
+		progress.text = Loc.t("farm.recycle_progress", {"points": total % 10 if total < 10 else 10, "consumed": pending, "left": lab_data.recycle_points})
+		progress.add_theme_font_size_override("font_size", 10)
+		farm_list.add_child(progress)
+		# Прогресс полосой
+		var bar := ProgressBar.new()
+		bar.min_value = 0
+		bar.max_value = 10
+		bar.value = total % 10
+		bar.custom_minimum_size = Vector2(0, 16)
+		farm_list.add_child(bar)
+		# Уже гарантированные крутки из партии
+		var ready_rolls := int(total / 10.0)
+		if ready_rolls > 0:
+				var ready_label := Label.new()
+				ready_label.text = Loc.t("farm.recycle_confirm", {"n": ready_rolls})
+				ready_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25))
+				farm_list.add_child(ready_label)
 
-        # Состав списка с учётом фильтра редкости
-        var any_copies := false
-        var visible_types: Array = []
-        var visible_copies := 0
-        for type in lab_data.unlocked_mutants:
-                var copies: int = lab_data.get_farm_copies(type)
-                if copies <= 0:
-                        continue
-                any_copies = true
-                if not _recycle_filter.is_empty() and not _recycle_filter.has(GachaData.get_fodder_value(type, true)):
-                        continue
-                visible_types.append(type)
-                visible_copies += copies
-        # Чипы фильтра редкости (+1/+2/+3/+5)
-        if any_copies:
-                var filter_row := HBoxContainer.new()
-                filter_row.add_theme_constant_override("separation", 5)
-                var filter_label := Label.new()
-                filter_label.text = Loc.t("farm.recycle_filter")
-                filter_label.add_theme_font_size_override("font_size", 11)
-                filter_label.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-                filter_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                filter_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-                filter_row.add_child(filter_label)
-                for rar in [1, 2, 3, 5]:
-                        var chip := Button.new()
-                        chip.text = "+%d" % rar
-                        chip.toggle_mode = true
-                        chip.button_pressed = _recycle_filter.has(rar)
-                        chip.custom_minimum_size = Vector2(44, 30)
-                        chip.tooltip_text = Loc.t("farm.recycle_filter_tip")
-                        BunkerUI.style_button(chip, "ghost", 12)
-                        chip.toggled.connect(_on_recycle_filter_toggled.bind(rar))
-                        filter_row.add_child(chip)
-                farm_list.add_child(filter_row)
-                # Пакетная утилизация: без фильтра - всё, с фильтром - только прошедшее фильтр
-                if visible_copies > 0:
-                        var all_btn := Button.new()
-                        var all_key := "farm.recycle_all_f" if not _recycle_filter.is_empty() else "farm.recycle_all"
-                        all_btn.text = Loc.t(all_key, {"n": visible_copies})
-                        all_btn.tooltip_text = Loc.t("farm.recycle_filter_tip")
-                        all_btn.custom_minimum_size = Vector2(0, 38)
-                        BunkerUI.style_button(all_btn, "hazard", 13)
-                        all_btn.pressed.connect(_on_recycle_all_pressed)
-                        farm_list.add_child(all_btn)
-        var found := false
-        for type in visible_types:
-                var copies: int = lab_data.get_farm_copies(type)
-                found = true
-                var row := HBoxContainer.new()
-                row.add_theme_constant_override("separation", 6)
-                row.add_child(_make_icon_rect(type, true, 26))
-                var name_label := Label.new()
-                var value: int = GachaData.get_fodder_value(type, true)
-                name_label.text = "%s - %s (+%d)" % [Loc.type_name(type), Loc.t("farm.copies_x", {"n": copies}), value]
-                name_label.tooltip_text = Loc.t("farm.value_tip", {"points": value})
-                name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                row.add_child(name_label)
-                var pending_n: int = int(_recycle_batch.get(type, 0))
-                if pending_n > 0:
-                        var mark := Label.new()
-                        mark.text = "x%d" % pending_n
-                        mark.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25))
-                        row.add_child(mark)
-                for qty in [1, 5, 10]:
-                        if qty <= copies:
-                                var q_btn := Button.new()
-                                q_btn.text = "+%d" % qty
-                                q_btn.pressed.connect(_on_recycle_add.bind(type, qty))
-                                row.add_child(q_btn)
-                if pending_n > 0:
-                        var sub_btn := Button.new()
-                        sub_btn.text = "-%d" % pending_n
-                        sub_btn.pressed.connect(_on_recycle_remove.bind(type))
-                        row.add_child(sub_btn)
-                farm_list.add_child(row)
-        if not found:
-                var none := Label.new()
-                none.text = Loc.t("farm.recycle_filter_empty") if any_copies else Loc.t("farm.recycle_nothing")
-                farm_list.add_child(none)
+		# Состав списка с учётом фильтра редкости
+		var any_copies := false
+		var visible_types: Array = []
+		var visible_copies := 0
+		for type in lab_data.unlocked_mutants:
+				var copies: int = lab_data.get_farm_copies(type)
+				if copies <= 0:
+						continue
+				any_copies = true
+				if not _recycle_filter.is_empty() and not _recycle_filter.has(GachaData.get_fodder_value(type, true)):
+						continue
+				visible_types.append(type)
+				visible_copies += copies
+		# Чипы фильтра редкости (+1/+2/+3/+5)
+		if any_copies:
+				var filter_row := HBoxContainer.new()
+				filter_row.add_theme_constant_override("separation", 5)
+				var filter_label := Label.new()
+				filter_label.text = Loc.t("farm.recycle_filter")
+				filter_label.add_theme_font_size_override("font_size", 11)
+				filter_label.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+				filter_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				filter_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				filter_row.add_child(filter_label)
+				for rar in [1, 2, 3, 5]:
+						var chip := Button.new()
+						chip.text = "+%d" % rar
+						chip.toggle_mode = true
+						chip.button_pressed = _recycle_filter.has(rar)
+						chip.custom_minimum_size = Vector2(44, 30)
+						chip.tooltip_text = Loc.t("farm.recycle_filter_tip")
+						BunkerUI.style_button(chip, "ghost", 12)
+						chip.toggled.connect(_on_recycle_filter_toggled.bind(rar))
+						filter_row.add_child(chip)
+				farm_list.add_child(filter_row)
+				# Пакетная утилизация: без фильтра - всё, с фильтром - только прошедшее фильтр
+				if visible_copies > 0:
+						var all_btn := Button.new()
+						var all_key := "farm.recycle_all_f" if not _recycle_filter.is_empty() else "farm.recycle_all"
+						all_btn.text = Loc.t(all_key, {"n": visible_copies})
+						all_btn.tooltip_text = Loc.t("farm.recycle_filter_tip")
+						all_btn.custom_minimum_size = Vector2(0, 38)
+						BunkerUI.style_button(all_btn, "hazard", 13)
+						all_btn.pressed.connect(_on_recycle_all_pressed)
+						farm_list.add_child(all_btn)
+		var found := false
+		for type in visible_types:
+				var copies: int = lab_data.get_farm_copies(type)
+				found = true
+				var row := HBoxContainer.new()
+				row.add_theme_constant_override("separation", 6)
+				row.add_child(_make_icon_rect(type, true, 26))
+				var name_label := Label.new()
+				var value: int = GachaData.get_fodder_value(type, true)
+				name_label.text = "%s - %s (+%d)" % [Loc.type_name(type), Loc.t("farm.copies_x", {"n": copies}), value]
+				name_label.tooltip_text = Loc.t("farm.value_tip", {"points": value})
+				name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				row.add_child(name_label)
+				var pending_n: int = int(_recycle_batch.get(type, 0))
+				if pending_n > 0:
+						var mark := Label.new()
+						mark.text = "x%d" % pending_n
+						mark.add_theme_color_override("font_color", Color(1.0, 0.72, 0.25))
+						row.add_child(mark)
+				for qty in [1, 5, 10]:
+						if qty <= copies:
+								var q_btn := Button.new()
+								q_btn.text = "+%d" % qty
+								q_btn.pressed.connect(_on_recycle_add.bind(type, qty))
+								row.add_child(q_btn)
+				if pending_n > 0:
+						var sub_btn := Button.new()
+						sub_btn.text = "-%d" % pending_n
+						sub_btn.pressed.connect(_on_recycle_remove.bind(type))
+						row.add_child(sub_btn)
+				farm_list.add_child(row)
+		if not found:
+				var none := Label.new()
+				none.text = Loc.t("farm.recycle_filter_empty") if any_copies else Loc.t("farm.recycle_nothing")
+				farm_list.add_child(none)
 
-        var confirm := Button.new()
-        confirm.text = Loc.t("farm.recycle_confirm", {"n": ready_rolls})
-        confirm.disabled = ready_rolls <= 0
-        confirm.custom_minimum_size = Vector2(0, 36)
-        confirm.pressed.connect(_on_recycle_confirm)
-        farm_list.add_child(confirm)
+		var confirm := Button.new()
+		confirm.text = Loc.t("farm.recycle_confirm", {"n": ready_rolls})
+		confirm.disabled = ready_rolls <= 0
+		confirm.custom_minimum_size = Vector2(0, 36)
+		confirm.pressed.connect(_on_recycle_confirm)
+		farm_list.add_child(confirm)
 
-        if not _recycle_batch.is_empty():
-                var clear := Button.new()
-                clear.text = Loc.t("farm.recycle_clear")
-                clear.custom_minimum_size = Vector2(0, 32)
-                BunkerUI.style_button(clear, "ghost", 12)
-                clear.pressed.connect(_on_recycle_clear)
-                farm_list.add_child(clear)
+		if not _recycle_batch.is_empty():
+				var clear := Button.new()
+				clear.text = Loc.t("farm.recycle_clear")
+				clear.custom_minimum_size = Vector2(0, 32)
+				BunkerUI.style_button(clear, "ghost", 12)
+				clear.pressed.connect(_on_recycle_clear)
+				farm_list.add_child(clear)
 
-        var cancel := Button.new()
-        cancel.text = Loc.t("lab.back")
-        cancel.pressed.connect(_on_recycle_cancel)
-        farm_list.add_child(cancel)
+		var cancel := Button.new()
+		cancel.text = Loc.t("lab.back")
+		cancel.pressed.connect(_on_recycle_cancel)
+		farm_list.add_child(cancel)
 
 
 func _on_recycle_add(type: String, qty: int):
-        _play_click_sound()
-        _recycle_batch[type] = int(_recycle_batch.get(type, 0)) + qty
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_recycle_batch[type] = int(_recycle_batch.get(type, 0)) + qty
+		_rebuild_farm_panel()
 
 
 func _on_recycle_remove(type: String):
-        _play_click_sound()
-        _recycle_batch.erase(type)
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_recycle_batch.erase(type)
+		_rebuild_farm_panel()
 
 
 func _on_recycle_filter_toggled(toggled_on: bool, rar: int) -> void:
-        _play_click_sound()
-        if toggled_on:
-                if not _recycle_filter.has(rar):
-                        _recycle_filter.append(rar)
-        else:
-                _recycle_filter.erase(rar)
-        _rebuild_farm_panel()
+		_play_click_sound()
+		if toggled_on:
+				if not _recycle_filter.has(rar):
+						_recycle_filter.append(rar)
+		else:
+				_recycle_filter.erase(rar)
+		_rebuild_farm_panel()
 
 
 func _on_recycle_all_pressed() -> void:
-        _play_click_sound()
-        # Без фильтра - все копии; с фильтром - только строки, прошедшие фильтр
-        for type in lab_data.unlocked_mutants:
-                var copies: int = lab_data.get_farm_copies(type)
-                if copies <= 0:
-                        continue
-                if not _recycle_filter.is_empty() and not _recycle_filter.has(GachaData.get_fodder_value(type, true)):
-                        continue
-                _recycle_batch[type] = copies
-        _rebuild_farm_panel()
+		_play_click_sound()
+		# Без фильтра - все копии; с фильтром - только строки, прошедшие фильтр
+		for type in lab_data.unlocked_mutants:
+				var copies: int = lab_data.get_farm_copies(type)
+				if copies <= 0:
+						continue
+				if not _recycle_filter.is_empty() and not _recycle_filter.has(GachaData.get_fodder_value(type, true)):
+						continue
+				_recycle_batch[type] = copies
+		_rebuild_farm_panel()
 
 
 func _on_recycle_clear() -> void:
-        _play_click_sound()
-        _recycle_batch.clear()
-        _rebuild_farm_panel()
+		_play_click_sound()
+		_recycle_batch.clear()
+		_rebuild_farm_panel()
 
 
 func _on_recycle_confirm():
-        _play_click_sound()
-        var result: Dictionary = game_manager.recycle_copies(_recycle_batch)
-        if int(result.get("rolls", 0)) > 0:
-                _show_message(Loc.t("farm.recycle_done", {"n": int(result.get("rolls", 0)), "c": int(result.get("consumed", 0))}), 2.5)
-        else:
-                _show_message(Loc.t("farm.recycle_zero"), 1.5)
-        _recycle_batch.clear()
-        _recycle_filter.clear()
-        _rebuild_farm_panel()
-        _refresh_ui()
+		_play_click_sound()
+		var result: Dictionary = game_manager.recycle_copies(_recycle_batch)
+		if int(result.get("rolls", 0)) > 0:
+				_show_message(Loc.t("farm.recycle_done", {"n": int(result.get("rolls", 0)), "c": int(result.get("consumed", 0))}), 2.5)
+		else:
+				_show_message(Loc.t("farm.recycle_zero"), 1.5)
+		_recycle_batch.clear()
+		_recycle_filter.clear()
+		_rebuild_farm_panel()
+		_refresh_ui()
 
 
 # ==================== СТИЛЬ БУНКЕР ====================
 
 func _apply_bunker_style():
         """Тема и декорации БУНКЕР для лаборатории (вариант 4)."""
-        BunkerUI.apply_bunker(self, true)
+		BunkerUI.apply_bunker(self, true)
 
-        # Фон-арт бункера 2K (пак lab_ui, спека lab_redesign): за контентом
-        _apply_lab_background_art()
+		# Фон-арт бункера 2K (пак lab_ui, спека lab_redesign): за контентом
+		_apply_lab_background_art()
 
-        # Рамки-арт больших панелей (панель >= 60% экрана по спеке)
-        for pnl in [shop_panel, farm_panel, gallery_panel, arena_panel]:
-                if pnl:
-                        BunkerUI.add_frame_overlay(pnl)
+		# Рамки-арт больших панелей (панель >= 60% экрана по спеке)
+		for pnl in [shop_panel, farm_panel, gallery_panel, arena_panel]:
+				if pnl:
+						BunkerUI.add_frame_overlay(pnl)
 
-        # Заголовок шапки
-        var title: Label = get_node_or_null("VBox/Header/Title")
-        if title:
-                title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-                title.add_theme_font_override("font", BunkerUI.font_title())
-                title.add_theme_font_size_override("font_size", 26)
-                title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        var run_no: Label = get_node_or_null("VBox/Header/RunNumber")
-        if run_no:
-                run_no.add_theme_font_override("font", BunkerUI.font_mono())
-                run_no.add_theme_font_size_override("font_size", 17)
-                run_no.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+		# Заголовок шапки
+		var title: Label = get_node_or_null("VBox/Header/Title")
+		if title:
+				title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+				title.add_theme_font_override("font", BunkerUI.font_title())
+				title.add_theme_font_size_override("font_size", 26)
+				title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		var run_no: Label = get_node_or_null("VBox/Header/RunNumber")
+		if run_no:
+				run_no.add_theme_font_override("font", BunkerUI.font_mono())
+				run_no.add_theme_font_size_override("font_size", 17)
+				run_no.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
 
-        # Старт забега - большая зелёная 3D-кнопка
-        start_run_button.custom_minimum_size = Vector2(340, 62)
-        BunkerUI.style_button(start_run_button, "primary", 20, true)
+		# Старт забега - большая зелёная 3D-кнопка
+		start_run_button.custom_minimum_size = Vector2(340, 62)
+		BunkerUI.style_button(start_run_button, "primary", 20, true)
 
-        # Станции - стальные панели с жёлтым уровнем + иконки-бейджи из пака
-        var station_icons := {
-                anomaly_station: "station_anomaly",
-                mutant_station: "station_mutant",
-                monolith_station: "station_monolith",
-        }
-        for st in [anomaly_station, mutant_station, monolith_station]:
-                BunkerUI.style_button(st, "steel", 16)
-                var nm: Label = st.get_node_or_null("StationName")
-                if nm:
-                        nm.add_theme_font_override("font", BunkerUI.font_body())
-                        nm.add_theme_font_size_override("font_size", 19)
-                        nm.add_theme_color_override("font_color", BunkerUI.TEXT_BRIGHT)
-                var lv: Label = st.get_node_or_null("StationLevel")
-                if lv:
-                        lv.add_theme_font_override("font", BunkerUI.font_mono())
-                        lv.add_theme_font_size_override("font_size", 14)
-                        lv.add_theme_color_override("font_color", BunkerUI.HAZARD)
-                var icon_key: String = station_icons.get(st, "")
-                var icon_path := BunkerUI.LAB_ART_DIR + icon_key + ".png"
-                if icon_key != "" and ResourceLoader.exists(icon_path):
-                        var badge := TextureRect.new()
-                        badge.name = "StationBadge"
-                        badge.texture = load(icon_path)
-                        badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-                        badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-                        badge.anchor_left = 0.0
-                        badge.anchor_top = 0.0
-                        badge.anchor_right = 0.0
-                        badge.anchor_bottom = 0.0
-                        badge.offset_left = 8.0
-                        badge.offset_top = 8.0
-                        badge.offset_right = 52.0
-                        badge.offset_bottom = 52.0
-                        badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-                        badge.modulate = Color(1, 1, 1, 0.9)
-                        st.add_child(badge)
+		# Станции - стальные панели с жёлтым уровнем + иконки-бейджи из пака
+		var station_icons := {
+				anomaly_station: "station_anomaly",
+				mutant_station: "station_mutant",
+				monolith_station: "station_monolith",
+		}
+		for st in [anomaly_station, mutant_station, monolith_station]:
+				BunkerUI.style_button(st, "steel", 16)
+				var nm: Label = st.get_node_or_null("StationName")
+				if nm:
+						nm.add_theme_font_override("font", BunkerUI.font_body())
+						nm.add_theme_font_size_override("font_size", 19)
+						nm.add_theme_color_override("font_color", BunkerUI.TEXT_BRIGHT)
+				var lv: Label = st.get_node_or_null("StationLevel")
+				if lv:
+						lv.add_theme_font_override("font", BunkerUI.font_mono())
+						lv.add_theme_font_size_override("font_size", 14)
+						lv.add_theme_color_override("font_color", BunkerUI.HAZARD)
+				var icon_key: String = station_icons.get(st, "")
+				var icon_path := BunkerUI.LAB_ART_DIR + icon_key + ".png"
+				if icon_key != "" and ResourceLoader.exists(icon_path):
+						var badge := TextureRect.new()
+						badge.name = "StationBadge"
+						badge.texture = load(icon_path)
+						badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+						badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+						badge.anchor_left = 0.0
+						badge.anchor_top = 0.0
+						badge.anchor_right = 0.0
+						badge.anchor_bottom = 0.0
+						badge.offset_left = 8.0
+						badge.offset_top = 8.0
+						badge.offset_right = 52.0
+						badge.offset_bottom = 52.0
+						badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+						badge.modulate = Color(1, 1, 1, 0.9)
+						st.add_child(badge)
 
-        # Рядовые кнопки - сталь
-        for b in [menu_button, settings_button, shop_button, save_button, artifact_storage_button]:
-                BunkerUI.style_button(b, "steel", 16)
+		# Рядовые кнопки - сталь
+		for b in [menu_button, settings_button, shop_button, save_button, artifact_storage_button]:
+				BunkerUI.style_button(b, "steel", 16)
 
 
 ## Фон-арт лаборатории: 2K интерьер бункера за контентом (пак lab_ui)
 func _apply_lab_background_art():
-        const BG_PATH := "res://assets/ui/lab/lab_background_2k.png"
-        if not ResourceLoader.exists(BG_PATH):
-                return
-        var bg := TextureRect.new()
-        bg.name = "BackgroundArt"
-        bg.texture = load(BG_PATH)
-        bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-        bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-        bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        add_child(bg)
-        move_child(bg, 1)  # сразу за ColorRect-подложкой, перед всем контентом
+		const BG_PATH := "res://assets/ui/lab/lab_background_2k.png"
+		if not ResourceLoader.exists(BG_PATH):
+				return
+		var bg := TextureRect.new()
+		bg.name = "BackgroundArt"
+		bg.texture = load(BG_PATH)
+		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(bg)
+		move_child(bg, 1)  # сразу за ColorRect-подложкой, перед всем контентом
 
 
 func _refresh_gacha_deck():
         """Пластины круток в деке гачи."""
-        var deck: PanelContainer = get_node_or_null("VBox/GachaDeck")
-        if deck == null or lab_data == null:
-                return
-        var mut_plate: PanelContainer = deck.get_node_or_null("DeckRow/MutRollsPlate")
-        if mut_plate:
-                var mut_label: Label = mut_plate.get_child(0).get_child(0)
-                mut_label.text = _rolls_lab_text(lab_data.gacha_rolls_mutants)
-        var art_plate: PanelContainer = deck.get_node_or_null("DeckRow/ArtRollsPlate")
-        if art_plate:
-                var art_label: Label = art_plate.get_child(0).get_child(0)
-                art_label.text = str(lab_data.gacha_rolls_artifacts)
+		var deck: PanelContainer = get_node_or_null("VBox/GachaDeck")
+		if deck == null or lab_data == null:
+				return
+		var mut_plate: PanelContainer = deck.get_node_or_null("DeckRow/MutRollsPlate")
+		if mut_plate:
+				var mut_label: Label = mut_plate.get_child(0).get_child(0)
+				mut_label.text = _rolls_lab_text(lab_data.gacha_rolls_mutants)
+		var art_plate: PanelContainer = deck.get_node_or_null("DeckRow/ArtRollsPlate")
+		if art_plate:
+				var art_label: Label = art_plate.get_child(0).get_child(0)
+				art_label.text = str(lab_data.gacha_rolls_artifacts)
 
 
 func _rolls_lab_text(n: int) -> String:
-        return "∞" if n >= 1000000 else str(n)
+		return "∞" if n >= 1000000 else str(n)
 
 
 func _apply_bunker_layout_sizes():
         """Компактные размеры рядов в духе макета: станции ниже, статистика дышит."""
-        var stations_row: HBoxContainer = get_node_or_null("VBox/Stations")
-        if stations_row:
-                stations_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-                stations_row.custom_minimum_size = Vector2(0, 170)
+		var stations_row: HBoxContainer = get_node_or_null("VBox/Stations")
+		if stations_row:
+				stations_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+				stations_row.custom_minimum_size = Vector2(0, 170)
 
 
 # ==================== АРЕНА ВЫЖИВАНИЯ (макет «АРЕНА») ====================
@@ -4096,258 +4096,258 @@ var _defense_power_label: Label = null
 
 func _build_arena_ui():
         """Кнопка АРЕНА + полноэкранная арена выживания (строится кодом)"""
-        var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
-        if bottom:
-                var arena_btn := Button.new()
-                arena_btn.name = "ArenaButton"
-                arena_btn.text = Loc.t("arena.tab")
-                arena_btn.custom_minimum_size = Vector2(0, 62)
-                arena_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(arena_btn, "steel", 18)
-                arena_btn.pressed.connect(_on_arena_pressed)
-                arena_btn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(arena_btn)
+		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
+		if bottom:
+				var arena_btn := Button.new()
+				arena_btn.name = "ArenaButton"
+				arena_btn.text = Loc.t("arena.tab")
+				arena_btn.custom_minimum_size = Vector2(0, 62)
+				arena_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(arena_btn, "steel", 18)
+				arena_btn.pressed.connect(_on_arena_pressed)
+				arena_btn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(arena_btn)
 
-        arena_panel = Control.new()
-        arena_panel.name = "ArenaPanel"
-        arena_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        arena_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        arena_panel.visible = false
-        add_child(arena_panel)
+		arena_panel = Control.new()
+		arena_panel.name = "ArenaPanel"
+		arena_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		arena_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		arena_panel.visible = false
+		add_child(arena_panel)
 
-        var bg := ColorRect.new()
-        bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        bg.color = Color(0.023, 0.033, 0.018, 0.985)
-        arena_panel.add_child(bg)
+		var bg := ColorRect.new()
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.color = Color(0.023, 0.033, 0.018, 0.985)
+		arena_panel.add_child(bg)
 
-        var root := VBoxContainer.new()
-        root.set_anchors_preset(Control.PRESET_FULL_RECT)
-        root.offset_left = 30
-        root.offset_right = -30
-        root.offset_top = 16
-        root.offset_bottom = -14
-        root.add_theme_constant_override("separation", 10)
-        arena_panel.add_child(root)
+		var root := VBoxContainer.new()
+		root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		root.offset_left = 30
+		root.offset_right = -30
+		root.offset_top = 16
+		root.offset_bottom = -14
+		root.add_theme_constant_override("separation", 10)
+		arena_panel.add_child(root)
 
-        # ---- Шапка: НАЗАД + заголовок + сезон + место + таймер ----
-        var head := HBoxContainer.new()
-        head.add_theme_constant_override("separation", 18)
-        root.add_child(head)
+		# ---- Шапка: НАЗАД + заголовок + сезон + место + таймер ----
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 18)
+		root.add_child(head)
 
-        var back := Button.new()
-        back.name = "ArenaBackButton"
-        back.text = Loc.t("arena.back")
-        back.custom_minimum_size = Vector2(180, 56)
-        back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        BunkerUI.style_button(back, "steel", 18)
-        back.pressed.connect(_on_arena_close_pressed)
-        back.mouse_entered.connect(_play_hover_sound)
-        head.add_child(back)
+		var back := Button.new()
+		back.name = "ArenaBackButton"
+		back.text = Loc.t("arena.back")
+		back.custom_minimum_size = Vector2(180, 56)
+		back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		BunkerUI.style_button(back, "steel", 18)
+		back.pressed.connect(_on_arena_close_pressed)
+		back.mouse_entered.connect(_play_hover_sound)
+		head.add_child(back)
 
-        var t1 := Label.new()
-        t1.text = Loc.t("arena.title")
-        t1.add_theme_font_override("font", BunkerUI.font_title())
-        t1.add_theme_font_size_override("font_size", 34)
-        t1.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        head.add_child(t1)
-        var t2 := Label.new()
-        t2.text = Loc.t("arena.subtitle")
-        t2.add_theme_font_override("font", BunkerUI.font_title())
-        t2.add_theme_font_size_override("font_size", 34)
-        t2.add_theme_color_override("font_color", BunkerUI.DANGER_HI)
-        head.add_child(t2)
+		var t1 := Label.new()
+		t1.text = Loc.t("arena.title")
+		t1.add_theme_font_override("font", BunkerUI.font_title())
+		t1.add_theme_font_size_override("font_size", 34)
+		t1.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		head.add_child(t1)
+		var t2 := Label.new()
+		t2.text = Loc.t("arena.subtitle")
+		t2.add_theme_font_override("font", BunkerUI.font_title())
+		t2.add_theme_font_size_override("font_size", 34)
+		t2.add_theme_color_override("font_color", BunkerUI.DANGER_HI)
+		head.add_child(t2)
 
-        var season := PanelContainer.new()
-        season.add_theme_stylebox_override("panel", BunkerUI.steel())
-        var sv := VBoxContainer.new()
-        sv.add_theme_constant_override("separation", 0)
-        var sa := Label.new()
-        sa.text = Loc.t("arena.blowout_roman")
-        sa.add_theme_font_override("font", BunkerUI.font_title())
-        sa.add_theme_font_size_override("font_size", 18)
-        sa.add_theme_color_override("font_color", BunkerUI.HAZARD)
-        sa.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        var sb := Label.new()
-        _arena_season_label = sb
-        sb.text = Loc.t("arena.season_liga", {"n": _arena_season_number()})
-        sb.add_theme_font_override("font", BunkerUI.font_mono())
-        sb.add_theme_font_size_override("font_size", 12)
-        sb.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-        sb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        sv.add_child(sa)
-        sv.add_child(sb)
-        season.add_child(sv)
-        head.add_child(season)
+		var season := PanelContainer.new()
+		season.add_theme_stylebox_override("panel", BunkerUI.steel())
+		var sv := VBoxContainer.new()
+		sv.add_theme_constant_override("separation", 0)
+		var sa := Label.new()
+		sa.text = Loc.t("arena.blowout_roman")
+		sa.add_theme_font_override("font", BunkerUI.font_title())
+		sa.add_theme_font_size_override("font_size", 18)
+		sa.add_theme_color_override("font_color", BunkerUI.HAZARD)
+		sa.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var sb := Label.new()
+		_arena_season_label = sb
+		sb.text = Loc.t("arena.season_liga", {"n": _arena_season_number()})
+		sb.add_theme_font_override("font", BunkerUI.font_mono())
+		sb.add_theme_font_size_override("font_size", 12)
+		sb.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+		sb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sv.add_child(sa)
+		sv.add_child(sb)
+		season.add_child(sv)
+		head.add_child(season)
 
-        var sp0 := Control.new()
-        sp0.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        head.add_child(sp0)
+		var sp0 := Control.new()
+		sp0.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(sp0)
 
-        var rank := PanelContainer.new()
-        var rsb := StyleBoxFlat.new()
-        rsb.bg_color = Color(0.10, 0.082, 0.03)
-        rsb.border_color = Color("8a6d1e")
-        rsb.set_border_width_all(1)
-        rsb.set_corner_radius_all(8)
-        rsb.content_margin_left = 16.0
-        rsb.content_margin_right = 16.0
-        rsb.content_margin_top = 6.0
-        rsb.content_margin_bottom = 6.0
-        rank.add_theme_stylebox_override("panel", rsb)
-        var rv := VBoxContainer.new()
-        rv.add_theme_constant_override("separation", 0)
-        var r1 := Label.new()
-        _arena_rank_label = r1
-        r1.text = Loc.t("arena.place_suffix")
-        r1.add_theme_font_override("font", BunkerUI.font_title())
-        r1.add_theme_font_size_override("font_size", 18)
-        r1.add_theme_color_override("font_color", Color("ffd94d"))
-        r1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        var r2 := Label.new()
-        _arena_rank_sub = r2
-        r2.text = Loc.t("arena.promo_zone")
-        r2.add_theme_font_override("font", BunkerUI.font_mono())
-        r2.add_theme_font_size_override("font_size", 11)
-        r2.add_theme_color_override("font_color", Color("9a8349"))
-        r2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        rv.add_child(r1)
-        rv.add_child(r2)
-        rank.add_child(rv)
-        head.add_child(rank)
+		var rank := PanelContainer.new()
+		var rsb := StyleBoxFlat.new()
+		rsb.bg_color = Color(0.10, 0.082, 0.03)
+		rsb.border_color = Color("8a6d1e")
+		rsb.set_border_width_all(1)
+		rsb.set_corner_radius_all(8)
+		rsb.content_margin_left = 16.0
+		rsb.content_margin_right = 16.0
+		rsb.content_margin_top = 6.0
+		rsb.content_margin_bottom = 6.0
+		rank.add_theme_stylebox_override("panel", rsb)
+		var rv := VBoxContainer.new()
+		rv.add_theme_constant_override("separation", 0)
+		var r1 := Label.new()
+		_arena_rank_label = r1
+		r1.text = Loc.t("arena.place_suffix")
+		r1.add_theme_font_override("font", BunkerUI.font_title())
+		r1.add_theme_font_size_override("font_size", 18)
+		r1.add_theme_color_override("font_color", Color("ffd94d"))
+		r1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var r2 := Label.new()
+		_arena_rank_sub = r2
+		r2.text = Loc.t("arena.promo_zone")
+		r2.add_theme_font_override("font", BunkerUI.font_mono())
+		r2.add_theme_font_size_override("font_size", 11)
+		r2.add_theme_color_override("font_color", Color("9a8349"))
+		r2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		rv.add_child(r1)
+		rv.add_child(r2)
+		rank.add_child(rv)
+		head.add_child(rank)
 
-        var tv := VBoxContainer.new()
-        tv.add_theme_constant_override("separation", 0)
-        _arena_timer_label = BunkerUI.make_mono_label("00:00:00", 24, BunkerUI.GREEN)
-        _arena_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        var tl := BunkerUI.make_mono_label("ДО КОНЦА СЕЗОНА", 11, BunkerUI.TEXT_FAINT)
-        tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        tv.add_child(_arena_timer_label)
-        tv.add_child(tl)
-        head.add_child(tv)
+		var tv := VBoxContainer.new()
+		tv.add_theme_constant_override("separation", 0)
+		_arena_timer_label = BunkerUI.make_mono_label("00:00:00", 24, BunkerUI.GREEN)
+		_arena_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		var tl := BunkerUI.make_mono_label("ДО КОНЦА СЕЗОНА", 11, BunkerUI.TEXT_FAINT)
+		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		tv.add_child(_arena_timer_label)
+		tv.add_child(tl)
+		head.add_child(tv)
 
-        # ---- Тело: список вызовов (лево) + доска (право) ----
-        var body := HBoxContainer.new()
-        body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        body.add_theme_constant_override("separation", 16)
-        root.add_child(body)
+		# ---- Тело: список вызовов (лево) + доска (право) ----
+		var body := HBoxContainer.new()
+		body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		body.add_theme_constant_override("separation", 16)
+		root.add_child(body)
 
-        var list_scroll := ScrollContainer.new()
-        list_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        # v0.29.3: свайп-слой — список вызовов едет за пальцем, кнопки жмутся тапом
-        body.add_child(_make_swipe_overlay(list_scroll, false))
+		var list_scroll := ScrollContainer.new()
+		list_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		# v0.29.3: свайп-слой — список вызовов едет за пальцем, кнопки жмутся тапом
+		body.add_child(_make_swipe_overlay(list_scroll, false))
 
-        _arena_foes_box = VBoxContainer.new()
-        _arena_foes_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        _arena_foes_box.add_theme_constant_override("separation", 10)
-        list_scroll.add_child(_arena_foes_box)
+		_arena_foes_box = VBoxContainer.new()
+		_arena_foes_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_arena_foes_box.add_theme_constant_override("separation", 10)
+		list_scroll.add_child(_arena_foes_box)
 
-        var side := VBoxContainer.new()
-        side.custom_minimum_size = Vector2(520, 0)
-        side.add_theme_constant_override("separation", 10)
-        body.add_child(side)
+		var side := VBoxContainer.new()
+		side.custom_minimum_size = Vector2(520, 0)
+		side.add_theme_constant_override("separation", 10)
+		body.add_child(side)
 
-        var board := PanelContainer.new()
-        board.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        side.add_child(board)
-        _arena_board_box = VBoxContainer.new()
-        _arena_board_box.add_theme_constant_override("separation", 6)
-        board.add_child(_arena_board_box)
+		var board := PanelContainer.new()
+		board.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		side.add_child(board)
+		_arena_board_box = VBoxContainer.new()
+		_arena_board_box.add_theme_constant_override("separation", 6)
+		board.add_child(_arena_board_box)
 
-        var bless := PanelContainer.new()
-        var bsb2 := StyleBoxFlat.new()
-        bsb2.bg_color = Color(0.10, 0.082, 0.03)
-        bsb2.border_color = Color("8a6d1e")
-        bsb2.set_border_width_all(1)
-        bsb2.set_corner_radius_all(10)
-        bsb2.content_margin_left = 16.0
-        bsb2.content_margin_right = 16.0
-        bsb2.content_margin_top = 10.0
-        bsb2.content_margin_bottom = 10.0
-        bless.add_theme_stylebox_override("panel", bsb2)
-        var bl := Label.new()
-        _arena_bless_label = bl
-        bl.text = Loc.t("arena.blessing")
-        bl.add_theme_font_override("font", BunkerUI.font_body())
-        bl.add_theme_font_size_override("font_size", 14)
-        bl.add_theme_color_override("font_color", Color("c9b06a"))
-        bl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        bless.add_child(bl)
-        side.add_child(bless)
+		var bless := PanelContainer.new()
+		var bsb2 := StyleBoxFlat.new()
+		bsb2.bg_color = Color(0.10, 0.082, 0.03)
+		bsb2.border_color = Color("8a6d1e")
+		bsb2.set_border_width_all(1)
+		bsb2.set_corner_radius_all(10)
+		bsb2.content_margin_left = 16.0
+		bsb2.content_margin_right = 16.0
+		bsb2.content_margin_top = 10.0
+		bsb2.content_margin_bottom = 10.0
+		bless.add_theme_stylebox_override("panel", bsb2)
+		var bl := Label.new()
+		_arena_bless_label = bl
+		bl.text = Loc.t("arena.blessing")
+		bl.add_theme_font_override("font", BunkerUI.font_body())
+		bl.add_theme_font_size_override("font_size", 14)
+		bl.add_theme_color_override("font_color", Color("c9b06a"))
+		bl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		bless.add_child(bl)
+		side.add_child(bless)
 
-        var quick := HBoxContainer.new()
-        quick.add_theme_constant_override("separation", 12)
-        side.add_child(quick)
-        var q1 := Button.new()
-        q1.text = Loc.t("arena.quick")
-        q1.custom_minimum_size = Vector2(0, 60)
-        q1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        BunkerUI.style_button(q1, "hazard", 17, true)
-        q1.pressed.connect(_on_arena_challenge.bind("БЫСТРЫЙ ВЫЗОВ"))
-        q1.mouse_entered.connect(_play_hover_sound)
-        quick.add_child(q1)
-        var q2 := Button.new()
-        q2.text = Loc.t("arena.change_defense")
-        q2.custom_minimum_size = Vector2(0, 60)
-        q2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        BunkerUI.style_button(q2, "steel", 15)
-        q2.pressed.connect(_on_defense_open_pressed)
-        q2.mouse_entered.connect(_play_hover_sound)
-        quick.add_child(q2)
+		var quick := HBoxContainer.new()
+		quick.add_theme_constant_override("separation", 12)
+		side.add_child(quick)
+		var q1 := Button.new()
+		q1.text = Loc.t("arena.quick")
+		q1.custom_minimum_size = Vector2(0, 60)
+		q1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		BunkerUI.style_button(q1, "hazard", 17, true)
+		q1.pressed.connect(_on_arena_challenge.bind("БЫСТРЫЙ ВЫЗОВ"))
+		q1.mouse_entered.connect(_play_hover_sound)
+		quick.add_child(q1)
+		var q2 := Button.new()
+		q2.text = Loc.t("arena.change_defense")
+		q2.custom_minimum_size = Vector2(0, 60)
+		q2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		BunkerUI.style_button(q2, "steel", 15)
+		q2.pressed.connect(_on_defense_open_pressed)
+		q2.mouse_entered.connect(_play_hover_sound)
+		quick.add_child(q2)
 
-        # ---- Вкладки ----
-        var tabs := HBoxContainer.new()
-        tabs.add_theme_constant_override("separation", 8)
-        root.add_child(tabs)
-        var tab_names := [Loc.t("arena.tab_rewards"), Loc.t("arena.tab_hall"), Loc.t("arena.tab_reports"), Loc.t("arena.tab_defense"), Loc.t("arena.tab_tasks")]
-        for i in range(tab_names.size()):
-                var tb := Button.new()
-                tb.text = tab_names[i]
-                tb.custom_minimum_size = Vector2(0, 50)
-                tb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(tb, "steel", 14)
-                tb.pressed.connect(_on_arena_tab.bind(i))
-                tb.mouse_entered.connect(_play_hover_sound)
-                tabs.add_child(tb)
+		# ---- Вкладки ----
+		var tabs := HBoxContainer.new()
+		tabs.add_theme_constant_override("separation", 8)
+		root.add_child(tabs)
+		var tab_names := [Loc.t("arena.tab_rewards"), Loc.t("arena.tab_hall"), Loc.t("arena.tab_reports"), Loc.t("arena.tab_defense"), Loc.t("arena.tab_tasks")]
+		for i in range(tab_names.size()):
+				var tb := Button.new()
+				tb.text = tab_names[i]
+				tb.custom_minimum_size = Vector2(0, 50)
+				tb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(tb, "steel", 14)
+				tb.pressed.connect(_on_arena_tab.bind(i))
+				tb.mouse_entered.connect(_play_hover_sound)
+				tabs.add_child(tb)
 
-        # Таймер сезона
-        _arena_season_timer = Timer.new()
-        _arena_season_timer.wait_time = 1.0
-        _arena_season_timer.timeout.connect(_update_arena_timer)
-        arena_panel.add_child(_arena_season_timer)
+		# Таймер сезона
+		_arena_season_timer = Timer.new()
+		_arena_season_timer.wait_time = 1.0
+		_arena_season_timer.timeout.connect(_update_arena_timer)
+		arena_panel.add_child(_arena_season_timer)
 
-        _build_defense_ui()
+		_build_defense_ui()
 
 
 func _on_arena_pressed():
-        _play_click_sound()
-        _hide_lab_overlays("arena")
-        arena_panel.visible = true
-        Prog.request_story("arena", self)
-        _arena_tab = 0
-        _rebuild_arena_panel()
-        _update_arena_timer()
-        _arena_season_timer.start()
+		_play_click_sound()
+		_hide_lab_overlays("arena")
+		arena_panel.visible = true
+		Prog.request_story("arena", self)
+		_arena_tab = 0
+		_rebuild_arena_panel()
+		_update_arena_timer()
+		_arena_season_timer.start()
 
 
 func _on_arena_close_pressed():
-        _play_click_sound()
-        arena_panel.visible = false
-        _arena_season_timer.stop()
+		_play_click_sound()
+		arena_panel.visible = false
+		_arena_season_timer.stop()
 
 
 ## Сила отряда игрока (арена): звёзды питомцев + рекорд выживания
 func _arena_player_power() -> int:
-        var power := 1200
-        if lab_data:
-                for t in lab_data.unlocked_mutants:
-                        power += 340 * lab_data.get_mutant_stars(str(t))
-                        power += 15 * lab_data.get_farm_copies(str(t))
-        var rec := 0
-        if statistics:
-                rec = statistics.best_survival_wave
-        power += rec * 45
-        return power
+		var power := 1200
+		if lab_data:
+				for t in lab_data.unlocked_mutants:
+						power += 340 * lab_data.get_mutant_stars(str(t))
+						power += 15 * lab_data.get_farm_copies(str(t))
+		var rec := 0
+		if statistics:
+				rec = statistics.best_survival_wave
+		power += rec * 45
+		return power
 
 
 ## Десять символических соперников: фиксированная лестница Зоны.
@@ -4355,629 +4355,629 @@ func _arena_player_power() -> int:
 ## КРОТ (старт, 4 волны) -> ШТЫРЬ -> БАРМЕН -> ДЕГТЯРЁВ -> КЛЫК -> ЛУЧНИК
 ## -> ПРИЗРАК -> ВОЛК -> СТРЕЛОК -> МЕЧЕНЫЙ (топ лиги, волна 50).
 func _arena_make_rivals() -> Array:
-        var defs := [
-                ["МЕЧЕНЫЙ", "«Легенда Зоны»", 21500, 50, "Химера"],
-                ["СТРЕЛОК", "«Легенда Зоны»", 17800, 44, "Кряж"],
-                ["ВОЛК", "«Долг»", 14400, 38, "Пиявец"],
-                ["ПРИЗРАК", "«Свобода»", 11500, 32, "Полтергейст"],
-                ["ЛУЧНИК", "«Наёмники»", 9100, 26, "Сновод"],
-                ["КЛЫК", "«Наёмники»", 7100, 21, "Сумеречник"],
-                ["ДЕГТЯРЁВ", "«Долг»", 5200, 16, "Пиявец"],
-                ["БАРМЕН", "«Долг»", 3800, 12, "Болотник"],
-                ["ШТЫРЬ", "«Одиночки»", 2400, 8, "Сумеречник"],
-                ["КРОТ", "«Одиночки»", 1100, 4, "Болотник"],
-        ]
-        var out: Array = []
-        for d in defs:
-                out.append({
-                        "name": str(d[0]), "clan": str(d[1]),
-                        "power": int(d[2]), "wave": int(d[3]),
-                        "pet": str(d[4])
-                })
-        return out
+		var defs := [
+				["МЕЧЕНЫЙ", "«Легенда Зоны»", 21500, 50, "Химера"],
+				["СТРЕЛОК", "«Легенда Зоны»", 17800, 44, "Кряж"],
+				["ВОЛК", "«Долг»", 14400, 38, "Пиявец"],
+				["ПРИЗРАК", "«Свобода»", 11500, 32, "Полтергейст"],
+				["ЛУЧНИК", "«Наёмники»", 9100, 26, "Сновод"],
+				["КЛЫК", "«Наёмники»", 7100, 21, "Сумеречник"],
+				["ДЕГТЯРЁВ", "«Долг»", 5200, 16, "Пиявец"],
+				["БАРМЕН", "«Долг»", 3800, 12, "Болотник"],
+				["ШТЫРЬ", "«Одиночки»", 2400, 8, "Сумеречник"],
+				["КРОТ", "«Одиночки»", 1100, 4, "Болотник"],
+		]
+		var out: Array = []
+		for d in defs:
+				out.append({
+						"name": str(d[0]), "clan": str(d[1]),
+						"power": int(d[2]), "wave": int(d[3]),
+						"pet": str(d[4])
+				})
+		return out
 
 
 func _make_arena_foe_row(foe: Dictionary, is_me: bool) -> Control:
-        var row := PanelContainer.new()
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.062, 0.086, 0.041)
-        sb.border_color = BunkerUI.HAZARD if is_me else BunkerUI.STEEL_EDGE
-        sb.set_border_width_all(2)
-        sb.set_corner_radius_all(10)
-        sb.content_margin_left = 18.0
-        sb.content_margin_right = 18.0
-        sb.content_margin_top = 10.0
-        sb.content_margin_bottom = 10.0
-        if is_me:
-                sb.shadow_color = Color(BunkerUI.HAZARD, 0.35)
-                sb.shadow_size = 16
-                sb.shadow_offset = Vector2.ZERO
-        row.add_theme_stylebox_override("panel", sb)
+		var row := PanelContainer.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.062, 0.086, 0.041)
+		sb.border_color = BunkerUI.HAZARD if is_me else BunkerUI.STEEL_EDGE
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(10)
+		sb.content_margin_left = 18.0
+		sb.content_margin_right = 18.0
+		sb.content_margin_top = 10.0
+		sb.content_margin_bottom = 10.0
+		if is_me:
+				sb.shadow_color = Color(BunkerUI.HAZARD, 0.35)
+				sb.shadow_size = 16
+				sb.shadow_offset = Vector2.ZERO
+		row.add_theme_stylebox_override("panel", sb)
 
-        var h := HBoxContainer.new()
-        h.add_theme_constant_override("separation", 16)
-        row.add_child(h)
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 16)
+		row.add_child(h)
 
-        # Круг-аватар
-        var ava := Panel.new()
-        ava.custom_minimum_size = Vector2(64, 64)
-        ava.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        var asb := StyleBoxFlat.new()
-        asb.set_corner_radius_all(32)
-        asb.bg_color = Color(0.06, 0.09, 0.045)
-        asb.border_color = BunkerUI.HAZARD if is_me else Color("4a5c2e")
-        asb.set_border_width_all(2)
-        ava.add_theme_stylebox_override("panel", asb)
-        var al := Label.new()
-        al.set_anchors_preset(Control.PRESET_FULL_RECT)
-        al.text = Loc.t("arena.you_initial") if is_me else str(foe.get("name", "?")).substr(0, 1)
-        al.add_theme_font_override("font", BunkerUI.font_title())
-        al.add_theme_font_size_override("font_size", 28)
-        al.add_theme_color_override("font_color", Color("ffd94d") if is_me else Color(0.9, 1.0, 0.8, 0.3))
-        al.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        al.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        ava.add_child(al)
-        h.add_child(ava)
+		# Круг-аватар
+		var ava := Panel.new()
+		ava.custom_minimum_size = Vector2(64, 64)
+		ava.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var asb := StyleBoxFlat.new()
+		asb.set_corner_radius_all(32)
+		asb.bg_color = Color(0.06, 0.09, 0.045)
+		asb.border_color = BunkerUI.HAZARD if is_me else Color("4a5c2e")
+		asb.set_border_width_all(2)
+		ava.add_theme_stylebox_override("panel", asb)
+		var al := Label.new()
+		al.set_anchors_preset(Control.PRESET_FULL_RECT)
+		al.text = Loc.t("arena.you_initial") if is_me else str(foe.get("name", "?")).substr(0, 1)
+		al.add_theme_font_override("font", BunkerUI.font_title())
+		al.add_theme_font_size_override("font_size", 28)
+		al.add_theme_color_override("font_color", Color("ffd94d") if is_me else Color(0.9, 1.0, 0.8, 0.3))
+		al.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		al.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		ava.add_child(al)
+		h.add_child(ava)
 
-        # Кто
-        var who := VBoxContainer.new()
-        who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        who.alignment = BoxContainer.ALIGNMENT_CENTER
-        who.add_theme_constant_override("separation", 0)
-        var nm := Label.new()
-        nm.text = Loc.t("arena.you_name") if is_me else str(foe.get("name", ""))
-        nm.add_theme_font_override("font", BunkerUI.font_title())
-        nm.add_theme_font_size_override("font_size", 19)
-        nm.add_theme_color_override("font_color", Color("ffd94d") if is_me else BunkerUI.TEXT_LIGHT)
-        who.add_child(nm)
-        var cl := Label.new()
-        if is_me:
-                var mcount := 0
-                if lab_data:
-                        mcount = lab_data.unlocked_mutants.size()
-                cl.text = Loc.t("arena.defense_count", {"a": lab_data.arena_defense_squad.size(), "b": mcount})
-        else:
-                cl.text = Loc.t("arena.foe_squad", {"clan": str(foe.get("clan", "")), "pet": str(foe.get("pet", ""))})
-        cl.add_theme_font_override("font", BunkerUI.font_body())
-        cl.add_theme_font_size_override("font_size", 13)
-        cl.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-        who.add_child(cl)
-        h.add_child(who)
+		# Кто
+		var who := VBoxContainer.new()
+		who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		who.alignment = BoxContainer.ALIGNMENT_CENTER
+		who.add_theme_constant_override("separation", 0)
+		var nm := Label.new()
+		nm.text = Loc.t("arena.you_name") if is_me else str(foe.get("name", ""))
+		nm.add_theme_font_override("font", BunkerUI.font_title())
+		nm.add_theme_font_size_override("font_size", 19)
+		nm.add_theme_color_override("font_color", Color("ffd94d") if is_me else BunkerUI.TEXT_LIGHT)
+		who.add_child(nm)
+		var cl := Label.new()
+		if is_me:
+				var mcount := 0
+				if lab_data:
+						mcount = lab_data.unlocked_mutants.size()
+				cl.text = Loc.t("arena.defense_count", {"a": lab_data.arena_defense_squad.size(), "b": mcount})
+		else:
+				cl.text = Loc.t("arena.foe_squad", {"clan": str(foe.get("clan", "")), "pet": str(foe.get("pet", ""))})
+		cl.add_theme_font_override("font", BunkerUI.font_body())
+		cl.add_theme_font_size_override("font_size", 13)
+		cl.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+		who.add_child(cl)
+		h.add_child(who)
 
-        # Волна
-        var wv := VBoxContainer.new()
-        wv.add_theme_constant_override("separation", 0)
-        var rec := 0
-        if statistics:
-                rec = statistics.best_survival_wave
-        var wv_val: int = rec if is_me else int(foe.get("wave", 1))
-        var wv1 := BunkerUI.make_mono_label(str(wv_val), 20, BunkerUI.DANGER_HI)
-        wv1.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        var wv2 := BunkerUI.make_mono_label("ВОЛНА", 11, BunkerUI.TEXT_FAINT)
-        wv2.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        wv.add_child(wv1)
-        wv.add_child(wv2)
-        h.add_child(wv)
+		# Волна
+		var wv := VBoxContainer.new()
+		wv.add_theme_constant_override("separation", 0)
+		var rec := 0
+		if statistics:
+				rec = statistics.best_survival_wave
+		var wv_val: int = rec if is_me else int(foe.get("wave", 1))
+		var wv1 := BunkerUI.make_mono_label(str(wv_val), 20, BunkerUI.DANGER_HI)
+		wv1.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		var wv2 := BunkerUI.make_mono_label("ВОЛНА", 11, BunkerUI.TEXT_FAINT)
+		wv2.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		wv.add_child(wv1)
+		wv.add_child(wv2)
+		h.add_child(wv)
 
-        # Сила
-        var pw := VBoxContainer.new()
-        pw.add_theme_constant_override("separation", 0)
-        var pv := BunkerUI.make_mono_label(_format_number(float(foe.get("power", 0))), 20, BunkerUI.GREEN)
-        pv.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        var pl2 := BunkerUI.make_mono_label("СИЛА", 11, BunkerUI.TEXT_FAINT)
-        pl2.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        pw.add_child(pv)
-        pw.add_child(pl2)
-        h.add_child(pw)
+		# Сила
+		var pw := VBoxContainer.new()
+		pw.add_theme_constant_override("separation", 0)
+		var pv := BunkerUI.make_mono_label(_format_number(float(foe.get("power", 0))), 20, BunkerUI.GREEN)
+		pv.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		var pl2 := BunkerUI.make_mono_label("СИЛА", 11, BunkerUI.TEXT_FAINT)
+		pl2.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		pw.add_child(pv)
+		pw.add_child(pl2)
+		h.add_child(pw)
 
 
-        # Кнопка
-        var call_btn := Button.new()
-        call_btn.custom_minimum_size = Vector2(170, 50)
-        call_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        if is_me:
-                call_btn.text = Loc.t("arena.defense_btn")
-                BunkerUI.style_button(call_btn, "ghost", 15)
-                call_btn.pressed.connect(_on_arena_defend_run_pressed)
-        else:
-                call_btn.text = Loc.t("arena.challenge_btn")
-                BunkerUI.style_button(call_btn, "hazard", 16, true)
-                call_btn.pressed.connect(_on_arena_challenge.bind(str(foe.get("name", ""))))
-        call_btn.mouse_entered.connect(_play_hover_sound)
-        h.add_child(call_btn)
-        return row
+		# Кнопка
+		var call_btn := Button.new()
+		call_btn.custom_minimum_size = Vector2(170, 50)
+		call_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if is_me:
+				call_btn.text = Loc.t("arena.defense_btn")
+				BunkerUI.style_button(call_btn, "ghost", 15)
+				call_btn.pressed.connect(_on_arena_defend_run_pressed)
+		else:
+				call_btn.text = Loc.t("arena.challenge_btn")
+				BunkerUI.style_button(call_btn, "hazard", 16, true)
+				call_btn.pressed.connect(_on_arena_challenge.bind(str(foe.get("name", ""))))
+		call_btn.mouse_entered.connect(_play_hover_sound)
+		h.add_child(call_btn)
+		return row
 
 
 func _make_arena_board_row(k: String, v: String, gold: bool = false) -> Control:
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 8)
-        var kl := BunkerUI.make_mono_label(k, 15, Color("a9bd8d"))
-        kl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.add_child(kl)
-        var vl := BunkerUI.make_mono_label(v, 15, Color("ffd94d") if gold else BunkerUI.TEXT_LIGHT)
-        vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        row.add_child(vl)
-        var line := ColorRect.new()
-        line.custom_minimum_size = Vector2(0, 1)
-        line.color = Color(BunkerUI.STEEL_EDGE, 0.6)
-        var wrap_box := VBoxContainer.new()
-        wrap_box.add_theme_constant_override("separation", 2)
-        wrap_box.add_child(row)
-        wrap_box.add_child(line)
-        return wrap_box
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var kl := BunkerUI.make_mono_label(k, 15, Color("a9bd8d"))
+		kl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(kl)
+		var vl := BunkerUI.make_mono_label(v, 15, Color("ffd94d") if gold else BunkerUI.TEXT_LIGHT)
+		vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row.add_child(vl)
+		var line := ColorRect.new()
+		line.custom_minimum_size = Vector2(0, 1)
+		line.color = Color(BunkerUI.STEEL_EDGE, 0.6)
+		var wrap_box := VBoxContainer.new()
+		wrap_box.add_theme_constant_override("separation", 2)
+		wrap_box.add_child(row)
+		wrap_box.add_child(line)
+		return wrap_box
 
 
 func _make_claim_row(kind: String, idx: int, k: String, v: String) -> Control:
         """Строка выполненной сезонной награды с кнопкой ЗАБРАТЬ"""
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 8)
-        var kl := BunkerUI.make_mono_label(k, 15, Color("a9bd8d"))
-        kl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.add_child(kl)
-        var vl := BunkerUI.make_mono_label(v, 15, Color("ffd94d"))
-        vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        row.add_child(vl)
-        var btn := Button.new()
-        btn.text = Loc.t("medals.claim")
-        btn.custom_minimum_size = Vector2(120, 36)
-        BunkerUI.style_button(btn, "primary", 14)
-        btn.pressed.connect(_on_arena_claim.bind(kind, idx))
-        btn.mouse_entered.connect(_play_hover_sound)
-        row.add_child(btn)
-        var line := ColorRect.new()
-        line.custom_minimum_size = Vector2(0, 1)
-        line.color = Color(BunkerUI.STEEL_EDGE, 0.6)
-        var wrap_box := VBoxContainer.new()
-        wrap_box.add_theme_constant_override("separation", 2)
-        wrap_box.add_child(row)
-        wrap_box.add_child(line)
-        return wrap_box
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var kl := BunkerUI.make_mono_label(k, 15, Color("a9bd8d"))
+		kl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(kl)
+		var vl := BunkerUI.make_mono_label(v, 15, Color("ffd94d"))
+		vl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row.add_child(vl)
+		var btn := Button.new()
+		btn.text = Loc.t("medals.claim")
+		btn.custom_minimum_size = Vector2(120, 36)
+		BunkerUI.style_button(btn, "primary", 14)
+		btn.pressed.connect(_on_arena_claim.bind(kind, idx))
+		btn.mouse_entered.connect(_play_hover_sound)
+		row.add_child(btn)
+		var line := ColorRect.new()
+		line.custom_minimum_size = Vector2(0, 1)
+		line.color = Color(BunkerUI.STEEL_EDGE, 0.6)
+		var wrap_box := VBoxContainer.new()
+		wrap_box.add_theme_constant_override("separation", 2)
+		wrap_box.add_child(row)
+		wrap_box.add_child(line)
+		return wrap_box
 
 
 func _on_arena_claim(kind: String, idx: int):
-        _play_click_sound()
-        if not lab_data:
-                return
-        var store: Dictionary = lab_data.arena_medals_claimed if kind == "medal" else lab_data.arena_season_tasks_claimed
-        if bool(store.get(idx, false)):
-                return
-        store[idx] = true
-        var msg := ""
-        if kind == "medal":
-                match idx:
-                        0:
-                                if not lab_data.unlocked_mutants.has("chimera"):
-                                        lab_data.unlocked_mutants.append("chimera")
-                                lab_data.farm_copies["chimera"] = int(lab_data.farm_copies.get("chimera", 0)) + 1
-                                lab_data.gacha_rolls_mutants += 30
-                                msg = "Медаль «Лига»: Химера в отряде + 30 круток!"
-                        1:
-                                lab_data.gacha_rolls_mutants += 10
-                                msg = "Медаль «Выброс»: +10 круток!"
-                        2:
-                                lab_data.gacha_rolls_mutants += 25
-                                msg = "Медаль «Глубина»: +25 круток!"
-                        3:
-                                lab_data.biomass += 120000.0
-                                msg = "Медаль «Жатва»: +120 000 биомассы!"
-                        4:
-                                lab_data.gacha_rolls_mutants += 10
-                                msg = "Медаль «Саркофаг»: +10 круток!"
-                        5:
-                                lab_data.gacha_rolls_mutants += 5
-                                msg = "Медаль «Охотник»: +5 круток!"
-                        6:
-                                lab_data.gacha_rolls_mutants += 5
-                                msg = "Медаль «Странник»: +5 круток!"
-                        7:
-                                lab_data.gacha_rolls_mutants += 10
-                                msg = "Медаль «Зверовод»: +10 круток!"
-                        8:
-                                lab_data.gacha_rolls_mutants += 15
-                                msg = "Медаль «Монолит»: +15 круток!"
-        else:
-                match idx:
-                        0:
-                                lab_data.gacha_rolls_mutants += 10
-                                msg = "Задача сезона: +10 круток!"
-                        1:
-                                lab_data.gacha_rolls_mutants += 15
-                                msg = "Задача сезона: +15 круток!"
-                        2:
-                                lab_data.gacha_rolls_mutants += 5
-                                msg = "Задача сезона: +5 круток!"
-                        3:
-                                lab_data.biomass += 50000.0
-                                msg = "Задача сезона: +50 000 биомассы!"
-        var sp_bonus := 0
-        if kind == "medal":
-                var medal_sp := [25, 10, 10, 10, 10, 5, 5, 5, 15]
-                if idx >= 0 and idx < medal_sp.size():
-                        sp_bonus = medal_sp[idx]
-        else:
-                var task_sp := [10, 15, 5, 10]
-                if idx >= 0 and idx < task_sp.size():
-                        sp_bonus = task_sp[idx]
-        if sp_bonus > 0:
-                lab_data.season_points += sp_bonus
-                msg += " · +" + str(sp_bonus) + " СП"
-        _show_message(msg, 2.2)
-        _rebuild_arena_panel()
-        _refresh_ui()
+		_play_click_sound()
+		if not lab_data:
+				return
+		var store: Dictionary = lab_data.arena_medals_claimed if kind == "medal" else lab_data.arena_season_tasks_claimed
+		if bool(store.get(idx, false)):
+				return
+		store[idx] = true
+		var msg := ""
+		if kind == "medal":
+				match idx:
+						0:
+								if not lab_data.unlocked_mutants.has("chimera"):
+										lab_data.unlocked_mutants.append("chimera")
+								lab_data.farm_copies["chimera"] = int(lab_data.farm_copies.get("chimera", 0)) + 1
+								lab_data.gacha_rolls_mutants += 30
+								msg = "Медаль «Лига»: Химера в отряде + 30 круток!"
+						1:
+								lab_data.gacha_rolls_mutants += 10
+								msg = "Медаль «Выброс»: +10 круток!"
+						2:
+								lab_data.gacha_rolls_mutants += 25
+								msg = "Медаль «Глубина»: +25 круток!"
+						3:
+								lab_data.biomass += 120000.0
+								msg = "Медаль «Жатва»: +120 000 биомассы!"
+						4:
+								lab_data.gacha_rolls_mutants += 10
+								msg = "Медаль «Саркофаг»: +10 круток!"
+						5:
+								lab_data.gacha_rolls_mutants += 5
+								msg = "Медаль «Охотник»: +5 круток!"
+						6:
+								lab_data.gacha_rolls_mutants += 5
+								msg = "Медаль «Странник»: +5 круток!"
+						7:
+								lab_data.gacha_rolls_mutants += 10
+								msg = "Медаль «Зверовод»: +10 круток!"
+						8:
+								lab_data.gacha_rolls_mutants += 15
+								msg = "Медаль «Монолит»: +15 круток!"
+		else:
+				match idx:
+						0:
+								lab_data.gacha_rolls_mutants += 10
+								msg = "Задача сезона: +10 круток!"
+						1:
+								lab_data.gacha_rolls_mutants += 15
+								msg = "Задача сезона: +15 круток!"
+						2:
+								lab_data.gacha_rolls_mutants += 5
+								msg = "Задача сезона: +5 круток!"
+						3:
+								lab_data.biomass += 50000.0
+								msg = "Задача сезона: +50 000 биомассы!"
+		var sp_bonus := 0
+		if kind == "medal":
+				var medal_sp := [25, 10, 10, 10, 10, 5, 5, 5, 15]
+				if idx >= 0 and idx < medal_sp.size():
+						sp_bonus = medal_sp[idx]
+		else:
+				var task_sp := [10, 15, 5, 10]
+				if idx >= 0 and idx < task_sp.size():
+						sp_bonus = task_sp[idx]
+		if sp_bonus > 0:
+				lab_data.season_points += sp_bonus
+				msg += " · +" + str(sp_bonus) + " СП"
+		_show_message(msg, 2.2)
+		_rebuild_arena_panel()
+		_refresh_ui()
 
 
 func _rebuild_arena_panel():
         """Список вызовов + доска по активной вкладке"""
-        for child in _arena_foes_box.get_children():
-                child.queue_free()
-        for child in _arena_board_box.get_children():
-                child.queue_free()
-        if not lab_data:
-                return
+		for child in _arena_foes_box.get_children():
+				child.queue_free()
+		for child in _arena_board_box.get_children():
+				child.queue_free()
+		if not lab_data:
+				return
 
-        _arena_rivals = _arena_make_rivals()
-        _arena_foes_box.add_child(_make_arena_foe_row({"power": _arena_player_power()}, true))
-        for foe in _arena_rivals:
-                _arena_foes_box.add_child(_make_arena_foe_row(foe, false))
+		_arena_rivals = _arena_make_rivals()
+		_arena_foes_box.add_child(_make_arena_foe_row({"power": _arena_player_power()}, true))
+		for foe in _arena_rivals:
+				_arena_foes_box.add_child(_make_arena_foe_row(foe, false))
 
-        var rec := 0
-        var total_runs := 0
-        var wins := 0
-        var losses := 0
-        var kills := 0
-        if statistics:
-                rec = statistics.best_survival_wave
-                total_runs = statistics.total_runs
-                wins = statistics.wins
-                losses = statistics.losses
-                kills = statistics.stalkers_killed
+		var rec := 0
+		var total_runs := 0
+		var wins := 0
+		var losses := 0
+		var kills := 0
+		if statistics:
+				rec = statistics.best_survival_wave
+				total_runs = statistics.total_runs
+				wins = statistics.wins
+				losses = statistics.losses
+				kills = statistics.stalkers_killed
 
-        # D25: rollover сезона (сброс задач/медалей/счётчиков, письмо с
-        # наградой за место). Старый рекорд больше не участвует — сезонные волны.
-        # Сейв — здесь: у статического канона методов сохранения нет.
-        if game_manager and not ArenaSeason.ensure_season(game_manager.current_save_data).is_empty():
-                game_manager.save_to_active_slot()
+		# D25: rollover сезона (сброс задач/медалей/счётчиков, письмо с
+		# наградой за место). Старый рекорд больше не участвует — сезонные волны.
+		# Сейв — здесь: у статического канона методов сохранения нет.
+		if game_manager and not ArenaSeason.ensure_season(game_manager.current_save_data).is_empty():
+				game_manager.save_to_active_slot()
 
-        # Зал славы: сезонные волны vs соперники СЕЗОНА (не пожизненный рекорд)
-        var my_season_wave: int = 0
-        if game_manager and game_manager.current_save_data and game_manager.current_save_data.lab_data:
-                my_season_wave = game_manager.current_save_data.lab_data.arena_season_waves
-        var board: Array = ArenaSeason.rivals(_arena_season_number() - 7)
-        board.append({"name": "СТАЛКЕР (ВЫ)", "power": _arena_player_power(), "wave": my_season_wave})
-        board.sort_custom(func(a, b):
-                var wa := int(a.get("wave", 0))
-                var wb := int(b.get("wave", 0))
-                if wa == wb:
-                        return int(a.get("power", 0)) > int(b.get("power", 0))
-                return wa > wb)
-        var my_place := 1
-        for i in range(board.size()):
-                if str(board[i].get("name", "")).begins_with("СТАЛКЕР"):
-                        my_place = i + 1
-                        break
+		# Зал славы: сезонные волны vs соперники СЕЗОНА (не пожизненный рекорд)
+		var my_season_wave: int = 0
+		if game_manager and game_manager.current_save_data and game_manager.current_save_data.lab_data:
+				my_season_wave = game_manager.current_save_data.lab_data.arena_season_waves
+		var board: Array = ArenaSeason.rivals(_arena_season_number() - 7)
+		board.append({"name": "СТАЛКЕР (ВЫ)", "power": _arena_player_power(), "wave": my_season_wave})
+		board.sort_custom(func(a, b):
+				var wa := int(a.get("wave", 0))
+				var wb := int(b.get("wave", 0))
+				if wa == wb:
+						return int(a.get("power", 0)) > int(b.get("power", 0))
+				return wa > wb)
+		var my_place := 1
+		for i in range(board.size()):
+				if str(board[i].get("name", "")).begins_with("СТАЛКЕР"):
+						my_place = i + 1
+						break
 
-        # Живая шапка: сезон, место, благословение
-        if _arena_season_label:
-                _arena_season_label.text = Loc.t("arena.season_liga", {"n": _arena_season_number()})
-        if _arena_rank_label:
-                _arena_rank_label.text = Loc.t("arena.place_n", {"n": my_place})
-        if _arena_rank_sub:
-                _arena_rank_sub.text = Loc.t("arena.promo_zone") if my_place <= 2 else Loc.t("arena.hold_top")
-        if _arena_bless_label:
-                var wins_total: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
-                var to_spin: int = 5 - (wins_total % 5)
-                _arena_bless_label.text = Loc.t("arena.blessing_stat", {"wins": wins_total, "left": to_spin})
+		# Живая шапка: сезон, место, благословение
+		if _arena_season_label:
+				_arena_season_label.text = Loc.t("arena.season_liga", {"n": _arena_season_number()})
+		if _arena_rank_label:
+				_arena_rank_label.text = Loc.t("arena.place_n", {"n": my_place})
+		if _arena_rank_sub:
+				_arena_rank_sub.text = Loc.t("arena.promo_zone") if my_place <= 2 else Loc.t("arena.hold_top")
+		if _arena_bless_label:
+				var wins_total: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
+				var to_spin: int = 5 - (wins_total % 5)
+				_arena_bless_label.text = Loc.t("arena.blessing_stat", {"wins": wins_total, "left": to_spin})
 
-        var title := Label.new()
-        title.add_theme_font_override("font", BunkerUI.font_title())
-        title.add_theme_font_size_override("font_size", 19)
-        title.add_theme_color_override("font_color", BunkerUI.GREEN)
-        _arena_board_box.add_child(title)
+		var title := Label.new()
+		title.add_theme_font_override("font", BunkerUI.font_title())
+		title.add_theme_font_size_override("font_size", 19)
+		title.add_theme_color_override("font_color", BunkerUI.GREEN)
+		_arena_board_box.add_child(title)
 
-        match _arena_tab:
-                0:
-                        var medals := _arena_medals(my_place)
-                        var done_count := 0
-                        for m in medals:
-                                if bool(m[3]):
-                                        done_count += 1
-                        title.text = Loc.t("arena.season_rewards", {"a": done_count, "b": medals.size()})
-                        var midx := 0
-                        for m in medals:
-                                var mclaimed: bool = bool(lab_data.arena_medals_claimed.get(midx, false))
-                                var mval: String = str(m[1]) if bool(m[3]) else str(m[2])
-                                if bool(m[3]) and not mclaimed:
-                                        _arena_board_box.add_child(_make_claim_row("medal", midx, str(m[0]), mval))
-                                elif mclaimed:
-                                        _arena_board_box.add_child(_make_arena_board_row(str(m[0]), "ПОЛУЧЕНО · " + mval, true))
-                                else:
-                                        _arena_board_box.add_child(_make_arena_board_row(str(m[0]), mval, false))
-                                midx += 1
-                1:
-                        title.text = Loc.t("arena.hall")
-                        var place := 1
-                        for e in board:
-                                _arena_board_box.add_child(_make_arena_board_row(
-                                        "%d. %s" % [place, str(e.get("name", ""))],
-                                        "волна %d · сила %s" % [int(e.get("wave", 1)), _format_number(float(e.get("power", 0)))],
-                                        str(e.get("name", "")).begins_with("СТАЛКЕР")))
-                                place += 1
-                2:
-                        title.text = Loc.t("arena.reports")
-                        _arena_board_box.add_child(_make_arena_board_row("Забегов всего", str(total_runs)))
-                        _arena_board_box.add_child(_make_arena_board_row("Побед", str(wins), true))
-                        _arena_board_box.add_child(_make_arena_board_row("Поражений", str(losses)))
-                        _arena_board_box.add_child(_make_arena_board_row("Лучший результат", "%d волн" % rec, true))
-                        _arena_board_box.add_child(_make_arena_board_row("Сталкеров перебито", str(kills)))
-                        _arena_board_box.add_child(_make_arena_board_row("Артефактов в хранилище", str(lab_data.won_artifacts.size())))
-                3:
-                        title.text = Loc.t("arena.defense_squad")
-                        for t in lab_data.unlocked_mutants:
-                                _arena_board_box.add_child(_make_arena_board_row(
-                                        Loc.type_name(str(t)),
-                                        "%s · копий %d" % [LabData.stars_text(lab_data.get_mutant_stars(str(t))), lab_data.get_farm_copies(str(t))]))
-                        if lab_data.unlocked_mutants.is_empty():
-                                _arena_board_box.add_child(_make_arena_board_row("Отряд пуст", "крутите Гачу Зоны"))
-                _:
-                        title.text = Loc.t("arena.tasks")
-                        var season_wins: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
-                        var season_wave: int = int(lab_data.arena_season_waves) if "arena_season_waves" in lab_data else 0
-                        var st_names := [Loc.t("arena.task_wins"), Loc.t("arena.task_wave"), Loc.t("arena.task_calls"), Loc.t("arena.task_kills")]
-                        var st_rew := [Loc.t("arena.rew_rolls", {"n": 10}), Loc.t("arena.rew_rolls", {"n": 15}), Loc.t("arena.rew_rolls", {"n": 5}), Loc.t("arena.rew_bio")]
-                        var st_prog := ["%d / 10" % mini(season_wins, 10), "%d / 30" % mini(season_wave, 30), "%d / 5" % mini(total_runs, 5), "%d / 500" % mini(kills, 500)]
-                        var st_done := [season_wins >= 10, season_wave >= 30, total_runs >= 5, kills >= 500]
-                        for si in range(4):
-                                var sclaimed: bool = bool(lab_data.arena_season_tasks_claimed.get(si, false))
-                                if bool(st_done[si]) and not sclaimed:
-                                        _arena_board_box.add_child(_make_claim_row("task", si, str(st_names[si]), "%s · %s" % [str(st_rew[si]), str(st_prog[si])]))
-                                elif sclaimed:
-                                        _arena_board_box.add_child(_make_arena_board_row(str(st_names[si]), Loc.t("arena.claimed", {"n": str(st_rew[si])}), true))
-                                else:
-                                        _arena_board_box.add_child(_make_arena_board_row(str(st_names[si]), "%s · %s" % [str(st_rew[si]), str(st_prog[si])], false))
+		match _arena_tab:
+				0:
+						var medals := _arena_medals(my_place)
+						var done_count := 0
+						for m in medals:
+								if bool(m[3]):
+										done_count += 1
+						title.text = Loc.t("arena.season_rewards", {"a": done_count, "b": medals.size()})
+						var midx := 0
+						for m in medals:
+								var mclaimed: bool = bool(lab_data.arena_medals_claimed.get(midx, false))
+								var mval: String = str(m[1]) if bool(m[3]) else str(m[2])
+								if bool(m[3]) and not mclaimed:
+										_arena_board_box.add_child(_make_claim_row("medal", midx, str(m[0]), mval))
+								elif mclaimed:
+										_arena_board_box.add_child(_make_arena_board_row(str(m[0]), "ПОЛУЧЕНО · " + mval, true))
+								else:
+										_arena_board_box.add_child(_make_arena_board_row(str(m[0]), mval, false))
+								midx += 1
+				1:
+						title.text = Loc.t("arena.hall")
+						var place := 1
+						for e in board:
+								_arena_board_box.add_child(_make_arena_board_row(
+										"%d. %s" % [place, str(e.get("name", ""))],
+										"волна %d · сила %s" % [int(e.get("wave", 1)), _format_number(float(e.get("power", 0)))],
+										str(e.get("name", "")).begins_with("СТАЛКЕР")))
+								place += 1
+				2:
+						title.text = Loc.t("arena.reports")
+						_arena_board_box.add_child(_make_arena_board_row("Забегов всего", str(total_runs)))
+						_arena_board_box.add_child(_make_arena_board_row("Побед", str(wins), true))
+						_arena_board_box.add_child(_make_arena_board_row("Поражений", str(losses)))
+						_arena_board_box.add_child(_make_arena_board_row("Лучший результат", "%d волн" % rec, true))
+						_arena_board_box.add_child(_make_arena_board_row("Сталкеров перебито", str(kills)))
+						_arena_board_box.add_child(_make_arena_board_row("Артефактов в хранилище", str(lab_data.won_artifacts.size())))
+				3:
+						title.text = Loc.t("arena.defense_squad")
+						for t in lab_data.unlocked_mutants:
+								_arena_board_box.add_child(_make_arena_board_row(
+										Loc.type_name(str(t)),
+										"%s · копий %d" % [LabData.stars_text(lab_data.get_mutant_stars(str(t))), lab_data.get_farm_copies(str(t))]))
+						if lab_data.unlocked_mutants.is_empty():
+								_arena_board_box.add_child(_make_arena_board_row("Отряд пуст", "крутите Гачу Зоны"))
+				_:
+						title.text = Loc.t("arena.tasks")
+						var season_wins: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
+						var season_wave: int = int(lab_data.arena_season_waves) if "arena_season_waves" in lab_data else 0
+						var st_names := [Loc.t("arena.task_wins"), Loc.t("arena.task_wave"), Loc.t("arena.task_calls"), Loc.t("arena.task_kills")]
+						var st_rew := [Loc.t("arena.rew_rolls", {"n": 10}), Loc.t("arena.rew_rolls", {"n": 15}), Loc.t("arena.rew_rolls", {"n": 5}), Loc.t("arena.rew_bio")]
+						var st_prog := ["%d / 10" % mini(season_wins, 10), "%d / 30" % mini(season_wave, 30), "%d / 5" % mini(total_runs, 5), "%d / 500" % mini(kills, 500)]
+						var st_done := [season_wins >= 10, season_wave >= 30, total_runs >= 5, kills >= 500]
+						for si in range(4):
+								var sclaimed: bool = bool(lab_data.arena_season_tasks_claimed.get(si, false))
+								if bool(st_done[si]) and not sclaimed:
+										_arena_board_box.add_child(_make_claim_row("task", si, str(st_names[si]), "%s · %s" % [str(st_rew[si]), str(st_prog[si])]))
+								elif sclaimed:
+										_arena_board_box.add_child(_make_arena_board_row(str(st_names[si]), Loc.t("arena.claimed", {"n": str(st_rew[si])}), true))
+								else:
+										_arena_board_box.add_child(_make_arena_board_row(str(st_names[si]), "%s · %s" % [str(st_rew[si]), str(st_prog[si])], false))
 
 
 func _on_arena_tab(idx: int):
-        _play_click_sound()
-        _arena_tab = idx
-        _rebuild_arena_panel()
+		_play_click_sound()
+		_arena_tab = idx
+		_rebuild_arena_panel()
 
 
 func _on_arena_challenge(foe_name: String):
-        _play_click_sound()
-        if not game_manager:
-                return
-        # Цель вызова (v0.21.0 «ЛИГА ВОЛН»): превзошёл волну соперника - ПОБЕДА
-        var target_wave := 0
-        if foe_name != "БЫСТРЫЙ ВЫЗОВ":
-                for r in _arena_make_rivals():
-                        if str(r.get("name", "")) == foe_name:
-                                target_wave = int(r.get("wave", 0))
-                                break
-                _show_message(Loc.t("arena.challenge_accepted", {"name": foe_name, "n": target_wave}), 1.6)
-        game_manager.arena_run_kind = "challenge"
-        game_manager.arena_target_wave = target_wave
-        _arena_season_timer.stop()
-        game_manager.set_selected_run_mode("survival")
-        _refresh_campaign_ui()
-        _on_start_run_pressed()
+		_play_click_sound()
+		if not game_manager:
+				return
+		# Цель вызова (v0.21.0 «ЛИГА ВОЛН»): превзошёл волну соперника - ПОБЕДА
+		var target_wave := 0
+		if foe_name != "БЫСТРЫЙ ВЫЗОВ":
+				for r in _arena_make_rivals():
+						if str(r.get("name", "")) == foe_name:
+								target_wave = int(r.get("wave", 0))
+								break
+				_show_message(Loc.t("arena.challenge_accepted", {"name": foe_name, "n": target_wave}), 1.6)
+		game_manager.arena_run_kind = "challenge"
+		game_manager.arena_target_wave = target_wave
+		_arena_season_timer.stop()
+		game_manager.set_selected_run_mode("survival")
+		_refresh_campaign_ui()
+		_on_start_run_pressed()
 
 
 func _on_arena_defend_run_pressed():
         """Кнопка ОБОРОНА на строке «Я»: старт выживания от лица защитного отряда"""
-        _play_click_sound()
-        if not game_manager:
-                return
-        game_manager.arena_run_kind = "defense"
-        _show_message(Loc.t("arena.defense_fight"), 1.6)
-        _arena_season_timer.stop()
-        game_manager.set_selected_run_mode("survival")
-        _refresh_campaign_ui()
-        _on_start_run_pressed()
+		_play_click_sound()
+		if not game_manager:
+				return
+		game_manager.arena_run_kind = "defense"
+		_show_message(Loc.t("arena.defense_fight"), 1.6)
+		_arena_season_timer.stop()
+		game_manager.set_selected_run_mode("survival")
+		_refresh_campaign_ui()
+		_on_start_run_pressed()
 
 
 func _update_arena_timer():
-        if _arena_timer_label == null or not arena_panel.visible:
-                return
-        # Конец сезона: предстоящий понедельник 00:00 локального времени
-        var now := Time.get_datetime_dict_from_system()
-        var days_ahead := (8 - int(now.get("weekday", 1))) % 7
-        if days_ahead == 0:
-                days_ahead = 7
-        var secs_left := days_ahead * 86400.0 - float(now.get("hour", 0)) * 3600.0 - float(now.get("minute", 0)) * 60.0 - float(now.get("second", 0))
-        secs_left = maxf(secs_left, 0.0)
-        var hh := int(secs_left) / 3600
-        var mm := (int(secs_left) % 3600) / 60
-        var ss := int(secs_left) % 60
-        _arena_timer_label.text = "%02d:%02d:%02d" % [hh, mm, ss]
+		if _arena_timer_label == null or not arena_panel.visible:
+				return
+		# Конец сезона: предстоящий понедельник 00:00 локального времени
+		var now := Time.get_datetime_dict_from_system()
+		var days_ahead := (8 - int(now.get("weekday", 1))) % 7
+		if days_ahead == 0:
+				days_ahead = 7
+		var secs_left := days_ahead * 86400.0 - float(now.get("hour", 0)) * 3600.0 - float(now.get("minute", 0)) * 60.0 - float(now.get("second", 0))
+		secs_left = maxf(secs_left, 0.0)
+		var hh := int(secs_left) / 3600
+		var mm := (int(secs_left) % 3600) / 60
+		var ss := int(secs_left) % 60
+		_arena_timer_label.text = "%02d:%02d:%02d" % [hh, mm, ss]
 
 
 ## Номер сезона: недели с 19.10.2026 (тот самый «сезон 7») + 6
 func _arena_season_number() -> int:
-        return 7 + int(ArenaSeason.season_info()["idx"])
+		return 7 + int(ArenaSeason.season_info()["idx"])
 
 
 ## 9 сезонных медалей по реальным условиям: [название, награда, прогресс, выполнено]
 func _arena_medals(my_place: int) -> Array:
-        # D25: медали сезонные — условия от полей СЕЗОНА (сброшены rollover'ом)
-        var rec: int = lab_data.arena_season_waves
-        var runs := 0
-        if statistics:
-                runs = statistics.total_runs
-        var wins_total: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
-        var mutants: int = lab_data.unlocked_mutants.size()
-        var power := _arena_player_power()
-        # D20-локаль: имена медалей по ключам medal.m0..m8 (RU-строки - фолбэк)
-        var medals: Array = [
-                ["Топ-1 лиги", "Химера ★ + 30 круток", "место %d из 11" % my_place, my_place == 1],
-                ["10 побед сезона", "+10 круток · медаль «Выброс»", "%d / 10 побед" % mini(wins_total, 10), wins_total >= 10],
-                ["Рекорд волны 30", "+25 круток", "%d / 30 волн" % mini(rec, 30), rec >= 30],
-                ["Защита удержана ×5", "+120 000 био", "%d / 5 оборон" % mini(lab_data.arena_wins_defense, 5), lab_data.arena_wins_defense >= 5],
-                ["Защита удержана ×10", "+10 круток · медаль «Саркофаг»", "%d / 10 оборон" % mini(lab_data.arena_wins_defense, 10), lab_data.arena_wins_defense >= 10],
-                ["5 побед в вызовах", "+5 круток", "%d / 5 вызовов" % mini(lab_data.arena_wins_challenge, 5), lab_data.arena_wins_challenge >= 5],
-                ["Участие: 10 вылазок", "+5 круток", "%d / 10 забегов" % mini(runs, 10), runs >= 10],
-                ["Отряд из 10 мутантов", "+10 круток", "%d / 10 видов" % mini(mutants, 10), mutants >= 10],
-                ["Сила отряда 5000", "+15 круток · медаль «Монолит»", "%s / 5000 силы" % _format_number(float(mini(power, 5000))), power >= 5000],
-        ]
-        for mi in range(medals.size()):
-                var mk := "medal.m%d" % mi
-                var mnm: String = Loc.t(mk)
-                if mnm != mk:
-                        medals[mi][0] = mnm
-        return medals
+		# D25: медали сезонные — условия от полей СЕЗОНА (сброшены rollover'ом)
+		var rec: int = lab_data.arena_season_waves
+		var runs := 0
+		if statistics:
+				runs = statistics.total_runs
+		var wins_total: int = lab_data.arena_wins_challenge + lab_data.arena_wins_defense
+		var mutants: int = lab_data.unlocked_mutants.size()
+		var power := _arena_player_power()
+		# D20-локаль: имена медалей по ключам medal.m0..m8 (RU-строки - фолбэк)
+		var medals: Array = [
+				["Топ-1 лиги", "Химера ★ + 30 круток", "место %d из 11" % my_place, my_place == 1],
+				["10 побед сезона", "+10 круток · медаль «Выброс»", "%d / 10 побед" % mini(wins_total, 10), wins_total >= 10],
+				["Рекорд волны 30", "+25 круток", "%d / 30 волн" % mini(rec, 30), rec >= 30],
+				["Защита удержана ×5", "+120 000 био", "%d / 5 оборон" % mini(lab_data.arena_wins_defense, 5), lab_data.arena_wins_defense >= 5],
+				["Защита удержана ×10", "+10 круток · медаль «Саркофаг»", "%d / 10 оборон" % mini(lab_data.arena_wins_defense, 10), lab_data.arena_wins_defense >= 10],
+				["5 побед в вызовах", "+5 круток", "%d / 5 вызовов" % mini(lab_data.arena_wins_challenge, 5), lab_data.arena_wins_challenge >= 5],
+				["Участие: 10 вылазок", "+5 круток", "%d / 10 забегов" % mini(runs, 10), runs >= 10],
+				["Отряд из 10 мутантов", "+10 круток", "%d / 10 видов" % mini(mutants, 10), mutants >= 10],
+				["Сила отряда 5000", "+15 круток · медаль «Монолит»", "%s / 5000 силы" % _format_number(float(mini(power, 5000))), power >= 5000],
+		]
+		for mi in range(medals.size()):
+				var mk := "medal.m%d" % mi
+				var mnm: String = Loc.t(mk)
+				if mnm != mk:
+						medals[mi][0] = mnm
+		return medals
 
 
 ## Сила защитного отряда: только назначенные в оборону мутанты
 func _defense_power() -> int:
-        var power := 0
-        if not lab_data:
-                return 0
-        for t in lab_data.arena_defense_squad:
-                power += 340 * lab_data.get_mutant_stars(str(t))
-                power += 15 * lab_data.get_farm_copies(str(t))
-        return power
+		var power := 0
+		if not lab_data:
+				return 0
+		for t in lab_data.arena_defense_squad:
+				power += 340 * lab_data.get_mutant_stars(str(t))
+				power += 15 * lab_data.get_farm_copies(str(t))
+		return power
 
 
 func _build_defense_ui():
         """СМЕНА ОБОРОНЫ: выбор мутантов, держащих арену (строится кодом)"""
-        defense_panel = Control.new()
-        defense_panel.name = "DefensePanel"
-        defense_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        defense_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        defense_panel.visible = false
-        add_child(defense_panel)
+		defense_panel = Control.new()
+		defense_panel.name = "DefensePanel"
+		defense_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		defense_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		defense_panel.visible = false
+		add_child(defense_panel)
 
-        var bg := ColorRect.new()
-        bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        bg.color = Color(0.028, 0.022, 0.014, 0.97)
-        defense_panel.add_child(bg)
+		var bg := ColorRect.new()
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.color = Color(0.028, 0.022, 0.014, 0.97)
+		defense_panel.add_child(bg)
 
-        var root := VBoxContainer.new()
-        root.set_anchors_preset(Control.PRESET_FULL_RECT)
-        root.offset_left = 60
-        root.offset_right = -60
-        root.offset_top = 24
-        root.offset_bottom = -24
-        root.add_theme_constant_override("separation", 12)
-        defense_panel.add_child(root)
+		var root := VBoxContainer.new()
+		root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		root.offset_left = 60
+		root.offset_right = -60
+		root.offset_top = 24
+		root.offset_bottom = -24
+		root.add_theme_constant_override("separation", 12)
+		defense_panel.add_child(root)
 
-        var head := HBoxContainer.new()
-        head.add_theme_constant_override("separation", 16)
-        root.add_child(head)
-        var title := Label.new()
-        title.text = Loc.t("arena.change_defense")
-        title.add_theme_font_override("font", BunkerUI.font_title())
-        title.add_theme_font_size_override("font_size", 34)
-        title.add_theme_color_override("font_color", BunkerUI.HAZARD)
-        head.add_child(title)
-        var sub := Label.new()
-        sub.text = Loc.t("arena.defense_sub")
-        sub.add_theme_font_override("font", BunkerUI.font_body())
-        sub.add_theme_font_size_override("font_size", 15)
-        sub.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-        sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        head.add_child(sub)
-        var sp := Control.new()
-        sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        head.add_child(sp)
-        var done_btn := Button.new()
-        done_btn.text = Loc.t("arena.done")
-        done_btn.custom_minimum_size = Vector2(160, 56)
-        BunkerUI.style_button(done_btn, "hazard", 17, true)
-        done_btn.pressed.connect(_on_defense_close_pressed)
-        done_btn.mouse_entered.connect(_play_hover_sound)
-        head.add_child(done_btn)
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 16)
+		root.add_child(head)
+		var title := Label.new()
+		title.text = Loc.t("arena.change_defense")
+		title.add_theme_font_override("font", BunkerUI.font_title())
+		title.add_theme_font_size_override("font_size", 34)
+		title.add_theme_color_override("font_color", BunkerUI.HAZARD)
+		head.add_child(title)
+		var sub := Label.new()
+		sub.text = Loc.t("arena.defense_sub")
+		sub.add_theme_font_override("font", BunkerUI.font_body())
+		sub.add_theme_font_size_override("font_size", 15)
+		sub.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+		sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		head.add_child(sub)
+		var sp := Control.new()
+		sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(sp)
+		var done_btn := Button.new()
+		done_btn.text = Loc.t("arena.done")
+		done_btn.custom_minimum_size = Vector2(160, 56)
+		BunkerUI.style_button(done_btn, "hazard", 17, true)
+		done_btn.pressed.connect(_on_defense_close_pressed)
+		done_btn.mouse_entered.connect(_play_hover_sound)
+		head.add_child(done_btn)
 
-        _defense_power_label = BunkerUI.make_mono_label("", 18, BunkerUI.GREEN)
-        root.add_child(_defense_power_label)
+		_defense_power_label = BunkerUI.make_mono_label("", 18, BunkerUI.GREEN)
+		root.add_child(_defense_power_label)
 
-        var scroll := ScrollContainer.new()
-        scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        # v0.29.3: свайп-слой для списка защитного отряда
-        root.add_child(_make_swipe_overlay(scroll, false))
-        _defense_list_box = VBoxContainer.new()
-        _defense_list_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        _defense_list_box.add_theme_constant_override("separation", 8)
-        scroll.add_child(_defense_list_box)
+		var scroll := ScrollContainer.new()
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# v0.29.3: свайп-слой для списка защитного отряда
+		root.add_child(_make_swipe_overlay(scroll, false))
+		_defense_list_box = VBoxContainer.new()
+		_defense_list_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_defense_list_box.add_theme_constant_override("separation", 8)
+		scroll.add_child(_defense_list_box)
 
 
 func _rebuild_defense_panel():
         """Список мутантов с переключателем В ОБОРОНЕ/В РЕЗЕРВ"""
-        for child in _defense_list_box.get_children():
-                child.queue_free()
-        if not lab_data:
-                return
-        # Первое открытие: весь текущий отряд считаем обороной
-        if lab_data.arena_defense_squad.is_empty() and not lab_data.unlocked_mutants.is_empty():
-                for t in lab_data.unlocked_mutants:
-                        lab_data.arena_defense_squad.append(str(t))
-        for t in lab_data.unlocked_mutants:
-                var in_squad: bool = lab_data.arena_defense_squad.has(str(t))
-                var row := PanelContainer.new()
-                var sb := StyleBoxFlat.new()
-                sb.bg_color = Color(0.062, 0.086, 0.041)
-                sb.border_color = BunkerUI.HAZARD if in_squad else BunkerUI.STEEL_EDGE
-                sb.set_border_width_all(2)
-                sb.set_corner_radius_all(10)
-                sb.content_margin_left = 18.0
-                sb.content_margin_right = 18.0
-                sb.content_margin_top = 8.0
-                sb.content_margin_bottom = 8.0
-                row.add_theme_stylebox_override("panel", sb)
-                var h := HBoxContainer.new()
-                h.add_theme_constant_override("separation", 14)
-                row.add_child(h)
-                var who := VBoxContainer.new()
-                who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                who.alignment = BoxContainer.ALIGNMENT_CENTER
-                var nm := Label.new()
-                nm.text = Loc.type_name(str(t))
-                nm.add_theme_font_override("font", BunkerUI.font_title())
-                nm.add_theme_font_size_override("font_size", 17)
-                nm.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-                who.add_child(nm)
-                var info := BunkerUI.make_mono_label(
-                        "%s · копий %d" % [LabData.stars_text(lab_data.get_mutant_stars(str(t))), lab_data.get_farm_copies(str(t))],
-                        13, BunkerUI.TEXT_DIM)
-                who.add_child(info)
-                h.add_child(who)
-                var tog := Button.new()
-                tog.text = "В ОБОРОНЕ" if in_squad else "В РЕЗЕРВ"
-                tog.custom_minimum_size = Vector2(190, 48)
-                BunkerUI.style_button(tog, "hazard" if in_squad else "ghost", 14)
-                tog.pressed.connect(_on_defense_toggle.bind(str(t)))
-                tog.mouse_entered.connect(_play_hover_sound)
-                h.add_child(tog)
-                _defense_list_box.add_child(row)
-        if lab_data.unlocked_mutants.is_empty():
-                var empty := BunkerUI.make_mono_label("Отряд пуст — крутите Дар Зоны", 16, BunkerUI.TEXT_DIM)
-                _defense_list_box.add_child(empty)
-        _defense_power_label.text = "СИЛА ОБОРОНЫ: %d" % _defense_power()
+		for child in _defense_list_box.get_children():
+				child.queue_free()
+		if not lab_data:
+				return
+		# Первое открытие: весь текущий отряд считаем обороной
+		if lab_data.arena_defense_squad.is_empty() and not lab_data.unlocked_mutants.is_empty():
+				for t in lab_data.unlocked_mutants:
+						lab_data.arena_defense_squad.append(str(t))
+		for t in lab_data.unlocked_mutants:
+				var in_squad: bool = lab_data.arena_defense_squad.has(str(t))
+				var row := PanelContainer.new()
+				var sb := StyleBoxFlat.new()
+				sb.bg_color = Color(0.062, 0.086, 0.041)
+				sb.border_color = BunkerUI.HAZARD if in_squad else BunkerUI.STEEL_EDGE
+				sb.set_border_width_all(2)
+				sb.set_corner_radius_all(10)
+				sb.content_margin_left = 18.0
+				sb.content_margin_right = 18.0
+				sb.content_margin_top = 8.0
+				sb.content_margin_bottom = 8.0
+				row.add_theme_stylebox_override("panel", sb)
+				var h := HBoxContainer.new()
+				h.add_theme_constant_override("separation", 14)
+				row.add_child(h)
+				var who := VBoxContainer.new()
+				who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				who.alignment = BoxContainer.ALIGNMENT_CENTER
+				var nm := Label.new()
+				nm.text = Loc.type_name(str(t))
+				nm.add_theme_font_override("font", BunkerUI.font_title())
+				nm.add_theme_font_size_override("font_size", 17)
+				nm.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+				who.add_child(nm)
+				var info := BunkerUI.make_mono_label(
+						"%s · копий %d" % [LabData.stars_text(lab_data.get_mutant_stars(str(t))), lab_data.get_farm_copies(str(t))],
+						13, BunkerUI.TEXT_DIM)
+				who.add_child(info)
+				h.add_child(who)
+				var tog := Button.new()
+				tog.text = "В ОБОРОНЕ" if in_squad else "В РЕЗЕРВ"
+				tog.custom_minimum_size = Vector2(190, 48)
+				BunkerUI.style_button(tog, "hazard" if in_squad else "ghost", 14)
+				tog.pressed.connect(_on_defense_toggle.bind(str(t)))
+				tog.mouse_entered.connect(_play_hover_sound)
+				h.add_child(tog)
+				_defense_list_box.add_child(row)
+		if lab_data.unlocked_mutants.is_empty():
+				var empty := BunkerUI.make_mono_label("Отряд пуст — крутите Дар Зоны", 16, BunkerUI.TEXT_DIM)
+				_defense_list_box.add_child(empty)
+		_defense_power_label.text = "СИЛА ОБОРОНЫ: %d" % _defense_power()
 
 
 func _on_defense_toggle(type: String):
-        _play_click_sound()
-        if not lab_data:
-                return
-        var key := str(type)
-        if lab_data.arena_defense_squad.has(key):
-                lab_data.arena_defense_squad.erase(key)
-        else:
-                lab_data.arena_defense_squad.append(key)
-        _rebuild_defense_panel()
+		_play_click_sound()
+		if not lab_data:
+				return
+		var key := str(type)
+		if lab_data.arena_defense_squad.has(key):
+				lab_data.arena_defense_squad.erase(key)
+		else:
+				lab_data.arena_defense_squad.append(key)
+		_rebuild_defense_panel()
 
 
 func _on_defense_open_pressed():
-        _play_click_sound()
-        _hide_lab_overlays("defense")
-        defense_panel.visible = true
-        _rebuild_defense_panel()
+		_play_click_sound()
+		_hide_lab_overlays("defense")
+		defense_panel.visible = true
+		_rebuild_defense_panel()
 
 
 func _on_defense_close_pressed():
-        _play_click_sound()
-        defense_panel.visible = false
-        _on_arena_pressed()
+		_play_click_sound()
+		defense_panel.visible = false
+		_on_arena_pressed()
 
 
 # ==================== ВРАТА ЯРУСОВ БАШНИ (макет «ВРАТА ЯРУСОВ») ====================
@@ -4994,232 +4994,232 @@ var _gates_go_button: Button
 
 func _build_gates_ui():
         """Полноэкранные врата ярусов (строится кодом, рисует TierGates)"""
-        gates_panel = Control.new()
-        gates_panel.name = "GatesPanel"
-        gates_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        gates_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        gates_panel.visible = false
-        add_child(gates_panel)
+		gates_panel = Control.new()
+		gates_panel.name = "GatesPanel"
+		gates_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		gates_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		gates_panel.visible = false
+		add_child(gates_panel)
 
-        var bg := ColorRect.new()
-        bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        bg.color = Color(0.028, 0.022, 0.014, 0.99)
-        gates_panel.add_child(bg)
+		var bg := ColorRect.new()
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.color = Color(0.028, 0.022, 0.014, 0.99)
+		gates_panel.add_child(bg)
 
-        var root := VBoxContainer.new()
-        root.set_anchors_preset(Control.PRESET_FULL_RECT)
-        root.offset_left = 30
-        root.offset_right = -30
-        root.offset_top = 16
-        root.offset_bottom = -16
-        root.add_theme_constant_override("separation", 8)
-        gates_panel.add_child(root)
+		var root := VBoxContainer.new()
+		root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		root.offset_left = 30
+		root.offset_right = -30
+		root.offset_top = 16
+		root.offset_bottom = -16
+		root.add_theme_constant_override("separation", 8)
+		gates_panel.add_child(root)
 
-        # ---- Шапка ----
-        var head := HBoxContainer.new()
-        head.add_theme_constant_override("separation", 16)
-        root.add_child(head)
+		# ---- Шапка ----
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 16)
+		root.add_child(head)
 
-        var title := Label.new()
-        title.text = "БАШНЯ · "
-        title.add_theme_font_override("font", BunkerUI.font_title())
-        title.add_theme_font_size_override("font_size", 34)
-        title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        head.add_child(title)
-        var title2 := Label.new()
-        title2.text = "ВРАТА ЯРУСОВ"
-        title2.add_theme_font_override("font", BunkerUI.font_title())
-        title2.add_theme_font_size_override("font_size", 34)
-        title2.add_theme_color_override("font_color", BunkerUI.HAZARD)
-        head.add_child(title2)
+		var title := Label.new()
+		title.text = "БАШНЯ · "
+		title.add_theme_font_override("font", BunkerUI.font_title())
+		title.add_theme_font_size_override("font_size", 34)
+		title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		head.add_child(title)
+		var title2 := Label.new()
+		title2.text = "ВРАТА ЯРУСОВ"
+		title2.add_theme_font_override("font", BunkerUI.font_title())
+		title2.add_theme_font_size_override("font_size", 34)
+		title2.add_theme_color_override("font_color", BunkerUI.HAZARD)
+		head.add_child(title2)
 
-        var sp := Control.new()
-        sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        head.add_child(sp)
+		var sp := Control.new()
+		sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(sp)
 
-        var floor_plate := BunkerUI.make_plate("1", "ЛУЧШИЙ ЭТАЖ", 150.0)
-        head.add_child(floor_plate)
-        _gates_floor_plate = floor_plate.get_child(0).get_child(0)
+		var floor_plate := BunkerUI.make_plate("1", "ЛУЧШИЙ ЭТАЖ", 150.0)
+		head.add_child(floor_plate)
+		_gates_floor_plate = floor_plate.get_child(0).get_child(0)
 
-        var star_plate := BunkerUI.make_plate("0", "ЗВЁЗД ИЗ 300", 150.0, "res://assets/ui/currency/icon_star.png")
-        head.add_child(star_plate)
-        _gates_star_plate = star_plate.get_child(0).get_child(0)
+		var star_plate := BunkerUI.make_plate("0", "ЗВЁЗД ИЗ 300", 150.0, "res://assets/ui/currency/icon_star.png")
+		head.add_child(star_plate)
+		_gates_star_plate = star_plate.get_child(0).get_child(0)
 
-        # ---- Тело: врата (лево) + панель яруса (право) ----
-        var body := HBoxContainer.new()
-        body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        body.add_theme_constant_override("separation", 14)
-        root.add_child(body)
+		# ---- Тело: врата (лево) + панель яруса (право) ----
+		var body := HBoxContainer.new()
+		body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		body.add_theme_constant_override("separation", 14)
+		root.add_child(body)
 
-        _gates_control = TierGates.new()
-        _gates_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        _gates_control.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        _gates_control.selection_changed.connect(_on_gate_selected)
-        body.add_child(_gates_control)
+		_gates_control = TierGates.new()
+		_gates_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_gates_control.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_gates_control.selection_changed.connect(_on_gate_selected)
+		body.add_child(_gates_control)
 
-        var info := Panel.new()
-        info.custom_minimum_size = Vector2(460, 0)
-        body.add_child(info)
+		var info := Panel.new()
+		info.custom_minimum_size = Vector2(460, 0)
+		body.add_child(info)
 
-        _gates_info_box = VBoxContainer.new()
-        _gates_info_box.set_anchors_preset(Control.PRESET_FULL_RECT)
-        _gates_info_box.offset_left = 22
-        _gates_info_box.offset_right = -22
-        _gates_info_box.offset_top = 18
-        _gates_info_box.offset_bottom = -18
-        _gates_info_box.add_theme_constant_override("separation", 8)
-        info.add_child(_gates_info_box)
+		_gates_info_box = VBoxContainer.new()
+		_gates_info_box.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_gates_info_box.offset_left = 22
+		_gates_info_box.offset_right = -22
+		_gates_info_box.offset_top = 18
+		_gates_info_box.offset_bottom = -18
+		_gates_info_box.add_theme_constant_override("separation", 8)
+		info.add_child(_gates_info_box)
 
-        # ---- Подвал ----
-        var foot := HBoxContainer.new()
-        foot.add_theme_constant_override("separation", 14)
-        root.add_child(foot)
+		# ---- Подвал ----
+		var foot := HBoxContainer.new()
+		foot.add_theme_constant_override("separation", 14)
+		root.add_child(foot)
 
-        var back := Button.new()
-        back.text = Loc.t("arena.back")
-        back.custom_minimum_size = Vector2(190, 60)
-        BunkerUI.style_button(back, "steel", 19)
-        back.pressed.connect(_on_gates_close_pressed)
-        back.mouse_entered.connect(_play_hover_sound)
-        foot.add_child(back)
+		var back := Button.new()
+		back.text = Loc.t("arena.back")
+		back.custom_minimum_size = Vector2(190, 60)
+		BunkerUI.style_button(back, "steel", 19)
+		back.pressed.connect(_on_gates_close_pressed)
+		back.mouse_entered.connect(_play_hover_sound)
+		foot.add_child(back)
 
-        var hint := Label.new()
-        hint.text = "10 врат = 10 ярусов башни.\nВыбор этажа — ◀▶ в шапке лабы после входа в ярус."
-        hint.add_theme_font_override("font", BunkerUI.font_mono())
-        hint.add_theme_font_size_override("font_size", 12)
-        hint.add_theme_color_override("font_color", Color("8a744a"))
-        hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        foot.add_child(hint)
+		var hint := Label.new()
+		hint.text = "10 врат = 10 ярусов башни.\nВыбор этажа — ◀▶ в шапке лабы после входа в ярус."
+		hint.add_theme_font_override("font", BunkerUI.font_mono())
+		hint.add_theme_font_size_override("font_size", 12)
+		hint.add_theme_color_override("font_color", Color("8a744a"))
+		hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		foot.add_child(hint)
 
-        _gates_go_button = Button.new()
-        _gates_go_button.text = "▶  ИДТИ НА ЭТАЖ"
-        _gates_go_button.custom_minimum_size = Vector2(430, 60)
-        BunkerUI.style_button(_gates_go_button, "hazard", 19, true)
-        _gates_go_button.pressed.connect(_on_gates_go_pressed)
-        _gates_go_button.mouse_entered.connect(_play_hover_sound)
-        foot.add_child(_gates_go_button)
+		_gates_go_button = Button.new()
+		_gates_go_button.text = "▶  ИДТИ НА ЭТАЖ"
+		_gates_go_button.custom_minimum_size = Vector2(430, 60)
+		BunkerUI.style_button(_gates_go_button, "hazard", 19, true)
+		_gates_go_button.pressed.connect(_on_gates_go_pressed)
+		_gates_go_button.mouse_entered.connect(_play_hover_sound)
+		foot.add_child(_gates_go_button)
 
 
 func _gates_tier_stars_array() -> Array:
-        var out: Array = []
-        for t in range(10):
-                var s := 0
-                if game_manager and game_manager.current_save_data:
-                        for f in range(t * 10 + 1, t * 10 + 11):
-                                s += int(game_manager.current_save_data.tower_stars.get(str(f), 0))
-                out.append(s)
-        return out
+		var out: Array = []
+		for t in range(10):
+				var s := 0
+				if game_manager and game_manager.current_save_data:
+						for f in range(t * 10 + 1, t * 10 + 11):
+								s += int(game_manager.current_save_data.tower_stars.get(str(f), 0))
+				out.append(s)
+		return out
 
 
 func _gates_total_stars() -> int:
-        var total := 0
-        for s in _gates_tier_stars_array():
-                total += int(s)
-        return total
+		var total := 0
+		for s in _gates_tier_stars_array():
+				total += int(s)
+		return total
 
 
 func _open_gates():
-        if not game_manager:
-                return
-        _hide_lab_overlays("gates")
-        _refresh_gates_data()
-        gates_panel.visible = true
-        Prog.request_story("gates", self)
+		if not game_manager:
+				return
+		_hide_lab_overlays("gates")
+		_refresh_gates_data()
+		gates_panel.visible = true
+		Prog.request_story("gates", self)
 
 
 func _on_gates_open_pressed():
-        _play_click_sound()
-        _open_gates()
+		_play_click_sound()
+		_open_gates()
 
 
 func _on_gates_close_pressed():
-        _play_click_sound()
-        gates_panel.visible = false
+		_play_click_sound()
+		gates_panel.visible = false
 
 
 func _refresh_gates_data():
-        if not game_manager:
-                return
-        var frontier: int = game_manager.get_tower_frontier()
-        var names: Array = []
-        var bosses: Array = []
-        for t in TowerData.TIERS:
-                names.append(str(t.get("name", "")))
-                bosses.append(str(t.get("boss", "")))
-        var sel := clampi((_tower_floor - 1) / 10, 0, 9)
-        _gates_control.setup(frontier, names, _gates_tier_stars_array(), bosses, sel)
-        if _gates_floor_plate:
-                _gates_floor_plate.text = "%d/100" % frontier
-        if _gates_star_plate:
-                _gates_star_plate.text = "%d" % _gates_total_stars()
-        _rebuild_gates_info()
+		if not game_manager:
+				return
+		var frontier: int = game_manager.get_tower_frontier()
+		var names: Array = []
+		var bosses: Array = []
+		for t in TowerData.TIERS:
+				names.append(str(t.get("name", "")))
+				bosses.append(str(t.get("boss", "")))
+		var sel := clampi((_tower_floor - 1) / 10, 0, 9)
+		_gates_control.setup(frontier, names, _gates_tier_stars_array(), bosses, sel)
+		if _gates_floor_plate:
+				_gates_floor_plate.text = "%d/100" % frontier
+		if _gates_star_plate:
+				_gates_star_plate.text = "%d" % _gates_total_stars()
+		_rebuild_gates_info()
 
 
 func _on_gate_selected(tier_idx: int):
-        _play_click_sound()
-        # Программный выбор тоже двигает врата (клик обрабатывает сам TierGates)
-        if _gates_control and _gates_control.selected_tier != tier_idx:
-                _gates_control.selected_tier = clampi(tier_idx, 0, 9)
-                _gates_control.queue_redraw()
-        _rebuild_gates_info()
+		_play_click_sound()
+		# Программный выбор тоже двигает врата (клик обрабатывает сам TierGates)
+		if _gates_control and _gates_control.selected_tier != tier_idx:
+				_gates_control.selected_tier = clampi(tier_idx, 0, 9)
+				_gates_control.queue_redraw()
+		_rebuild_gates_info()
 
 
 func _rebuild_gates_info():
         """Панель выбранного яруса справа"""
-        for child in _gates_info_box.get_children():
-                child.queue_free()
-        var t := clampi(_gates_control.selected_tier, 0, 9)
-        var tier: Dictionary = TowerData.TIERS[t]
-        var unlocked: bool = game_manager and game_manager.get_tower_frontier() > t * 10
+		for child in _gates_info_box.get_children():
+				child.queue_free()
+		var t := clampi(_gates_control.selected_tier, 0, 9)
+		var tier: Dictionary = TowerData.TIERS[t]
+		var unlocked: bool = game_manager and game_manager.get_tower_frontier() > t * 10
 
-        var head := Label.new()
-        head.text = "ЯРУС %d · «%s»" % [t + 1, str(tier.get("name", ""))]
-        head.add_theme_font_override("font", BunkerUI.font_title())
-        head.add_theme_font_size_override("font_size", 22)
-        head.add_theme_color_override("font_color", Color("ffd94d") if unlocked else BunkerUI.TEXT_DIM)
-        head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        _gates_info_box.add_child(head)
+		var head := Label.new()
+		head.text = "ЯРУС %d · «%s»" % [t + 1, str(tier.get("name", ""))]
+		head.add_theme_font_override("font", BunkerUI.font_title())
+		head.add_theme_font_size_override("font_size", 22)
+		head.add_theme_color_override("font_color", Color("ffd94d") if unlocked else BunkerUI.TEXT_DIM)
+		head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_gates_info_box.add_child(head)
 
-        var sub := BunkerUI.make_mono_label(
-                "этажи %d–%d · %s" % [t * 10 + 1, t * 10 + 10,
-                "открыт" if unlocked else "нужно дойти до этажа %d" % (t * 10 + 1)],
-                13, Color("9a8349"))
-        sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        _gates_info_box.add_child(sub)
+		var sub := BunkerUI.make_mono_label(
+				"этажи %d–%d · %s" % [t * 10 + 1, t * 10 + 10,
+				"открыт" if unlocked else "нужно дойти до этажа %d" % (t * 10 + 1)],
+				13, Color("9a8349"))
+		sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_gates_info_box.add_child(sub)
 
-        var stars: int = int(_gates_tier_stars_array()[t])
-        _gates_info_box.add_child(_make_altar_kv("Звёзды яруса", "★ ×%d / 30" % stars, Color("ffd94d")))
-        _gates_info_box.add_child(_make_altar_kv("Волн на этаже", str(int(tier.get("waves", 3)))))
-        _gates_info_box.add_child(_make_altar_kv("Сталкеров на волну", str(int(tier.get("count", 8)))))
-        _gates_info_box.add_child(_make_altar_kv("Состав рангов", "%d/%d/%d %%" % [int(tier["mix"][0]), int(tier["mix"][1]), int(tier["mix"][2])]))
-        _gates_info_box.add_child(_make_altar_kv("Сила врагов", "×%.2f → ×%.2f" % [float(tier.get("stat", 1.0)), float(tier.get("stat_end", 1.0))]))
-        _gates_info_box.add_child(_make_altar_kv("Хранитель", str(tier.get("boss", "—")), BunkerUI.HAZARD))
-        _gates_info_box.add_child(_make_altar_kv("Выбросов до победы", str(int(tier.get("pulses", 3)))))
+		var stars: int = int(_gates_tier_stars_array()[t])
+		_gates_info_box.add_child(_make_altar_kv("Звёзды яруса", "★ ×%d / 30" % stars, Color("ffd94d")))
+		_gates_info_box.add_child(_make_altar_kv("Волн на этаже", str(int(tier.get("waves", 3)))))
+		_gates_info_box.add_child(_make_altar_kv("Сталкеров на волну", str(int(tier.get("count", 8)))))
+		_gates_info_box.add_child(_make_altar_kv("Состав рангов", "%d/%d/%d %%" % [int(tier["mix"][0]), int(tier["mix"][1]), int(tier["mix"][2])]))
+		_gates_info_box.add_child(_make_altar_kv("Сила врагов", "×%.2f → ×%.2f" % [float(tier.get("stat", 1.0)), float(tier.get("stat_end", 1.0))]))
+		_gates_info_box.add_child(_make_altar_kv("Хранитель", str(tier.get("boss", "—")), BunkerUI.HAZARD))
+		_gates_info_box.add_child(_make_altar_kv("Выбросов до победы", str(int(tier.get("pulses", 3)))))
 
-        var push := Control.new()
-        push.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        _gates_info_box.add_child(push)
+		var push := Control.new()
+		push.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_gates_info_box.add_child(push)
 
-        if unlocked:
-                var target_floor: int = mini(t * 10 + 10, game_manager.get_tower_frontier())
-                _gates_go_button.text = "▶  ИДТИ НА ЭТАЖ %d" % target_floor
-                _gates_go_button.disabled = false
-                _gates_go_button.set_meta("target_floor", target_floor)
-        else:
-                _gates_go_button.text = "ВРАТА ЗАПЕРТЫ"
-                _gates_go_button.disabled = true
+		if unlocked:
+				var target_floor: int = mini(t * 10 + 10, game_manager.get_tower_frontier())
+				_gates_go_button.text = "▶  ИДТИ НА ЭТАЖ %d" % target_floor
+				_gates_go_button.disabled = false
+				_gates_go_button.set_meta("target_floor", target_floor)
+		else:
+				_gates_go_button.text = "ВРАТА ЗАПЕРТЫ"
+				_gates_go_button.disabled = true
 
 
 func _on_gates_go_pressed():
-        _play_click_sound()
-        if not game_manager or _gates_go_button.disabled:
-                return
-        var target: int = int(_gates_go_button.get_meta("target_floor", game_manager.get_tower_frontier()))
-        _tower_floor = clampi(target, 1, game_manager.get_tower_frontier())
-        gates_panel.visible = false
-        _refresh_campaign_ui()
-        _show_message("Этаж %d выбран — жмите ЗАБЕГ" % _tower_floor, 1.8)
+		_play_click_sound()
+		if not game_manager or _gates_go_button.disabled:
+				return
+		var target: int = int(_gates_go_button.get_meta("target_floor", game_manager.get_tower_frontier()))
+		_tower_floor = clampi(target, 1, game_manager.get_tower_frontier())
+		gates_panel.visible = false
+		_refresh_campaign_ui()
+		_show_message("Этаж %d выбран — жмите ЗАБЕГ" % _tower_floor, 1.8)
 
 
 
@@ -5241,377 +5241,377 @@ var _tasks_track_scroll: ScrollContainer = null
 
 func _build_tasks_ui():
         """Кнопка ЗАДАЧИ в нижнем ряду + полноэкранная панель (строится кодом)."""
-        var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
-        if bottom:
-                var tbtn := Button.new()
-                tbtn.name = "TasksButton"
-                tbtn.text = "ЗАДАЧИ"
-                tbtn.custom_minimum_size = Vector2(0, 62)
-                tbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                BunkerUI.style_button(tbtn, "steel", 18)
-                tbtn.pressed.connect(_on_tasks_pressed)
-                tbtn.mouse_entered.connect(_play_hover_sound)
-                bottom.add_child(tbtn)
+		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
+		if bottom:
+				var tbtn := Button.new()
+				tbtn.name = "TasksButton"
+				tbtn.text = "ЗАДАЧИ"
+				tbtn.custom_minimum_size = Vector2(0, 62)
+				tbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				BunkerUI.style_button(tbtn, "steel", 18)
+				tbtn.pressed.connect(_on_tasks_pressed)
+				tbtn.mouse_entered.connect(_play_hover_sound)
+				bottom.add_child(tbtn)
 
-        tasks_panel = Control.new()
-        tasks_panel.name = "TasksPanel"
-        tasks_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-        tasks_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-        tasks_panel.visible = false
-        add_child(tasks_panel)
+		tasks_panel = Control.new()
+		tasks_panel.name = "TasksPanel"
+		tasks_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tasks_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		tasks_panel.visible = false
+		add_child(tasks_panel)
 
-        var bg := ColorRect.new()
-        bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        bg.color = Color(0.023, 0.033, 0.018, 0.985)
-        tasks_panel.add_child(bg)
+		var bg := ColorRect.new()
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.color = Color(0.023, 0.033, 0.018, 0.985)
+		tasks_panel.add_child(bg)
 
-        var root := VBoxContainer.new()
-        root.set_anchors_preset(Control.PRESET_FULL_RECT)
-        root.offset_left = 26
-        root.offset_right = -26
-        root.offset_top = 14
-        root.offset_bottom = -12
-        root.add_theme_constant_override("separation", 8)
-        tasks_panel.add_child(root)
+		var root := VBoxContainer.new()
+		root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		root.offset_left = 26
+		root.offset_right = -26
+		root.offset_top = 14
+		root.offset_bottom = -12
+		root.add_theme_constant_override("separation", 8)
+		tasks_panel.add_child(root)
 
-        # ---- Шапка: НАЗАД + заголовок + уровень лаборанта ----
-        var head := HBoxContainer.new()
-        head.add_theme_constant_override("separation", 16)
-        root.add_child(head)
+		# ---- Шапка: НАЗАД + заголовок + уровень лаборанта ----
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 16)
+		root.add_child(head)
 
-        var back := Button.new()
-        back.text = Loc.t("arena.back")
-        back.custom_minimum_size = Vector2(170, 54)
-        back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        BunkerUI.style_button(back, "steel", 18)
-        back.pressed.connect(_on_tasks_close_pressed)
-        back.mouse_entered.connect(_play_hover_sound)
-        head.add_child(back)
+		var back := Button.new()
+		back.text = Loc.t("arena.back")
+		back.custom_minimum_size = Vector2(170, 54)
+		back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		BunkerUI.style_button(back, "steel", 18)
+		back.pressed.connect(_on_tasks_close_pressed)
+		back.mouse_entered.connect(_play_hover_sound)
+		head.add_child(back)
 
-        var t1 := Label.new()
-        t1.text = "ЗАДАЧИ"
-        t1.add_theme_font_override("font", BunkerUI.font_title())
-        t1.add_theme_font_size_override("font_size", 32)
-        t1.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        head.add_child(t1)
-        var t2 := Label.new()
-        t2.text = "ЗОНЫ"
-        t2.add_theme_font_override("font", BunkerUI.font_title())
-        t2.add_theme_font_size_override("font_size", 32)
-        t2.add_theme_color_override("font_color", BunkerUI.HAZARD)
-        head.add_child(t2)
+		var t1 := Label.new()
+		t1.text = "ЗАДАЧИ"
+		t1.add_theme_font_override("font", BunkerUI.font_title())
+		t1.add_theme_font_size_override("font_size", 32)
+		t1.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		head.add_child(t1)
+		var t2 := Label.new()
+		t2.text = "ЗОНЫ"
+		t2.add_theme_font_override("font", BunkerUI.font_title())
+		t2.add_theme_font_size_override("font_size", 32)
+		t2.add_theme_color_override("font_color", BunkerUI.HAZARD)
+		head.add_child(t2)
 
-        var hsp := Control.new()
-        hsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        head.add_child(hsp)
+		var hsp := Control.new()
+		hsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(hsp)
 
-        # Карточка уровня: УР. N + шкала опыта
-        var lvl_card := _tasks_level_card()
-        head.add_child(lvl_card)
+		# Карточка уровня: УР. N + шкала опыта
+		var lvl_card := _tasks_level_card()
+		head.add_child(lvl_card)
 
-        # ---- Контент: задачи на всю ширину (скролл) ----
-        var body := HBoxContainer.new()
-        body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        body.add_theme_constant_override("separation", 18)
-        root.add_child(body)
+		# ---- Контент: задачи на всю ширину (скролл) ----
+		var body := HBoxContainer.new()
+		body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		body.add_theme_constant_override("separation", 18)
+		root.add_child(body)
 
-        var left_scroll := ScrollContainer.new()
-        left_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        left_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        left_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-        left_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
-        _tasks_left_scroll = left_scroll
-        # Свайп-слой (рецепт фермы): тянешь — список едет, тап — кнопка под пальцем
-        var left_wrap := _make_swipe_overlay(left_scroll, false)
-        body.add_child(left_wrap)
+		var left_scroll := ScrollContainer.new()
+		left_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		left_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		left_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		left_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+		_tasks_left_scroll = left_scroll
+		# Свайп-слой (рецепт фермы): тянешь — список едет, тап — кнопка под пальцем
+		var left_wrap := _make_swipe_overlay(left_scroll, false)
+		body.add_child(left_wrap)
 
-        _tasks_lists_box = VBoxContainer.new()
-        _tasks_lists_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        _tasks_lists_box.add_theme_constant_override("separation", 10)
-        left_scroll.add_child(_tasks_lists_box)
+		_tasks_lists_box = VBoxContainer.new()
+		_tasks_lists_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_tasks_lists_box.add_theme_constant_override("separation", 10)
+		left_scroll.add_child(_tasks_lists_box)
 
-        # ---- Низ окна: очки трека + ТРЕК НАГРАД + шкала + ЛЕНТА СУНДУКОВ ----
-        var pts_row := HBoxContainer.new()
-        pts_row.add_theme_constant_override("separation", 14)
-        root.add_child(pts_row)
-        _tasks_points_label = BunkerUI.make_mono_label("", 15, BunkerUI.HAZARD_BRIGHT)
-        _tasks_points_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        pts_row.add_child(_tasks_points_label)
+		# ---- Низ окна: очки трека + ТРЕК НАГРАД + шкала + ЛЕНТА СУНДУКОВ ----
+		var pts_row := HBoxContainer.new()
+		pts_row.add_theme_constant_override("separation", 14)
+		root.add_child(pts_row)
+		_tasks_points_label = BunkerUI.make_mono_label("", 15, BunkerUI.HAZARD_BRIGHT)
+		_tasks_points_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pts_row.add_child(_tasks_points_label)
 
-        var track_head := Label.new()
-        track_head.text = "ТРЕК НАГРАД"
-        track_head.add_theme_font_override("font", BunkerUI.font_title())
-        track_head.add_theme_font_size_override("font_size", 20)
-        track_head.add_theme_color_override("font_color", BunkerUI.GREEN)
-        pts_row.add_child(track_head)
+		var track_head := Label.new()
+		track_head.text = "ТРЕК НАГРАД"
+		track_head.add_theme_font_override("font", BunkerUI.font_title())
+		track_head.add_theme_font_size_override("font_size", 20)
+		track_head.add_theme_color_override("font_color", BunkerUI.GREEN)
+		pts_row.add_child(track_head)
 
-        _tasks_track_sub = BunkerUI.make_mono_label("", 13, BunkerUI.TEXT_DIM)
-        root.add_child(_tasks_track_sub)
+		_tasks_track_sub = BunkerUI.make_mono_label("", 13, BunkerUI.TEXT_DIM)
+		root.add_child(_tasks_track_sub)
 
-        var track_scroll := ScrollContainer.new()
-        track_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
-        track_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-        _tasks_track_scroll = track_scroll
-        # Свайп-слой: лента тянется пальцем, плитки-кнопки больше не съедают тач
-        var track_wrap := _make_swipe_overlay(track_scroll, true)
-        track_wrap.custom_minimum_size = Vector2(0, 200)
-        track_wrap.size_flags_vertical = Control.SIZE_FILL
-        root.add_child(track_wrap)
+		var track_scroll := ScrollContainer.new()
+		track_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+		track_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_tasks_track_scroll = track_scroll
+		# Свайп-слой: лента тянется пальцем, плитки-кнопки больше не съедают тач
+		var track_wrap := _make_swipe_overlay(track_scroll, true)
+		track_wrap.custom_minimum_size = Vector2(0, 200)
+		track_wrap.size_flags_vertical = Control.SIZE_FILL
+		root.add_child(track_wrap)
 
-        _tasks_track_row = HBoxContainer.new()
-        _tasks_track_row.add_theme_constant_override("separation", 10)
-        _tasks_track_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        track_scroll.add_child(_tasks_track_row)
+		_tasks_track_row = HBoxContainer.new()
+		_tasks_track_row.add_theme_constant_override("separation", 10)
+		_tasks_track_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		track_scroll.add_child(_tasks_track_row)
 
-        if not _tasks_built:
-                _tasks_built = true
-                Prog.tasks_changed.connect(_on_prog_tasks_changed)
-                Prog.track_changed.connect(_on_prog_tasks_changed)
-                Prog.xp_changed.connect(_on_prog_xp_changed)
-                Prog.track_changed.connect(_refresh_tasks_panel)
-                Prog.tasks_changed.connect(_refresh_tasks_panel)
+		if not _tasks_built:
+				_tasks_built = true
+				Prog.tasks_changed.connect(_on_prog_tasks_changed)
+				Prog.track_changed.connect(_on_prog_tasks_changed)
+				Prog.xp_changed.connect(_on_prog_xp_changed)
+				Prog.track_changed.connect(_refresh_tasks_panel)
+				Prog.tasks_changed.connect(_refresh_tasks_panel)
 
 
 func _tasks_level_card() -> Control:
-        var card := PanelContainer.new()
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = BunkerUI.STEEL_HI
-        sb.border_color = BunkerUI.STEEL_EDGE
-        sb.set_border_width_all(2)
-        sb.set_corner_radius_all(10)
-        sb.content_margin_left = 14.0
-        sb.content_margin_right = 14.0
-        sb.content_margin_top = 8.0
-        sb.content_margin_bottom = 8.0
-        card.add_theme_stylebox_override("panel", sb)
-        var v := VBoxContainer.new()
-        v.add_theme_constant_override("separation", 2)
-        card.add_child(v)
-        _tasks_level_value = Label.new()
-        _tasks_level_value.add_theme_font_override("font", BunkerUI.font_title())
-        _tasks_level_value.add_theme_font_size_override("font_size", 20)
-        _tasks_level_value.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
-        v.add_child(_tasks_level_value)
-        _tasks_level_bar = ProgressBar.new()
-        _tasks_level_bar.custom_minimum_size = Vector2(240, 12)
-        _tasks_level_bar.show_percentage = false
-        _tasks_level_bar.add_theme_stylebox_override("background", _tasks_bar_bg())
-        _tasks_level_bar.add_theme_stylebox_override("fill", _tasks_bar_fill(BunkerUI.GREEN))
-        v.add_child(_tasks_level_bar)
-        _tasks_level_sub = BunkerUI.make_mono_label("", 12, BunkerUI.TEXT_DIM)
-        v.add_child(_tasks_level_sub)
-        return card
+		var card := PanelContainer.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = BunkerUI.STEEL_HI
+		sb.border_color = BunkerUI.STEEL_EDGE
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(10)
+		sb.content_margin_left = 14.0
+		sb.content_margin_right = 14.0
+		sb.content_margin_top = 8.0
+		sb.content_margin_bottom = 8.0
+		card.add_theme_stylebox_override("panel", sb)
+		var v := VBoxContainer.new()
+		v.add_theme_constant_override("separation", 2)
+		card.add_child(v)
+		_tasks_level_value = Label.new()
+		_tasks_level_value.add_theme_font_override("font", BunkerUI.font_title())
+		_tasks_level_value.add_theme_font_size_override("font_size", 20)
+		_tasks_level_value.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+		v.add_child(_tasks_level_value)
+		_tasks_level_bar = ProgressBar.new()
+		_tasks_level_bar.custom_minimum_size = Vector2(240, 12)
+		_tasks_level_bar.show_percentage = false
+		_tasks_level_bar.add_theme_stylebox_override("background", _tasks_bar_bg())
+		_tasks_level_bar.add_theme_stylebox_override("fill", _tasks_bar_fill(BunkerUI.GREEN))
+		v.add_child(_tasks_level_bar)
+		_tasks_level_sub = BunkerUI.make_mono_label("", 12, BunkerUI.TEXT_DIM)
+		v.add_child(_tasks_level_sub)
+		return card
 
 
 func _tasks_bar_bg() -> StyleBoxFlat:
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.05, 0.08, 0.05)
-        sb.border_color = BunkerUI.STEEL_EDGE
-        sb.set_border_width_all(1)
-        sb.set_corner_radius_all(4)
-        return sb
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.05, 0.08, 0.05)
+		sb.border_color = BunkerUI.STEEL_EDGE
+		sb.set_border_width_all(1)
+		sb.set_corner_radius_all(4)
+		return sb
 
 
 func _tasks_bar_fill(col: Color) -> StyleBoxFlat:
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = col
-        sb.set_corner_radius_all(4)
-        return sb
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = col
+		sb.set_corner_radius_all(4)
+		return sb
 
 
 func _on_tasks_pressed():
-        _play_click_sound()
-        _hide_lab_overlays("tasks")
-        _refresh_tasks_panel()
-        tasks_panel.visible = true
+		_play_click_sound()
+		_hide_lab_overlays("tasks")
+		_refresh_tasks_panel()
+		tasks_panel.visible = true
 
 
 func _on_tasks_close_pressed():
-        _play_click_sound()
-        tasks_panel.visible = false
+		_play_click_sound()
+		tasks_panel.visible = false
 
 
 func _on_prog_tasks_changed():
-        if tasks_panel and tasks_panel.visible:
-                _refresh_tasks_panel()
+		if tasks_panel and tasks_panel.visible:
+				_refresh_tasks_panel()
 
 
 func _on_prog_xp_changed(_l: int, _x: int, _n: int):
-        if tasks_panel and tasks_panel.visible:
-                _refresh_tasks_panel()
+		if tasks_panel and tasks_panel.visible:
+				_refresh_tasks_panel()
 
 
 func _refresh_tasks_panel():
-        if tasks_panel == null:
-                return
-        # Уровень и опыт
-        var lvl := Prog.level()
-        var xp := Prog.xp_in_level()
-        var need := Prog.xp_need(lvl)
-        _tasks_level_value.text = "УРОВЕНЬ ЛАБОРАНТА: %d" % lvl
-        _tasks_level_bar.max_value = need
-        _tasks_level_bar.value = xp
-        _tasks_level_sub.text = "опыт %d / %d до ур. %d · всего %d" % [xp, need, lvl + 1, Prog.xp_total()]
-        # Очки и трек
-        var pts := Prog.track_points()
-        var cyc := Prog.track_cycle()
-        _tasks_points_label.text = "ОЧКИ ЗАДАЧ: %d · ЦИКЛ ТРЕКА %d · очки дают задачи и любые бои" % [pts, cyc]
-        var next_tier := Prog.TRACK_TIERS + 1
-        for i in range(1, Prog.TRACK_TIERS + 1):
-                if not Prog.tier_claimed(i):
-                        next_tier = i
-                        break
-        if next_tier <= Prog.TRACK_TIERS:
-                _tasks_track_sub.text = "до ступени %d: %d / %d очков" % [next_tier, pts, next_tier * Prog.TIER_COST]
-                _tasks_track_bar_max(next_tier * Prog.TIER_COST, pts)
-        else:
-                _tasks_track_sub.text = "трек закрыт — собирай очки нового цикла"
-                _tasks_track_bar_max(1, 0)
-        # D16: боевой пропуск — статус золотом или CTA покупки (открывает магазин)
-        if StoreData.ENABLED and game_manager and game_manager.current_save_data:
-                var owned_p: Dictionary = game_manager.current_save_data.owned
-                var cyc_p: int = Prog.track_cycle()
-                if _tasks_prem_btn == null:
-                        _tasks_prem_btn = Button.new()
-                        _tasks_prem_btn.custom_minimum_size = Vector2(260, 34)
-                        _tasks_prem_btn.add_theme_font_size_override("font_size", 13)
-                        BunkerUI.style_button(_tasks_prem_btn, "hazard", 13)
-                        _tasks_prem_btn.pressed.connect(_on_prem_track_button)
-                        if _tasks_points_label and _tasks_points_label.get_parent():
-                                        _tasks_points_label.get_parent().add_child(_tasks_prem_btn)
-                if StoreData.pass_active(cyc_p, owned_p):
-                        var pending: int = _prem_pending_count(owned_p, cyc_p)
-                        _tasks_prem_btn.visible = pending > 0
-                        _tasks_prem_btn.text = "★ " + Loc.t("store.claim_all", {"n": pending})
-                else:
-                        _tasks_prem_btn.visible = true
-                        _tasks_prem_btn.text = Loc.t("pass.cta")
-        elif _tasks_prem_btn:
-                _tasks_prem_btn.visible = false
-        # Задачи и сундуки
-        _rebuild_tasks_lists()
-        _rebuild_tasks_track()
+		if tasks_panel == null:
+				return
+		# Уровень и опыт
+		var lvl := Prog.level()
+		var xp := Prog.xp_in_level()
+		var need := Prog.xp_need(lvl)
+		_tasks_level_value.text = "УРОВЕНЬ ЛАБОРАНТА: %d" % lvl
+		_tasks_level_bar.max_value = need
+		_tasks_level_bar.value = xp
+		_tasks_level_sub.text = "опыт %d / %d до ур. %d · всего %d" % [xp, need, lvl + 1, Prog.xp_total()]
+		# Очки и трек
+		var pts := Prog.track_points()
+		var cyc := Prog.track_cycle()
+		_tasks_points_label.text = "ОЧКИ ЗАДАЧ: %d · ЦИКЛ ТРЕКА %d · очки дают задачи и любые бои" % [pts, cyc]
+		var next_tier := Prog.TRACK_TIERS + 1
+		for i in range(1, Prog.TRACK_TIERS + 1):
+				if not Prog.tier_claimed(i):
+						next_tier = i
+						break
+		if next_tier <= Prog.TRACK_TIERS:
+				_tasks_track_sub.text = "до ступени %d: %d / %d очков" % [next_tier, pts, next_tier * Prog.TIER_COST]
+				_tasks_track_bar_max(next_tier * Prog.TIER_COST, pts)
+		else:
+				_tasks_track_sub.text = "трек закрыт — собирай очки нового цикла"
+				_tasks_track_bar_max(1, 0)
+		# D16: боевой пропуск — статус золотом или CTA покупки (открывает магазин)
+		if StoreData.ENABLED and game_manager and game_manager.current_save_data:
+				var owned_p: Dictionary = game_manager.current_save_data.owned
+				var cyc_p: int = Prog.track_cycle()
+				if _tasks_prem_btn == null:
+						_tasks_prem_btn = Button.new()
+						_tasks_prem_btn.custom_minimum_size = Vector2(260, 34)
+						_tasks_prem_btn.add_theme_font_size_override("font_size", 13)
+						BunkerUI.style_button(_tasks_prem_btn, "hazard", 13)
+						_tasks_prem_btn.pressed.connect(_on_prem_track_button)
+						if _tasks_points_label and _tasks_points_label.get_parent():
+										_tasks_points_label.get_parent().add_child(_tasks_prem_btn)
+				if StoreData.pass_active(cyc_p, owned_p):
+						var pending: int = _prem_pending_count(owned_p, cyc_p)
+						_tasks_prem_btn.visible = pending > 0
+						_tasks_prem_btn.text = "★ " + Loc.t("store.claim_all", {"n": pending})
+				else:
+						_tasks_prem_btn.visible = true
+						_tasks_prem_btn.text = Loc.t("pass.cta")
+		elif _tasks_prem_btn:
+				_tasks_prem_btn.visible = false
+		# Задачи и сундуки
+		_rebuild_tasks_lists()
+		_rebuild_tasks_track()
 
 
 func _tasks_track_bar_max(m: int, v: int) -> void:
-        if _tasks_track_bar == null:
-                _tasks_track_bar = ProgressBar.new()
-                _tasks_track_bar.custom_minimum_size = Vector2(0, 10)
-                _tasks_track_bar.show_percentage = false
-                _tasks_track_bar.add_theme_stylebox_override("background", _tasks_bar_bg())
-                _tasks_track_bar.add_theme_stylebox_override("fill", _tasks_bar_fill(BunkerUI.HAZARD))
-                _tasks_track_sub.get_parent().add_child.call_deferred(_tasks_track_bar)
-                _tasks_track_sub.get_parent().move_child.call_deferred(_tasks_track_bar, _tasks_track_sub.get_index() + 1)
-                _tasks_track_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-                _tasks_track_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        _tasks_track_bar.max_value = m
-        _tasks_track_bar.value = v
+		if _tasks_track_bar == null:
+				_tasks_track_bar = ProgressBar.new()
+				_tasks_track_bar.custom_minimum_size = Vector2(0, 10)
+				_tasks_track_bar.show_percentage = false
+				_tasks_track_bar.add_theme_stylebox_override("background", _tasks_bar_bg())
+				_tasks_track_bar.add_theme_stylebox_override("fill", _tasks_bar_fill(BunkerUI.HAZARD))
+				_tasks_track_sub.get_parent().add_child.call_deferred(_tasks_track_bar)
+				_tasks_track_sub.get_parent().move_child.call_deferred(_tasks_track_bar, _tasks_track_sub.get_index() + 1)
+				_tasks_track_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				_tasks_track_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_tasks_track_bar.max_value = m
+		_tasks_track_bar.value = v
 
 
 func _rebuild_tasks_lists():
-        for child in _tasks_lists_box.get_children():
-                child.queue_free()
-        _tasks_section(Loc.t("tasks.daily_head"))
-        for t in Prog.daily_tasks():
-                _tasks_lists_box.add_child(_make_task_row("d", t))
-        _tasks_section(Loc.t("tasks.weekly_head"))
-        for t in Prog.weekly_tasks():
-                _tasks_lists_box.add_child(_make_task_row("w", t))
-        var note := BunkerUI.make_mono_label(Loc.t("tasks.note"), 12, BunkerUI.TEXT_FAINT)
-        _tasks_lists_box.add_child(note)
+		for child in _tasks_lists_box.get_children():
+				child.queue_free()
+		_tasks_section(Loc.t("tasks.daily_head"))
+		for t in Prog.daily_tasks():
+				_tasks_lists_box.add_child(_make_task_row("d", t))
+		_tasks_section(Loc.t("tasks.weekly_head"))
+		for t in Prog.weekly_tasks():
+				_tasks_lists_box.add_child(_make_task_row("w", t))
+		var note := BunkerUI.make_mono_label(Loc.t("tasks.note"), 12, BunkerUI.TEXT_FAINT)
+		_tasks_lists_box.add_child(note)
 
 
 func _tasks_section(text: String):
-        var l := Label.new()
-        l.text = text
-        l.add_theme_font_override("font", BunkerUI.font_title())
-        l.add_theme_font_size_override("font_size", 18)
-        l.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-        _tasks_lists_box.add_child(l)
+		var l := Label.new()
+		l.text = text
+		l.add_theme_font_override("font", BunkerUI.font_title())
+		l.add_theme_font_size_override("font_size", 18)
+		l.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+		_tasks_lists_box.add_child(l)
 
 
 func _make_task_row(kind: String, t: Dictionary) -> Control:
-        var def: Dictionary = t["def"]
-        var row := PanelContainer.new()
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = BunkerUI.STEEL_HI
-        sb.border_color = BunkerUI.STEEL_EDGE
-        sb.set_border_width_all(1)
-        sb.set_corner_radius_all(8)
-        sb.content_margin_left = 12.0
-        sb.content_margin_right = 12.0
-        sb.content_margin_top = 8.0
-        sb.content_margin_bottom = 8.0
-        row.add_theme_stylebox_override("panel", sb)
-        var h := HBoxContainer.new()
-        h.add_theme_constant_override("separation", 12)
-        row.add_child(h)
-        # Иконка типа задачи (помощник, 48px глифы): маппинг по ключу счётчика
-        const KEY_ICON := {"wins": "task_win", "arena_wins": "task_win",
-                "campaign_wins": "task_win", "kills": "task_boss",
-                "artifacts": "task_artifact", "waves": "task_survive",
-                "tower_wins": "task_floor", "tower_intro": "task_floor",
-                "guild": "task_guild"}
-        var icon_key: String = str(KEY_ICON.get(str(def.get("key", "")), ""))
-        if icon_key != "":
-                var icon_path := "res://assets/ui/icons/tasks/%s.png" % icon_key
-                if ResourceLoader.exists(icon_path):
-                        var ticon := TextureRect.new()
-                        ticon.texture = load(icon_path)
-                        ticon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-                        ticon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-                        ticon.custom_minimum_size = Vector2(40, 40)
-                        ticon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-                        h.add_child(ticon)
-        var v := VBoxContainer.new()
-        v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        v.add_theme_constant_override("separation", 4)
-        h.add_child(v)
-        var title := Label.new()
-        var title_key := "task." + str(def.get("id", ""))
-        var title_txt: String = Loc.t(title_key)
-        title.text = title_txt if title_txt != title_key else str(def["title"])
-        title.add_theme_font_override("font", BunkerUI.font_body())
-        title.add_theme_font_size_override("font_size", 16)
-        title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        v.add_child(title)
-        var bar := ProgressBar.new()
-        bar.custom_minimum_size = Vector2(0, 10)
-        bar.show_percentage = false
-        bar.max_value = int(def["need"])
-        bar.value = int(t["prog"])
-        bar.add_theme_stylebox_override("background", _tasks_bar_bg())
-        var fill_col := BunkerUI.GREEN if bool(t["done"]) else BunkerUI.HAZARD
-        bar.add_theme_stylebox_override("fill", _tasks_bar_fill(fill_col))
-        v.add_child(bar)
-        var sub := BunkerUI.make_mono_label(Loc.t("tasks.reward_line",
-                        {"a": int(t["prog"]), "b": int(def["need"]), "x": int(def["xp"]), "p": int(def["pts"])}), 12, BunkerUI.TEXT_DIM)
-        v.add_child(sub)
-        var btn := Button.new()
-        btn.custom_minimum_size = Vector2(170, 52)
-        btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        if bool(t["claimed"]):
-                btn.text = "ЗАКРЫТО"
-                btn.disabled = true
-                BunkerUI.style_button(btn, "steel", 15)
-        elif bool(t["done"]):
-                btn.text = Loc.t("medals.claim")
-                BunkerUI.style_button(btn, "primary", 16)
-                btn.pressed.connect(_on_task_claim.bind(kind, str(def["id"])))
-        else:
-                btn.text = "В ПРОЦЕССЕ"
-                btn.disabled = true
-                BunkerUI.style_button(btn, "steel", 15)
-        btn.mouse_entered.connect(_play_hover_sound)
-        h.add_child(btn)
-        return row
+		var def: Dictionary = t["def"]
+		var row := PanelContainer.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = BunkerUI.STEEL_HI
+		sb.border_color = BunkerUI.STEEL_EDGE
+		sb.set_border_width_all(1)
+		sb.set_corner_radius_all(8)
+		sb.content_margin_left = 12.0
+		sb.content_margin_right = 12.0
+		sb.content_margin_top = 8.0
+		sb.content_margin_bottom = 8.0
+		row.add_theme_stylebox_override("panel", sb)
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 12)
+		row.add_child(h)
+		# Иконка типа задачи (помощник, 48px глифы): маппинг по ключу счётчика
+		const KEY_ICON := {"wins": "task_win", "arena_wins": "task_win",
+				"campaign_wins": "task_win", "kills": "task_boss",
+				"artifacts": "task_artifact", "waves": "task_survive",
+				"tower_wins": "task_floor", "tower_intro": "task_floor",
+				"guild": "task_guild"}
+		var icon_key: String = str(KEY_ICON.get(str(def.get("key", "")), ""))
+		if icon_key != "":
+				var icon_path := "res://assets/ui/icons/tasks/%s.png" % icon_key
+				if ResourceLoader.exists(icon_path):
+						var ticon := TextureRect.new()
+						ticon.texture = load(icon_path)
+						ticon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+						ticon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+						ticon.custom_minimum_size = Vector2(40, 40)
+						ticon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+						h.add_child(ticon)
+		var v := VBoxContainer.new()
+		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		v.add_theme_constant_override("separation", 4)
+		h.add_child(v)
+		var title := Label.new()
+		var title_key := "task." + str(def.get("id", ""))
+		var title_txt: String = Loc.t(title_key)
+		title.text = title_txt if title_txt != title_key else str(def["title"])
+		title.add_theme_font_override("font", BunkerUI.font_body())
+		title.add_theme_font_size_override("font_size", 16)
+		title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		v.add_child(title)
+		var bar := ProgressBar.new()
+		bar.custom_minimum_size = Vector2(0, 10)
+		bar.show_percentage = false
+		bar.max_value = int(def["need"])
+		bar.value = int(t["prog"])
+		bar.add_theme_stylebox_override("background", _tasks_bar_bg())
+		var fill_col := BunkerUI.GREEN if bool(t["done"]) else BunkerUI.HAZARD
+		bar.add_theme_stylebox_override("fill", _tasks_bar_fill(fill_col))
+		v.add_child(bar)
+		var sub := BunkerUI.make_mono_label(Loc.t("tasks.reward_line",
+						{"a": int(t["prog"]), "b": int(def["need"]), "x": int(def["xp"]), "p": int(def["pts"])}), 12, BunkerUI.TEXT_DIM)
+		v.add_child(sub)
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(170, 52)
+		btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if bool(t["claimed"]):
+				btn.text = "ЗАКРЫТО"
+				btn.disabled = true
+				BunkerUI.style_button(btn, "steel", 15)
+		elif bool(t["done"]):
+				btn.text = Loc.t("medals.claim")
+				BunkerUI.style_button(btn, "primary", 16)
+				btn.pressed.connect(_on_task_claim.bind(kind, str(def["id"])))
+		else:
+				btn.text = "В ПРОЦЕССЕ"
+				btn.disabled = true
+				BunkerUI.style_button(btn, "steel", 15)
+		btn.mouse_entered.connect(_play_hover_sound)
+		h.add_child(btn)
+		return row
 
 
 func _on_task_claim(kind: String, id: String):
-        _play_click_sound()
-        if Prog.claim_task(kind, id):
-                _refresh_tasks_panel()
+		_play_click_sound()
+		if Prog.claim_task(kind, id):
+				_refresh_tasks_panel()
 
 
 # Боевой пропуск (D16): кэш состояния на пересборку трека
@@ -5626,278 +5626,298 @@ var _mail_overlay: Control = null
 
 
 func _on_mail_pressed() -> void:
-        _play_click_sound()
-        if _mail_overlay == null:
-                _mail_overlay = MailOverlay.new()
-                add_child(_mail_overlay)
-        _mail_overlay.open()
+		_play_click_sound()
+		if _mail_overlay == null:
+				_mail_overlay = MailOverlay.new()
+				add_child(_mail_overlay)
+		_mail_overlay.open()
 
 
 func _on_lab_storage_pressed() -> void:
-        _play_click_sound()
-        if _storage_panel == null:
-                _storage_panel = LabStoragePanel.new()
-                add_child(_storage_panel)
-                _storage_panel.build()   # build после add_child: get_viewport живёт в дереве
-        _storage_panel.open()
+		_play_click_sound()
+		if _storage_panel == null:
+				_storage_panel = LabStoragePanel.new()
+				add_child(_storage_panel)
+				_storage_panel.build()   # build после add_child: get_viewport живёт в дереве
+		_storage_panel.open()
 
 
 func _on_event_pressed() -> void:
-        _play_click_sound()
-        # Видимый диагност: юзер видит, что обработчик жив
-        var ev_now: Dictionary = EventsData.current_event(int(Time.get_unix_time_from_system()))
-        _show_message(str(ev_now.get("title_ru", "СОБЫТИЯ")))
-        if _event_hub == null:
-                _event_hub = EventHub.new()
-                add_child(_event_hub)
-        _event_hub.open()
+		_play_click_sound()
+		# Видимый диагност: юзер видит, что обработчик жив
+		var ev_now: Dictionary = EventsData.current_event(int(Time.get_unix_time_from_system()))
+		_show_message(str(ev_now.get("title_ru", "СОБЫТИЯ")))
+		if _event_hub == null:
+				_event_hub = EventHub.new()
+				add_child(_event_hub)
+		_event_hub.open()
 
 
 func _rebuild_tasks_track():
-        _tp_cycle = Prog.track_cycle()
-        _tp_owned = game_manager.current_save_data.owned if game_manager and game_manager.current_save_data else {}
-        _tp_pass = StoreData.ENABLED and StoreData.pass_active(_tp_cycle, _tp_owned)
-        for child in _tasks_track_row.get_children():
-                child.queue_free()
-        for i in range(1, Prog.TRACK_TIERS + 1):
-                _tasks_track_row.add_child(_make_chest_tile(i))
+		_tp_cycle = Prog.track_cycle()
+		_tp_owned = game_manager.current_save_data.owned if game_manager and game_manager.current_save_data else {}
+		_tp_pass = StoreData.ENABLED and StoreData.pass_active(_tp_cycle, _tp_owned)
+		for child in _tasks_track_row.get_children():
+				child.queue_free()
+		for i in range(1, Prog.TRACK_TIERS + 1):
+				_tasks_track_row.add_child(_make_chest_tile(i))
 
 
 func _make_chest_tile(tier: int) -> Control:
-        var kind := Prog.chest_kind(tier)
-        var col: Color = Prog.chest_color(kind)
-        var contents: Dictionary = Prog.chest_contents(tier)
-        var claimed := Prog.tier_claimed(tier)
-        var enough := Prog.track_points() >= tier * Prog.TIER_COST
-        var tile := Button.new()
-        tile.custom_minimum_size = Vector2(148, 214)
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = BunkerUI.STEEL_HI if not claimed else Color(0.06, 0.09, 0.06)
-        sb.border_color = col
-        sb.set_border_width_all(2 if not claimed else 1)
-        sb.set_corner_radius_all(10)
-        sb.content_margin_left = 8.0
-        sb.content_margin_right = 8.0
-        sb.content_margin_top = 8.0
-        sb.content_margin_bottom = 8.0
-        tile.add_theme_stylebox_override("normal", sb)
-        var sbh: StyleBoxFlat = sb.duplicate()
-        sbh.bg_color = Color(0.12, 0.17, 0.11)
-        tile.add_theme_stylebox_override("hover", sbh)
-        tile.add_theme_stylebox_override("pressed", sbh)
-        var v := VBoxContainer.new()
-        v.set_anchors_preset(Control.PRESET_FULL_RECT)
-        v.add_theme_constant_override("separation", 4)
-        v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        tile.add_child(v)
-        var num := Label.new()
-        num.text = "%d" % tier
-        num.add_theme_font_override("font", BunkerUI.font_mono())
-        num.add_theme_font_size_override("font_size", 13)
-        num.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-        num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(num)
-        var name_l := Label.new()
-        name_l.text = Prog.chest_name(kind)
-        name_l.add_theme_font_override("font", BunkerUI.font_title())
-        name_l.add_theme_font_size_override("font_size", 13)
-        name_l.add_theme_color_override("font_color", col)
-        name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        v.add_child(name_l)
-        var desc := Label.new()
-        var parts: Array[String] = []
-        if int(contents["biomass"]) > 0:
-                parts.append("биомасса %d" % int(contents["biomass"]))
-        if int(contents["mutant_rolls"]) > 0:
-                parts.append("крутки мут. ×%d" % int(contents["mutant_rolls"]))
-        if int(contents["anomaly_rolls"]) > 0:
-                parts.append("крутки аном. ×%d" % int(contents["anomaly_rolls"]))
-        if int(contents.get("exclusive", 0)) > 0:
-                parts.append("2 эксклюзива: мутант + аномалия")
-        desc.text = "\n".join(parts)
-        desc.add_theme_font_override("font", BunkerUI.font_body())
-        desc.add_theme_font_size_override("font_size", 12)
-        desc.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-        desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(desc)
-        var sp := Control.new()
-        sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        sp.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        v.add_child(sp)
-        var state := Label.new()
-        if claimed:
-                state.text = "ЗАБРАНО"
-                state.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-        elif enough:
-                state.text = "ОТКРЫТО"
-                state.add_theme_color_override("font_color", BunkerUI.GREEN)
-        else:
-                state.text = "%d ОЧКОВ" % (tier * Prog.TIER_COST)
-                state.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
-        state.add_theme_font_override("font", BunkerUI.font_mono())
-        state.add_theme_font_size_override("font_size", 13)
-        state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(state)
+		var kind := Prog.chest_kind(tier)
+		var col: Color = Prog.chest_color(kind)
+		var contents: Dictionary = Prog.chest_contents(tier)
+		var claimed := Prog.tier_claimed(tier)
+		var enough := Prog.track_points() >= tier * Prog.TIER_COST
+		var tile := Button.new()
+		tile.custom_minimum_size = Vector2(148, 214)
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = BunkerUI.STEEL_HI if not claimed else Color(0.06, 0.09, 0.06)
+		sb.border_color = col
+		sb.set_border_width_all(2 if not claimed else 1)
+		sb.set_corner_radius_all(10)
+		sb.content_margin_left = 8.0
+		sb.content_margin_right = 8.0
+		sb.content_margin_top = 8.0
+		sb.content_margin_bottom = 8.0
+		tile.add_theme_stylebox_override("normal", sb)
+		var sbh: StyleBoxFlat = sb.duplicate()
+		sbh.bg_color = Color(0.12, 0.17, 0.11)
+		tile.add_theme_stylebox_override("hover", sbh)
+		tile.add_theme_stylebox_override("pressed", sbh)
+		var v := VBoxContainer.new()
+		v.set_anchors_preset(Control.PRESET_FULL_RECT)
+		v.add_theme_constant_override("separation", 4)
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.add_child(v)
+		var num := Label.new()
+		num.text = "%d" % tier
+		num.add_theme_font_override("font", BunkerUI.font_mono())
+		num.add_theme_font_size_override("font_size", 13)
+		num.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+		num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(num)
+		var name_l := Label.new()
+		name_l.text = Prog.chest_name(kind)
+		name_l.add_theme_font_override("font", BunkerUI.font_title())
+		name_l.add_theme_font_size_override("font_size", 13)
+		name_l.add_theme_color_override("font_color", col)
+		name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		v.add_child(name_l)
+		var desc := Label.new()
+		var parts: Array[String] = []
+		if int(contents["biomass"]) > 0:
+				parts.append("биомасса %d" % int(contents["biomass"]))
+		if int(contents["mutant_rolls"]) > 0:
+				parts.append("крутки мут. ×%d" % int(contents["mutant_rolls"]))
+		if int(contents["anomaly_rolls"]) > 0:
+				parts.append("крутки аном. ×%d" % int(contents["anomaly_rolls"]))
+		if int(contents.get("exclusive", 0)) > 0:
+				parts.append("2 эксклюзива: мутант + аномалия")
+		desc.text = "\n".join(parts)
+		desc.add_theme_font_override("font", BunkerUI.font_body())
+		desc.add_theme_font_size_override("font_size", 12)
+		desc.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+		desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(desc)
+		var sp := Control.new()
+		sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		sp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(sp)
+		var state := Label.new()
+		if claimed:
+				state.text = "ЗАБРАНО"
+				state.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+		elif enough:
+				state.text = "ОТКРЫТО"
+				state.add_theme_color_override("font_color", BunkerUI.GREEN)
+		else:
+				state.text = "%d ОЧКОВ" % (tier * Prog.TIER_COST)
+				state.add_theme_color_override("font_color", BunkerUI.TEXT_DIM)
+		state.add_theme_font_override("font", BunkerUI.font_mono())
+		state.add_theme_font_size_override("font_size", 13)
+		state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(state)
 
-        # ==== ПРЕМИУМ-ПОЛОСА ПРОПУСКА (D16): вторая строка награды ступени ====
-        if StoreData.ENABLED:
-                var prem: Dictionary = StoreData.premium_reward(tier, _tp_cycle)
-                var prem_claimed: bool = _tp_owned.has("prem_%d_%d" % [_tp_cycle, tier])
-                var milestone: bool = StoreData.PASS_PREMIUM.has(tier)
-                var gold := Color(1.0, 0.72, 0.25)
-                var strip := Panel.new()
-                strip.custom_minimum_size = Vector2(0, 46)
-                var psb := StyleBoxFlat.new()
-                psb.set_corner_radius_all(6)
-                psb.set_content_margin_all(3.0)
-                if _tp_pass:
-                        psb.bg_color = Color(gold.r, gold.g, gold.b, 0.16 if not milestone else 0.30)
-                        psb.border_color = gold
-                else:
-                        psb.bg_color = Color(0.10, 0.10, 0.09)
-                        psb.border_color = Color(gold, 0.35)
-                psb.set_border_width_all(2 if milestone else 1)
-                strip.add_theme_stylebox_override("panel", psb)
-                strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-                v.add_child(strip)
+		# ==== ПРЕМИУМ-ПОЛОСА ПРОПУСКА (D16): вторая строка награды ступени ====
+		if StoreData.ENABLED:
+				var prem: Dictionary = StoreData.premium_reward(tier, _tp_cycle)
+				var prem_claimed: bool = _tp_owned.has("prem_%d_%d" % [_tp_cycle, tier])
+				var milestone: bool = StoreData.PASS_PREMIUM.has(tier)
+				var gold := Color(1.0, 0.72, 0.25)
+				var strip := Panel.new()
+				strip.custom_minimum_size = Vector2(0, 46)
+				var psb := StyleBoxFlat.new()
+				psb.set_corner_radius_all(6)
+				psb.set_content_margin_all(3.0)
+				if _tp_pass:
+						psb.bg_color = Color(gold.r, gold.g, gold.b, 0.16 if not milestone else 0.30)
+						psb.border_color = gold
+				else:
+						psb.bg_color = Color(0.10, 0.10, 0.09)
+						psb.border_color = Color(gold, 0.35)
+				psb.set_border_width_all(2 if milestone else 1)
+				strip.add_theme_stylebox_override("panel", psb)
+				strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				v.add_child(strip)
 
-                var pv := VBoxContainer.new()
-                pv.set_anchors_preset(Control.PRESET_FULL_RECT)
-                pv.add_theme_constant_override("separation", 0)
-                pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
-                strip.add_child(pv)
-                var head := Label.new()
-                head.text = "★ ПРЕМИУМ" if milestone else "★"
-                head.add_theme_font_override("font", BunkerUI.font_mono())
-                head.add_theme_font_size_override("font_size", 9)
-                head.add_theme_color_override("font_color", gold if _tp_pass else Color(gold, 0.5))
-                head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-                pv.add_child(head)
-                var prem_l := Label.new()
-                prem_l.text = _prem_summary(prem)
-                prem_l.add_theme_font_override("font", BunkerUI.font_body())
-                prem_l.add_theme_font_size_override("font_size", 11)
-                prem_l.add_theme_color_override("font_color",
-                        BunkerUI.TEXT_BRIGHT if _tp_pass else BunkerUI.TEXT_FAINT)
-                prem_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-                prem_l.clip_text = true
-                pv.add_child(prem_l)
-                var prem_state := Label.new()
-                if not _tp_pass:
-                        prem_state.text = "🔒 ПРОПУСК"
-                        prem_state.add_theme_color_override("font_color", Color(gold, 0.65))
-                elif prem_claimed:
-                        prem_state.text = "✓"
-                        prem_state.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-                elif enough:
-                        prem_state.text = "✦ ГОТОВО"
-                        prem_state.add_theme_color_override("font_color", gold)
-                else:
-                        prem_state.text = "· · ·"
-                        prem_state.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-                prem_state.add_theme_font_override("font", BunkerUI.font_mono())
-                prem_state.add_theme_font_size_override("font_size", 10)
-                prem_state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-                pv.add_child(prem_state)
+				var pv := VBoxContainer.new()
+				pv.set_anchors_preset(Control.PRESET_FULL_RECT)
+				pv.add_theme_constant_override("separation", 0)
+				pv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				strip.add_child(pv)
+				var head := Label.new()
+				head.text = "★ ПРЕМИУМ" if milestone else "★"
+				head.add_theme_font_override("font", BunkerUI.font_mono())
+				head.add_theme_font_size_override("font_size", 9)
+				head.add_theme_color_override("font_color", gold if _tp_pass else Color(gold, 0.5))
+				head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				pv.add_child(head)
+				var prem_l := Label.new()
+				prem_l.text = _prem_summary(prem)
+				prem_l.add_theme_font_override("font", BunkerUI.font_body())
+				prem_l.add_theme_font_size_override("font_size", 11)
+				prem_l.add_theme_color_override("font_color",
+						BunkerUI.TEXT_BRIGHT if _tp_pass else BunkerUI.TEXT_FAINT)
+				prem_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				prem_l.clip_text = true
+				pv.add_child(prem_l)
+				var prem_state := Label.new()
+				if not _tp_pass:
+						prem_state.text = "🔒 ПРОПУСК"
+						prem_state.add_theme_color_override("font_color", Color(gold, 0.65))
+				elif prem_claimed:
+						prem_state.text = "✓"
+						prem_state.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+				elif enough:
+						prem_state.text = "✦ ГОТОВО"
+						prem_state.add_theme_color_override("font_color", gold)
+				else:
+						prem_state.text = "· · ·"
+						prem_state.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+				prem_state.add_theme_font_override("font", BunkerUI.font_mono())
+				prem_state.add_theme_font_size_override("font_size", 10)
+				prem_state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				pv.add_child(prem_state)
 
-        # Один клик забирает ступень целиком: сундук + премиум (если готов)
-        if enough and not claimed:
-                tile.pressed.connect(_on_tile_pressed.bind(tier))
-        elif _tp_pass and StoreData.prem_claim_pending(tier, _tp_cycle, _tp_owned):
-                tile.pressed.connect(_on_tile_pressed.bind(tier))
-        tile.mouse_entered.connect(_play_hover_sound)
-        return tile
+		# Один клик забирает ступень целиком: сундук + премиум (если готов)
+		if enough and not claimed:
+				tile.pressed.connect(_on_tile_pressed.bind(tier))
+		elif _tp_pass and StoreData.prem_claim_pending(tier, _tp_cycle, _tp_owned):
+				tile.pressed.connect(_on_tile_pressed.bind(tier))
+		tile.mouse_entered.connect(_play_hover_sound)
+		return tile
 
 
 
 
 func _prem_summary(prem: Dictionary) -> String:
-        var parts: Array[String] = []
-        if int(prem.get("rolls_mut", 0)) > 0:
-                parts.append("★мут ×%d" % int(prem["rolls_mut"]))
-        if int(prem.get("rolls_art", 0)) > 0:
-                parts.append("★ан ×%d" % int(prem["rolls_art"]))
-        if float(prem.get("bio", 0.0)) > 0.0:
-                parts.append("био %dК" % int(float(prem["bio"]) / 1000.0))
-        if prem.has("cos_frame"):
-                parts.append("рамка")
-        if prem.has("cos_avatar"):
-                parts.append("аватар")
-        if prem.has("cos_title"):
-                parts.append("титул")
-        if prem.has("cos_set"):
-                parts.append("КОМПЛЕКТ")
-        return " · ".join(parts) if not parts.is_empty() else "награда"
+		var parts: Array[String] = []
+		# Косметика первой: она уникальна и не должна резаться clip_text'ом
+		if prem.has("cos_frame"):
+				parts.append("рамка")
+		if prem.has("cos_avatar"):
+				parts.append("аватар")
+		if prem.has("cos_title"):
+				parts.append("титул")
+		if prem.has("cos_set"):
+				parts.append("КОМПЛЕКТ")
+		if int(prem.get("rolls_mut", 0)) > 0:
+				parts.append("★мут ×%d" % int(prem["rolls_mut"]))
+		if int(prem.get("rolls_art", 0)) > 0:
+				parts.append("★ан ×%d" % int(prem["rolls_art"]))
+		if float(prem.get("bio", 0.0)) > 0.0:
+				parts.append("био %dК" % int(float(prem["bio"]) / 1000.0))
+		return " · ".join(parts) if not parts.is_empty() else "награда"
 
 
 ## Клик по ступени трека: сундук + премиум пропуска одной кнопкой
 func _on_tile_pressed(tier: int) -> void:
-        _play_click_sound()
-        var granted: Array[String] = []
+		_play_click_sound()
+		var granted: Array[String] = []
+		var prem_done: Dictionary = {}  # премиум, уже выданный этим кликом
 
-        # Сундук (бесплатная ветка) — с богатым разбором эксклюзивов
-        if not Prog.tier_claimed(tier) and Prog.track_points() >= tier * Prog.TIER_COST:
-                var rewards: Dictionary = Prog.claim_tier(tier)
-                if int(rewards.get("biomass", 0)) > 0:
-                        granted.append("+%d биомассы" % int(rewards["biomass"]))
-                if int(rewards.get("mutant_rolls", 0)) > 0:
-                        granted.append("+%d круток мутантов" % int(rewards["mutant_rolls"]))
-                if int(rewards.get("anomaly_rolls", 0)) > 0:
-                        granted.append("+%d круток аномалий" % int(rewards["anomaly_rolls"]))
-                if str(rewards.get("exclusive_type", "")) != "":
-                        granted.append("ЭКСКЛЮЗИВ «%s»: %s" % [
-                                str(rewards["exclusive_name"]),
-                                "новый в коллекции" if bool(rewards.get("exclusive_new")) else "повтор — копия на ферму"])
-                if str(rewards.get("ex_anomaly_type", "")) != "":
-                        granted.append("АНОМАЛИЯ-ЭКСКЛЮЗИВ «%s»: %s" % [
-                                str(rewards["ex_anomaly_name"]),
-                                "новая в коллекции" if bool(rewards.get("ex_anomaly_new")) else "повтор — +400 биомассы"])
+		# Сундук (бесплатная ветка) — с богатым разбором эксклюзивов
+		if not Prog.tier_claimed(tier) and Prog.track_points() >= tier * Prog.TIER_COST:
+				var rewards: Dictionary = Prog.claim_tier(tier)
+				if int(rewards.get("biomass", 0)) > 0:
+						granted.append("+%d биомассы" % int(rewards["biomass"]))
+				if int(rewards.get("mutant_rolls", 0)) > 0:
+						granted.append("+%d круток мутантов" % int(rewards["mutant_rolls"]))
+				if int(rewards.get("anomaly_rolls", 0)) > 0:
+						granted.append("+%d круток аномалий" % int(rewards["anomaly_rolls"]))
+				if str(rewards.get("exclusive_type", "")) != "":
+						granted.append("ЭКСКЛЮЗИВ «%s»: %s" % [
+								str(rewards["exclusive_name"]),
+								"новый в коллекции" if bool(rewards.get("exclusive_new")) else "повтор — копия на ферму"])
+				if str(rewards.get("ex_anomaly_type", "")) != "":
+						granted.append("АНОМАЛИЯ-ЭКСКЛЮЗИВ «%s»: %s" % [
+								str(rewards["ex_anomaly_name"]),
+								"новая в коллекции" if bool(rewards.get("ex_anomaly_new")) else "повтор — +400 биомассы"])
+				# Премиум выдан внутри claim_tier (единственный источник
+				# начислений): помечаем ступень и показываем в сообщении,
+				# второй раз НЕ выдаём
+				if rewards.has("premium"):
+						prem_done = rewards["premium"]
+						_tp_owned["prem_%d_%d" % [_tp_cycle, tier]] = true
+						if int(prem_done.get("rolls_mut", 0)) > 0:
+								granted.append("★мут ×%d" % int(prem_done["rolls_mut"]))
+						if int(prem_done.get("rolls_art", 0)) > 0:
+								granted.append("★ан ×%d" % int(prem_done["rolls_art"]))
+						if float(prem_done.get("bio", 0.0)) > 0.0:
+								granted.append("био %dК" % int(float(prem_done["bio"]) / 1000.0))
+						for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
+								if prem_done.has(cos_key):
+										granted.append("косметика сезона")
+						if game_manager:
+								game_manager.save_to_active_slot()
 
-        # Премиум пропуска (если активен и ступень пройдена)
-        if _tp_pass and StoreData.prem_claim_pending(tier, _tp_cycle, _tp_owned) \
-                        and game_manager and game_manager.current_save_data:
-                var prem: Dictionary = StoreData.premium_reward(tier, _tp_cycle)
-                if int(prem.get("rolls_mut", 0)) > 0:
-                        game_manager.grant_mutant_rolls(int(prem["rolls_mut"]), "пропуск сезона")
-                        granted.append("★мут ×%d" % int(prem["rolls_mut"]))
-                if int(prem.get("rolls_art", 0)) > 0:
-                        game_manager.grant_anomaly_rolls(int(prem["rolls_art"]), "пропуск сезона")
-                        granted.append("★ан ×%d" % int(prem["rolls_art"]))
-                if float(prem.get("bio", 0.0)) > 0.0 and game_manager.get_lab_data():
-                        game_manager.get_lab_data().biomass += float(prem["bio"])
-                        granted.append("био %dК" % int(float(prem["bio"]) / 1000.0))
-                for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
-                        if prem.has(cos_key):
-                                game_manager.current_save_data.owned["cos_" + str(prem[cos_key])] = true
-                                granted.append("косметика сезона")
-                _tp_owned["prem_%d_%d" % [_tp_cycle, tier]] = true
-                game_manager.save_to_active_slot()
+		# Премиум пропуска: ступень была закрыта ДО покупки пропуска - тогда
+		# выдаём здесь (свежая ступень уже обслужана веткой claim_tier выше)
+		if prem_done.is_empty() and _tp_pass and StoreData.prem_claim_pending(tier, _tp_cycle, _tp_owned) \
+						and game_manager and game_manager.current_save_data:
+				var prem: Dictionary = StoreData.premium_reward(tier, _tp_cycle)
+				if int(prem.get("rolls_mut", 0)) > 0:
+						game_manager.grant_mutant_rolls(int(prem["rolls_mut"]), "пропуск сезона")
+						granted.append("★мут ×%d" % int(prem["rolls_mut"]))
+				if int(prem.get("rolls_art", 0)) > 0:
+						game_manager.grant_anomaly_rolls(int(prem["rolls_art"]), "пропуск сезона")
+						granted.append("★ан ×%d" % int(prem["rolls_art"]))
+				if float(prem.get("bio", 0.0)) > 0.0 and game_manager.get_lab_data():
+						game_manager.get_lab_data().biomass += float(prem["bio"])
+						granted.append("био %dК" % int(float(prem["bio"]) / 1000.0))
+				for cos_key in ["cos_frame", "cos_avatar", "cos_title", "cos_set"]:
+						if prem.has(cos_key):
+								game_manager.current_save_data.owned["cos_" + str(prem[cos_key])] = true
+								granted.append("косметика сезона")
+				_tp_owned["prem_%d_%d" % [_tp_cycle, tier]] = true
+				game_manager.save_to_active_slot()
 
-        if not granted.is_empty():
-                var sm = get_tree().get_first_node_in_group("sound_manager")
-                if sm and sm.has_method("play_sound"):
-                        sm.play_sound("upgrade", 0.9, 1.0)
-                _show_message("%s: %s" % [
-                        Loc.t("pass.claimed_line", {"n": tier, "list": ""}).trim_suffix(": "),
-                        ", ".join(granted)], 3.0)
-        _refresh_tasks_panel()
+		if not granted.is_empty():
+				var sm = get_tree().get_first_node_in_group("sound_manager")
+				if sm and sm.has_method("play_sound"):
+						sm.play_sound("upgrade", 0.9, 1.0)
+				_show_message("%s: %s" % [
+						Loc.t("pass.claimed_line", {"n": tier, "list": ""}).trim_suffix(": "),
+						", ".join(granted)], 3.0)
+		_refresh_tasks_panel()
 
 
 
 func _on_prog_task_done(title: String, xp: int, pts: int):
-        _show_message("ЗАДАЧА ЗАКРЫТА: %s  (+%d опыта, +%d очков)" % [title, xp, pts], 2.6)
+		_show_message("ЗАДАЧА ЗАКРЫТА: %s  (+%d опыта, +%d очков)" % [title, xp, pts], 2.6)
 
 
 func _prog_late_story():
-        await get_tree().create_timer(1.3).timeout
-        if not is_instance_valid(self):
-                return
-        Prog.request_story("lab", self)
+		await get_tree().create_timer(1.3).timeout
+		if not is_instance_valid(self):
+				return
+		Prog.request_story("lab", self)
 
 
 func _on_prog_level_up(lvl: int):
-        _show_message("НОВЫЙ УРОВЕНЬ ЛАБОРАНТА: %d" % lvl, 2.6)
+		_show_message("НОВЫЙ УРОВЕНЬ ЛАБОРАНТА: %d" % lvl, 2.6)
 
 
 # ==================== ВИДЖЕТ ЗАДАЧ (главный экран) + КАЛЕНДАРЬ ВХОДА ====================
@@ -5924,561 +5944,561 @@ var _cal_today_tile_ref: Dictionary = {}
 
 
 func _build_tasks_widget():
-        if _tw_root != null:
-                return
-        _tw_root = Control.new()
-        _tw_root.name = "TasksWidget"
-        _tw_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-        _tw_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        add_child(_tw_root)
+		if _tw_root != null:
+				return
+		_tw_root = Control.new()
+		_tw_root.name = "TasksWidget"
+		_tw_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_tw_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_tw_root)
 
-        # --- язычок у правого края (интро: выезд справа) ---
-        _tw_tab = Button.new()
-        _tw_tab.text = Loc.t("tw.tab")
-        _tw_tab.add_theme_font_override("font", BunkerUI.font_title())
-        _tw_tab.add_theme_font_size_override("font_size", 15)
-        _tw_tab.anchor_left = 1.0
-        _tw_tab.anchor_right = 1.0
-        _tw_tab.anchor_top = 0.24
-        _tw_tab.anchor_bottom = 0.60
-        _tw_tab.offset_left = 70.0
-        _tw_tab.offset_right = 128.0
-        _tw_tab.modulate = Color(1, 1, 1, 0)
-        _tw_tab.mouse_entered.connect(_play_hover_sound)
-        _tw_tab.pressed.connect(func(): _tw_set_open(true))
-        _tw_root.add_child(_tw_tab)
+		# --- язычок у правого края (интро: выезд справа) ---
+		_tw_tab = Button.new()
+		_tw_tab.text = Loc.t("tw.tab")
+		_tw_tab.add_theme_font_override("font", BunkerUI.font_title())
+		_tw_tab.add_theme_font_size_override("font_size", 15)
+		_tw_tab.anchor_left = 1.0
+		_tw_tab.anchor_right = 1.0
+		_tw_tab.anchor_top = 0.24
+		_tw_tab.anchor_bottom = 0.60
+		_tw_tab.offset_left = 70.0
+		_tw_tab.offset_right = 128.0
+		_tw_tab.modulate = Color(1, 1, 1, 0)
+		_tw_tab.mouse_entered.connect(_play_hover_sound)
+		_tw_tab.pressed.connect(func(): _tw_set_open(true))
+		_tw_root.add_child(_tw_tab)
 
-        # точка-уведомление: есть что забрать
-        _tw_dot = Panel.new()
-        _tw_dot.anchor_left = 1.0
-        _tw_dot.anchor_right = 1.0
-        _tw_dot.offset_left = -26.0
-        _tw_dot.offset_right = -8.0
-        _tw_dot.offset_top = -8.0
-        _tw_dot.offset_bottom = 10.0
-        var dsb := StyleBoxFlat.new()
-        dsb.bg_color = BunkerUI.HAZARD_BRIGHT
-        dsb.set_corner_radius_all(9)
-        dsb.border_color = Color(0, 0, 0, 0.6)
-        dsb.set_border_width_all(2)
-        _tw_dot.add_theme_stylebox_override("panel", dsb)
-        _tw_dot.pivot_offset = Vector2(9, 9)
-        _tw_dot.visible = false
-        _tw_tab.add_child(_tw_dot)
+		# точка-уведомление: есть что забрать
+		_tw_dot = Panel.new()
+		_tw_dot.anchor_left = 1.0
+		_tw_dot.anchor_right = 1.0
+		_tw_dot.offset_left = -26.0
+		_tw_dot.offset_right = -8.0
+		_tw_dot.offset_top = -8.0
+		_tw_dot.offset_bottom = 10.0
+		var dsb := StyleBoxFlat.new()
+		dsb.bg_color = BunkerUI.HAZARD_BRIGHT
+		dsb.set_corner_radius_all(9)
+		dsb.border_color = Color(0, 0, 0, 0.6)
+		dsb.set_border_width_all(2)
+		_tw_dot.add_theme_stylebox_override("panel", dsb)
+		_tw_dot.pivot_offset = Vector2(9, 9)
+		_tw_dot.visible = false
+		_tw_tab.add_child(_tw_dot)
 
-        # --- выдвижная панель ---
-        _tw_panel = Panel.new()
-        _tw_panel.anchor_left = 1.0
-        _tw_panel.anchor_right = 1.0
-        _tw_panel.anchor_top = 0.0
-        _tw_panel.anchor_bottom = 1.0
-        _tw_panel.offset_left = 40.0
-        _tw_panel.offset_right = 540.0
-        _tw_panel.offset_top = 92.0
-        _tw_panel.offset_bottom = -92.0
-        var psb := StyleBoxFlat.new()
-        psb.bg_color = Color(0.031, 0.045, 0.026, 0.985)
-        psb.border_color = BunkerUI.GREEN
-        psb.set_border_width_all(2)
-        psb.set_corner_radius_all(12)
-        psb.shadow_color = Color(0, 0, 0, 0.5)
-        psb.shadow_size = 18
-        _tw_panel.add_theme_stylebox_override("panel", psb)
-        _tw_panel.visible = false
-        _tw_root.add_child(_tw_panel)
+		# --- выдвижная панель ---
+		_tw_panel = Panel.new()
+		_tw_panel.anchor_left = 1.0
+		_tw_panel.anchor_right = 1.0
+		_tw_panel.anchor_top = 0.0
+		_tw_panel.anchor_bottom = 1.0
+		_tw_panel.offset_left = 40.0
+		_tw_panel.offset_right = 540.0
+		_tw_panel.offset_top = 92.0
+		_tw_panel.offset_bottom = -92.0
+		var psb := StyleBoxFlat.new()
+		psb.bg_color = Color(0.031, 0.045, 0.026, 0.985)
+		psb.border_color = BunkerUI.GREEN
+		psb.set_border_width_all(2)
+		psb.set_corner_radius_all(12)
+		psb.shadow_color = Color(0, 0, 0, 0.5)
+		psb.shadow_size = 18
+		_tw_panel.add_theme_stylebox_override("panel", psb)
+		_tw_panel.visible = false
+		_tw_root.add_child(_tw_panel)
 
-        var marg := MarginContainer.new()
-        marg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        marg.add_theme_constant_override("margin_left", 16)
-        marg.add_theme_constant_override("margin_right", 16)
-        marg.add_theme_constant_override("margin_top", 12)
-        marg.add_theme_constant_override("margin_bottom", 12)
-        _tw_panel.add_child(marg)
-        var v := VBoxContainer.new()
-        v.add_theme_constant_override("separation", 8)
-        marg.add_child(v)
+		var marg := MarginContainer.new()
+		marg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		marg.add_theme_constant_override("margin_left", 16)
+		marg.add_theme_constant_override("margin_right", 16)
+		marg.add_theme_constant_override("margin_top", 12)
+		marg.add_theme_constant_override("margin_bottom", 12)
+		_tw_panel.add_child(marg)
+		var v := VBoxContainer.new()
+		v.add_theme_constant_override("separation", 8)
+		marg.add_child(v)
 
-        var head := HBoxContainer.new()
-        head.add_theme_constant_override("separation", 10)
-        v.add_child(head)
-        var hl := Label.new()
-        hl.text = Loc.t("tw.head")
-        hl.add_theme_font_override("font", BunkerUI.font_title())
-        hl.add_theme_font_size_override("font_size", 21)
-        hl.add_theme_color_override("font_color", BunkerUI.GREEN)
-        head.add_child(hl)
-        var hsp := Control.new()
-        hsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        head.add_child(hsp)
-        _tw_today_head = BunkerUI.make_mono_label("", 12, BunkerUI.TEXT_DIM)
-        head.add_child(_tw_today_head)
-        var close := Button.new()
-        close.text = Loc.t("tw.close")
-        close.custom_minimum_size = Vector2(42, 42)
-        BunkerUI.style_button(close, "steel", 16)
-        close.pressed.connect(func(): _tw_set_open(false))
-        head.add_child(close)
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 10)
+		v.add_child(head)
+		var hl := Label.new()
+		hl.text = Loc.t("tw.head")
+		hl.add_theme_font_override("font", BunkerUI.font_title())
+		hl.add_theme_font_size_override("font_size", 21)
+		hl.add_theme_color_override("font_color", BunkerUI.GREEN)
+		head.add_child(hl)
+		var hsp := Control.new()
+		hsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(hsp)
+		_tw_today_head = BunkerUI.make_mono_label("", 12, BunkerUI.TEXT_DIM)
+		head.add_child(_tw_today_head)
+		var close := Button.new()
+		close.text = Loc.t("tw.close")
+		close.custom_minimum_size = Vector2(42, 42)
+		BunkerUI.style_button(close, "steel", 16)
+		close.pressed.connect(func(): _tw_set_open(false))
+		head.add_child(close)
 
-        var rows_scroll := ScrollContainer.new()
-        rows_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        rows_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-        rows_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
-        var rows_wrap := _make_swipe_overlay(rows_scroll, false)
-        v.add_child(rows_wrap)
-        _tw_rows_box = VBoxContainer.new()
-        _tw_rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        _tw_rows_box.add_theme_constant_override("separation", 6)
-        rows_scroll.add_child(_tw_rows_box)
+		var rows_scroll := ScrollContainer.new()
+		rows_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		rows_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		rows_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+		var rows_wrap := _make_swipe_overlay(rows_scroll, false)
+		v.add_child(rows_wrap)
+		_tw_rows_box = VBoxContainer.new()
+		_tw_rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_tw_rows_box.add_theme_constant_override("separation", 6)
+		rows_scroll.add_child(_tw_rows_box)
 
 
-        var line := ColorRect.new()
-        line.custom_minimum_size = Vector2(0, 1)
-        line.color = BunkerUI.STEEL_EDGE
-        v.add_child(line)
+		var line := ColorRect.new()
+		line.custom_minimum_size = Vector2(0, 1)
+		line.color = BunkerUI.STEEL_EDGE
+		v.add_child(line)
 
-        _tw_track_btn = Button.new()
-        _tw_track_btn.custom_minimum_size = Vector2(0, 46)
-        _tw_track_btn.add_theme_font_override("font", BunkerUI.font_body())
-        _tw_track_btn.add_theme_font_size_override("font_size", 14)
-        BunkerUI.style_button(_tw_track_btn, "steel", 14)
-        _tw_track_btn.mouse_entered.connect(_play_hover_sound)
-        _tw_track_btn.pressed.connect(func():
-                _tw_set_open(false)
-                _on_tasks_pressed())
-        v.add_child(_tw_track_btn)
+		_tw_track_btn = Button.new()
+		_tw_track_btn.custom_minimum_size = Vector2(0, 46)
+		_tw_track_btn.add_theme_font_override("font", BunkerUI.font_body())
+		_tw_track_btn.add_theme_font_size_override("font_size", 14)
+		BunkerUI.style_button(_tw_track_btn, "steel", 14)
+		_tw_track_btn.mouse_entered.connect(_play_hover_sound)
+		_tw_track_btn.pressed.connect(func():
+				_tw_set_open(false)
+				_on_tasks_pressed())
+		v.add_child(_tw_track_btn)
 
-        var cal_btn := Button.new()
-        cal_btn.text = Loc.t("tw.calendar")
-        cal_btn.custom_minimum_size = Vector2(0, 52)
-        BunkerUI.style_button(cal_btn, "primary", 15)
-        cal_btn.mouse_entered.connect(_play_hover_sound)
-        cal_btn.pressed.connect(_cal_open)
-        v.add_child(cal_btn)
+		var cal_btn := Button.new()
+		cal_btn.text = Loc.t("tw.calendar")
+		cal_btn.custom_minimum_size = Vector2(0, 52)
+		BunkerUI.style_button(cal_btn, "primary", 15)
+		cal_btn.mouse_entered.connect(_play_hover_sound)
+		cal_btn.pressed.connect(_cal_open)
+		v.add_child(cal_btn)
 
 
 func _tw_make_task_row(kind: String) -> Dictionary:
-        var p := PanelContainer.new()
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.07, 0.10, 0.055, 0.9)
-        sb.border_color = BunkerUI.STEEL_EDGE
-        sb.set_border_width_all(1)
-        sb.set_corner_radius_all(8)
-        sb.content_margin_left = 10.0
-        sb.content_margin_right = 10.0
-        sb.content_margin_top = 7.0
-        sb.content_margin_bottom = 7.0
-        p.add_theme_stylebox_override("panel", sb)
-        _tw_rows_box.add_child(p)
-        var vv := VBoxContainer.new()
-        vv.add_theme_constant_override("separation", 5)
-        p.add_child(vv)
-        var title := Label.new()
-        title.add_theme_font_override("font", BunkerUI.font_body())
-        title.add_theme_font_size_override("font_size", 14)
-        title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        title.clip_text = true
-        vv.add_child(title)
-        var h := HBoxContainer.new()
-        h.add_theme_constant_override("separation", 8)
-        vv.add_child(h)
-        var bar := ProgressBar.new()
-        bar.custom_minimum_size = Vector2(0, 12)
-        bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        bar.show_percentage = false
-        bar.add_theme_stylebox_override("background", _tasks_bar_bg())
-        bar.add_theme_stylebox_override("fill", _tasks_bar_fill(BunkerUI.GREEN))
-        h.add_child(bar)
-        var rew := BunkerUI.make_mono_label("", 11, BunkerUI.TEXT_FAINT)
-        rew.custom_minimum_size = Vector2(104, 0)
-        rew.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        rew.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        h.add_child(rew)
-        var claim := Button.new()
-        claim.text = Loc.t("tw.claim")
-        claim.custom_minimum_size = Vector2(118, 36)
-        claim.pivot_offset = Vector2(59, 18)
-        BunkerUI.style_button(claim, "primary", 13)
-        claim.visible = false
-        h.add_child(claim)
-        var refs := {"panel": p, "title": title, "bar": bar, "rew": rew, "claim": claim, "id": "", "kind": kind}
-        claim.pressed.connect(func(): _tw_claim_row(refs))
-        return refs
+		var p := PanelContainer.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.07, 0.10, 0.055, 0.9)
+		sb.border_color = BunkerUI.STEEL_EDGE
+		sb.set_border_width_all(1)
+		sb.set_corner_radius_all(8)
+		sb.content_margin_left = 10.0
+		sb.content_margin_right = 10.0
+		sb.content_margin_top = 7.0
+		sb.content_margin_bottom = 7.0
+		p.add_theme_stylebox_override("panel", sb)
+		_tw_rows_box.add_child(p)
+		var vv := VBoxContainer.new()
+		vv.add_theme_constant_override("separation", 5)
+		p.add_child(vv)
+		var title := Label.new()
+		title.add_theme_font_override("font", BunkerUI.font_body())
+		title.add_theme_font_size_override("font_size", 14)
+		title.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		title.clip_text = true
+		vv.add_child(title)
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 8)
+		vv.add_child(h)
+		var bar := ProgressBar.new()
+		bar.custom_minimum_size = Vector2(0, 12)
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.show_percentage = false
+		bar.add_theme_stylebox_override("background", _tasks_bar_bg())
+		bar.add_theme_stylebox_override("fill", _tasks_bar_fill(BunkerUI.GREEN))
+		h.add_child(bar)
+		var rew := BunkerUI.make_mono_label("", 11, BunkerUI.TEXT_FAINT)
+		rew.custom_minimum_size = Vector2(104, 0)
+		rew.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		rew.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(rew)
+		var claim := Button.new()
+		claim.text = Loc.t("tw.claim")
+		claim.custom_minimum_size = Vector2(118, 36)
+		claim.pivot_offset = Vector2(59, 18)
+		BunkerUI.style_button(claim, "primary", 13)
+		claim.visible = false
+		h.add_child(claim)
+		var refs := {"panel": p, "title": title, "bar": bar, "rew": rew, "claim": claim, "id": "", "kind": kind}
+		claim.pressed.connect(func(): _tw_claim_row(refs))
+		return refs
 
 
 func _tw_claim_row(refs: Dictionary) -> void:
-        _play_click_sound()
-        Prog.claim_task(str(refs.get("kind", "d")), str(refs["id"]))
+		_play_click_sound()
+		Prog.claim_task(str(refs.get("kind", "d")), str(refs["id"]))
 
 
 ## Счётчики и точка-уведомление считаются всегда (tasks_changed стреляет на
 ## каждом убийстве), полная перестройка строк — только при открытой панели.
 func _tw_refresh(_x = null) -> void:
-        if _tw_root == null or lab_data == null:
-                return
-        var claimable := false
-        var claimed_n := 0
-        var dt: Array = Prog.daily_tasks()
-        for t in dt:
-                if bool(t["claimed"]):
-                        claimed_n += 1
-                elif bool(t["done"]):
-                        claimable = true
-        _tw_today_head.text = "%d/%d" % [claimed_n, dt.size()]
-        var ready_n := 0
-        var next_tier := 0
-        for i in range(1, Prog.TRACK_TIERS + 1):
-                if Prog.tier_claimed(i):
-                        continue
-                if Prog.track_points() >= i * Prog.TIER_COST:
-                        ready_n += 1
-                elif next_tier == 0:
-                        next_tier = i
-        if ready_n > 0:
-                _tw_track_btn.text = "● " + Loc.t("tw.track_ready", {"n": ready_n})
-                _tw_track_btn.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
-        else:
-                _tw_track_btn.text = Loc.t("tw.track_next", {"n": next_tier, "pts": Prog.track_points(), "need": next_tier * Prog.TIER_COST})
-                _tw_track_btn.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        _tw_dot.visible = claimable or ready_n > 0 or bool(Prog.calendar_info()["available"])
-        if not _tw_open:
-                return
-        _tw_rebuild_rows()
+		if _tw_root == null or lab_data == null:
+				return
+		var claimable := false
+		var claimed_n := 0
+		var dt: Array = Prog.daily_tasks()
+		for t in dt:
+				if bool(t["claimed"]):
+						claimed_n += 1
+				elif bool(t["done"]):
+						claimable = true
+		_tw_today_head.text = "%d/%d" % [claimed_n, dt.size()]
+		var ready_n := 0
+		var next_tier := 0
+		for i in range(1, Prog.TRACK_TIERS + 1):
+				if Prog.tier_claimed(i):
+						continue
+				if Prog.track_points() >= i * Prog.TIER_COST:
+						ready_n += 1
+				elif next_tier == 0:
+						next_tier = i
+		if ready_n > 0:
+				_tw_track_btn.text = "● " + Loc.t("tw.track_ready", {"n": ready_n})
+				_tw_track_btn.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+		else:
+				_tw_track_btn.text = Loc.t("tw.track_next", {"n": next_tier, "pts": Prog.track_points(), "need": next_tier * Prog.TIER_COST})
+				_tw_track_btn.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		_tw_dot.visible = claimable or ready_n > 0 or bool(Prog.calendar_info()["available"])
+		if not _tw_open:
+				return
+		_tw_rebuild_rows()
 
 
 ## Полный список: все дневные и недельные задачи, готовые к забору сверху
 func _tw_rebuild_rows() -> void:
-        for c in _tw_rows_box.get_children():
-                _tw_rows_box.remove_child(c)
-                c.queue_free()
-        _tw_rows.clear()
-        var dt: Array = Prog.daily_tasks()
-        var wt: Array = Prog.weekly_tasks()
-        var mt: Array = Prog.monthly_tasks()
-        _tw_add_section(Loc.t("tw.today"))
-        _tw_fill_section(dt, "d")
-        var wdone := 0
-        for t in wt:
-                if bool(t["claimed"]):
-                        wdone += 1
-        _tw_add_section("%s · %d/%d" % [Loc.t("tw.weekly"), wdone, wt.size()])
-        _tw_fill_section(wt, "w")
-        var mdone := 0
-        for t in mt:
-                if bool(t["claimed"]):
-                        mdone += 1
-        _tw_add_section("%s · %d/%d" % [Loc.t("tw.monthly"), mdone, mt.size()])
-        _tw_fill_section(mt, "m")
+		for c in _tw_rows_box.get_children():
+				_tw_rows_box.remove_child(c)
+				c.queue_free()
+		_tw_rows.clear()
+		var dt: Array = Prog.daily_tasks()
+		var wt: Array = Prog.weekly_tasks()
+		var mt: Array = Prog.monthly_tasks()
+		_tw_add_section(Loc.t("tw.today"))
+		_tw_fill_section(dt, "d")
+		var wdone := 0
+		for t in wt:
+				if bool(t["claimed"]):
+						wdone += 1
+		_tw_add_section("%s · %d/%d" % [Loc.t("tw.weekly"), wdone, wt.size()])
+		_tw_fill_section(wt, "w")
+		var mdone := 0
+		for t in mt:
+				if bool(t["claimed"]):
+						mdone += 1
+		_tw_add_section("%s · %d/%d" % [Loc.t("tw.monthly"), mdone, mt.size()])
+		_tw_fill_section(mt, "m")
 
 
 func _tw_add_section(text: String) -> void:
-        _tw_rows_box.add_child(BunkerUI.make_mono_label(text, 12, BunkerUI.TEXT_FAINT))
+		_tw_rows_box.add_child(BunkerUI.make_mono_label(text, 12, BunkerUI.TEXT_FAINT))
 
 
 ## Сортировка секции: «готово к забору», затем по заполненности, закрытые внизу
 func _tw_fill_section(arr: Array, kind: String) -> void:
-        var sorted: Array = arr.duplicate()
-        sorted.sort_custom(func(a, b):
-                var ca: bool = bool(a["done"]) and not bool(a["claimed"])
-                var cb: bool = bool(b["done"]) and not bool(b["claimed"])
-                if ca != cb:
-                        return ca
-                if bool(a["claimed"]) != bool(b["claimed"]):
-                        return not bool(a["claimed"])
-                var ra: float = float(a["prog"]) / float(maxi(1, int(a["def"]["need"])))
-                var rb: float = float(b["prog"]) / float(maxi(1, int(b["def"]["need"])))
-                return ra > rb)
-        for t in sorted:
-                var r := _tw_make_task_row(kind)
-                _tw_rows.append(r)
-                var done: bool = bool(t["done"])
-                var claimed: bool = bool(t["claimed"])
-                r["id"] = str(t["def"]["id"])
-                var title: Label = r["title"]
-                title.text = str(t["def"]["title"])
-                title.add_theme_color_override("font_color",
-                        BunkerUI.TEXT_FAINT if claimed else BunkerUI.TEXT_LIGHT)
-                (r["rew"] as Label).text = Loc.t("tw.reward", {"xp": int(t["def"]["xp"]), "pts": int(t["def"]["pts"])})
-                var bar: ProgressBar = r["bar"]
-                bar.max_value = maxi(1, int(t["def"]["need"]))
-                var target := float(mini(int(t["prog"]), int(t["def"]["need"])))
-                if done:
-                        target = float(int(t["def"]["need"]))
-                var tw := create_tween()
-                tw.tween_property(bar, "value", target, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-                (r["claim"] as Button).visible = done and not claimed
+		var sorted: Array = arr.duplicate()
+		sorted.sort_custom(func(a, b):
+				var ca: bool = bool(a["done"]) and not bool(a["claimed"])
+				var cb: bool = bool(b["done"]) and not bool(b["claimed"])
+				if ca != cb:
+						return ca
+				if bool(a["claimed"]) != bool(b["claimed"]):
+						return not bool(a["claimed"])
+				var ra: float = float(a["prog"]) / float(maxi(1, int(a["def"]["need"])))
+				var rb: float = float(b["prog"]) / float(maxi(1, int(b["def"]["need"])))
+				return ra > rb)
+		for t in sorted:
+				var r := _tw_make_task_row(kind)
+				_tw_rows.append(r)
+				var done: bool = bool(t["done"])
+				var claimed: bool = bool(t["claimed"])
+				r["id"] = str(t["def"]["id"])
+				var title: Label = r["title"]
+				title.text = str(t["def"]["title"])
+				title.add_theme_color_override("font_color",
+						BunkerUI.TEXT_FAINT if claimed else BunkerUI.TEXT_LIGHT)
+				(r["rew"] as Label).text = Loc.t("tw.reward", {"xp": int(t["def"]["xp"]), "pts": int(t["def"]["pts"])})
+				var bar: ProgressBar = r["bar"]
+				bar.max_value = maxi(1, int(t["def"]["need"]))
+				var target := float(mini(int(t["prog"]), int(t["def"]["need"])))
+				if done:
+						target = float(int(t["def"]["need"]))
+				var tw := create_tween()
+				tw.tween_property(bar, "value", target, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+				(r["claim"] as Button).visible = done and not claimed
 
 
 func _tw_set_open(v: bool) -> void:
-        if _tw_open == v:
-                return
-        _tw_open = v
-        _play_click_sound()
-        if _tw_anim and _tw_anim.is_valid():
-                _tw_anim.kill()
-        _tw_panel.visible = true
-        _tw_tab.mouse_filter = Control.MOUSE_FILTER_IGNORE if v else Control.MOUSE_FILTER_STOP
-        var l_target := -496.0 if v else 40.0
-        var r_target := -10.0 if v else 540.0
-        _tw_anim = create_tween().set_parallel(true)
-        _tw_anim.tween_property(_tw_panel, "offset_left", l_target, 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-        _tw_anim.tween_property(_tw_panel, "offset_right", r_target, 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-        _tw_anim.tween_property(_tw_tab, "modulate:a", 0.0 if v else 1.0, 0.22)
-        if v:
-                _tw_refresh()
+		if _tw_open == v:
+				return
+		_tw_open = v
+		_play_click_sound()
+		if _tw_anim and _tw_anim.is_valid():
+				_tw_anim.kill()
+		_tw_panel.visible = true
+		_tw_tab.mouse_filter = Control.MOUSE_FILTER_IGNORE if v else Control.MOUSE_FILTER_STOP
+		var l_target := -496.0 if v else 40.0
+		var r_target := -10.0 if v else 540.0
+		_tw_anim = create_tween().set_parallel(true)
+		_tw_anim.tween_property(_tw_panel, "offset_left", l_target, 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		_tw_anim.tween_property(_tw_panel, "offset_right", r_target, 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		_tw_anim.tween_property(_tw_tab, "modulate:a", 0.0 if v else 1.0, 0.22)
+		if v:
+				_tw_refresh()
 
 
 func _tw_intro() -> void:
-        if _tw_tab == null:
-                return
-        var tw := create_tween().set_parallel(true)
-        tw.tween_property(_tw_tab, "offset_left", -58.0, 0.55).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-        tw.tween_property(_tw_tab, "offset_right", 0.0, 0.55).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-        tw.tween_property(_tw_tab, "modulate:a", 1.0, 0.4)
-        tw.chain().tween_callback(_tw_refresh)
+		if _tw_tab == null:
+				return
+		var tw := create_tween().set_parallel(true)
+		tw.tween_property(_tw_tab, "offset_left", -58.0, 0.55).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(_tw_tab, "offset_right", 0.0, 0.55).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(_tw_tab, "modulate:a", 1.0, 0.4)
+		tw.chain().tween_callback(_tw_refresh)
 
 
 ## Пульсации (вызывается из _process): точка, кнопки ЗАБРАТЬ, плитка «сегодня»
 func _tw_tick(delta: float) -> void:
-        if _tw_root == null:
-                return
-        var busy := false
-        for p_v in [shop_panel, star_panel, farm_panel, gacha_panel, gallery_panel, detail_panel, up_panel, arena_panel, defense_panel, gates_panel, tasks_panel]:
-                if p_v != null and (p_v as Control).visible:
-                        busy = true
-        var res_panel := get_node_or_null("ResultPanel")
-        if res_panel != null and (res_panel as Control).visible:
-                busy = true
-        _tw_root.visible = not busy
-        if not _tw_root.visible:
-                return
-        _tw_pulse_t += delta
-        if _tw_dot != null and _tw_dot.visible and not _tw_open:
-                var s := 1.0 + 0.25 * sin(_tw_pulse_t * 5.2)
-                _tw_dot.scale = Vector2(s, s)
-                _tw_tab.self_modulate = Color(1, 1, 1, 0.8 + 0.2 * (0.5 + 0.5 * sin(_tw_pulse_t * 3.6)))
-        for r_v in _tw_rows:
-                var r: Dictionary = r_v
-                var b: Button = r["claim"]
-                if b.visible:
-                        b.self_modulate = Color(1, 1, 1, 0.78 + 0.22 * (0.5 + 0.5 * sin(_tw_pulse_t * 4.2)))
-        if _cal_root != null and _cal_root.visible:
-                if _cal_claim_btn.visible:
-                        var s2 := 1.0 + 0.03 * sin(_tw_pulse_t * 5.0)
-                        _cal_claim_btn.scale = Vector2(s2, s2)
-                if not _cal_today_tile_ref.is_empty():
-                        var pn: Panel = _cal_today_tile_ref["panel"]
-                        pn.self_modulate = Color(1, 1, 1, 0.82 + 0.18 * (0.5 + 0.5 * sin(_tw_pulse_t * 4.0)))
+		if _tw_root == null:
+				return
+		var busy := false
+		for p_v in [shop_panel, star_panel, farm_panel, gacha_panel, gallery_panel, detail_panel, up_panel, arena_panel, defense_panel, gates_panel, tasks_panel]:
+				if p_v != null and (p_v as Control).visible:
+						busy = true
+		var res_panel := get_node_or_null("ResultPanel")
+		if res_panel != null and (res_panel as Control).visible:
+				busy = true
+		_tw_root.visible = not busy
+		if not _tw_root.visible:
+				return
+		_tw_pulse_t += delta
+		if _tw_dot != null and _tw_dot.visible and not _tw_open:
+				var s := 1.0 + 0.25 * sin(_tw_pulse_t * 5.2)
+				_tw_dot.scale = Vector2(s, s)
+				_tw_tab.self_modulate = Color(1, 1, 1, 0.8 + 0.2 * (0.5 + 0.5 * sin(_tw_pulse_t * 3.6)))
+		for r_v in _tw_rows:
+				var r: Dictionary = r_v
+				var b: Button = r["claim"]
+				if b.visible:
+						b.self_modulate = Color(1, 1, 1, 0.78 + 0.22 * (0.5 + 0.5 * sin(_tw_pulse_t * 4.2)))
+		if _cal_root != null and _cal_root.visible:
+				if _cal_claim_btn.visible:
+						var s2 := 1.0 + 0.03 * sin(_tw_pulse_t * 5.0)
+						_cal_claim_btn.scale = Vector2(s2, s2)
+				if not _cal_today_tile_ref.is_empty():
+						var pn: Panel = _cal_today_tile_ref["panel"]
+						pn.self_modulate = Color(1, 1, 1, 0.82 + 0.18 * (0.5 + 0.5 * sin(_tw_pulse_t * 4.0)))
 
 
 # ---------- КАЛЕНДАРЬ ВХОДА: поп-ап ----------
 
 func _build_calendar_popup():
-        if _cal_root != null:
-                return
-        _cal_root = Control.new()
-        _cal_root.name = "CalendarPopup"
-        _cal_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-        _cal_root.mouse_filter = Control.MOUSE_FILTER_STOP
-        _cal_root.visible = false
-        add_child(_cal_root)
+		if _cal_root != null:
+				return
+		_cal_root = Control.new()
+		_cal_root.name = "CalendarPopup"
+		_cal_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_cal_root.mouse_filter = Control.MOUSE_FILTER_STOP
+		_cal_root.visible = false
+		add_child(_cal_root)
 
-        var dim := ColorRect.new()
-        dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-        dim.color = Color(0, 0, 0, 0.78)
-        dim.mouse_filter = Control.MOUSE_FILTER_STOP
-        dim.gui_input.connect(func(ev: InputEvent):
-                if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-                        _cal_close())
-        _cal_root.add_child(dim)
+		var dim := ColorRect.new()
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim.color = Color(0, 0, 0, 0.78)
+		dim.mouse_filter = Control.MOUSE_FILTER_STOP
+		dim.gui_input.connect(func(ev: InputEvent):
+				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+						_cal_close())
+		_cal_root.add_child(dim)
 
-        var panel := Panel.new()
-        panel.anchor_left = 0.5
-        panel.anchor_right = 0.5
-        panel.anchor_top = 0.5
-        panel.anchor_bottom = 0.5
-        panel.offset_left = -452.0
-        panel.offset_right = 452.0
-        panel.offset_top = -248.0
-        panel.offset_bottom = 248.0
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.031, 0.045, 0.026, 0.995)
-        sb.border_color = BunkerUI.GREEN
-        sb.set_border_width_all(2)
-        sb.set_corner_radius_all(12)
-        sb.shadow_color = Color(0, 0, 0, 0.55)
-        sb.shadow_size = 22
-        panel.add_theme_stylebox_override("panel", sb)
-        _cal_root.add_child(panel)
+		var panel := Panel.new()
+		panel.anchor_left = 0.5
+		panel.anchor_right = 0.5
+		panel.anchor_top = 0.5
+		panel.anchor_bottom = 0.5
+		panel.offset_left = -452.0
+		panel.offset_right = 452.0
+		panel.offset_top = -248.0
+		panel.offset_bottom = 248.0
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.031, 0.045, 0.026, 0.995)
+		sb.border_color = BunkerUI.GREEN
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(12)
+		sb.shadow_color = Color(0, 0, 0, 0.55)
+		sb.shadow_size = 22
+		panel.add_theme_stylebox_override("panel", sb)
+		_cal_root.add_child(panel)
 
-        var marg := MarginContainer.new()
-        marg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        marg.add_theme_constant_override("margin_left", 20)
-        marg.add_theme_constant_override("margin_right", 20)
-        marg.add_theme_constant_override("margin_top", 16)
-        marg.add_theme_constant_override("margin_bottom", 16)
-        panel.add_child(marg)
-        var v := VBoxContainer.new()
-        v.add_theme_constant_override("separation", 10)
-        marg.add_child(v)
+		var marg := MarginContainer.new()
+		marg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		marg.add_theme_constant_override("margin_left", 20)
+		marg.add_theme_constant_override("margin_right", 20)
+		marg.add_theme_constant_override("margin_top", 16)
+		marg.add_theme_constant_override("margin_bottom", 16)
+		panel.add_child(marg)
+		var v := VBoxContainer.new()
+		v.add_theme_constant_override("separation", 10)
+		marg.add_child(v)
 
-        var title := Label.new()
-        title.text = Loc.t("cal.title")
-        title.add_theme_font_override("font", BunkerUI.font_title())
-        title.add_theme_font_size_override("font_size", 27)
-        title.add_theme_color_override("font_color", BunkerUI.GREEN)
-        title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(title)
+		var title := Label.new()
+		title.text = Loc.t("cal.title")
+		title.add_theme_font_override("font", BunkerUI.font_title())
+		title.add_theme_font_size_override("font_size", 27)
+		title.add_theme_color_override("font_color", BunkerUI.GREEN)
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(title)
 
-        _cal_sub = BunkerUI.make_mono_label("", 13, BunkerUI.TEXT_DIM)
-        _cal_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        v.add_child(_cal_sub)
+		_cal_sub = BunkerUI.make_mono_label("", 13, BunkerUI.TEXT_DIM)
+		_cal_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(_cal_sub)
 
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 10)
-        row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        v.add_child(row)
-        for i in range(1, 8):
-                var tile := _cal_make_tile(i)
-                row.add_child(tile["panel"])
-                _cal_tiles.append(tile)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		v.add_child(row)
+		for i in range(1, 8):
+				var tile := _cal_make_tile(i)
+				row.add_child(tile["panel"])
+				_cal_tiles.append(tile)
 
-        var note := BunkerUI.make_mono_label(Loc.t("cal.note"), 12, BunkerUI.TEXT_FAINT)
-        note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        v.add_child(note)
+		var note := BunkerUI.make_mono_label(Loc.t("cal.note"), 12, BunkerUI.TEXT_FAINT)
+		note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		v.add_child(note)
 
-        var btns := HBoxContainer.new()
-        btns.add_theme_constant_override("separation", 14)
-        btns.alignment = BoxContainer.ALIGNMENT_CENTER
-        v.add_child(btns)
-        _cal_claim_btn = Button.new()
-        _cal_claim_btn.text = Loc.t("cal.claim")
-        _cal_claim_btn.custom_minimum_size = Vector2(320, 58)
-        _cal_claim_btn.pivot_offset = Vector2(160, 29)
-        BunkerUI.style_button(_cal_claim_btn, "primary", 17)
-        _cal_claim_btn.pressed.connect(_cal_claim)
-        btns.add_child(_cal_claim_btn)
-        var cb := Button.new()
-        cb.text = Loc.t("cal.close")
-        cb.custom_minimum_size = Vector2(180, 58)
-        BunkerUI.style_button(cb, "steel", 16)
-        cb.pressed.connect(_cal_close)
-        btns.add_child(cb)
+		var btns := HBoxContainer.new()
+		btns.add_theme_constant_override("separation", 14)
+		btns.alignment = BoxContainer.ALIGNMENT_CENTER
+		v.add_child(btns)
+		_cal_claim_btn = Button.new()
+		_cal_claim_btn.text = Loc.t("cal.claim")
+		_cal_claim_btn.custom_minimum_size = Vector2(320, 58)
+		_cal_claim_btn.pivot_offset = Vector2(160, 29)
+		BunkerUI.style_button(_cal_claim_btn, "primary", 17)
+		_cal_claim_btn.pressed.connect(_cal_claim)
+		btns.add_child(_cal_claim_btn)
+		var cb := Button.new()
+		cb.text = Loc.t("cal.close")
+		cb.custom_minimum_size = Vector2(180, 58)
+		BunkerUI.style_button(cb, "steel", 16)
+		cb.pressed.connect(_cal_close)
+		btns.add_child(cb)
 
 
 func _cal_make_tile(day: int) -> Dictionary:
-        var p := Panel.new()
-        p.custom_minimum_size = Vector2(112, 0)
-        p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.07, 0.10, 0.055, 0.9)
-        sb.set_corner_radius_all(10)
-        sb.set_border_width_all(2)
-        sb.border_color = BunkerUI.STEEL_EDGE
-        p.add_theme_stylebox_override("panel", sb)
-        var vv := VBoxContainer.new()
-        vv.set_anchors_preset(Control.PRESET_FULL_RECT)
-        vv.offset_left = 6.0
-        vv.offset_right = -6.0
-        vv.offset_top = 8.0
-        vv.offset_bottom = -8.0
-        vv.add_theme_constant_override("separation", 4)
-        p.add_child(vv)
-        var dl := BunkerUI.make_mono_label(Loc.t("cal.day", {"n": day}), 11, BunkerUI.TEXT_DIM)
-        dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        vv.add_child(dl)
-        var gl := Label.new()
-        gl.add_theme_font_override("font", BunkerUI.font_title())
-        gl.add_theme_font_size_override("font_size", 26)
-        gl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        gl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        gl.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        vv.add_child(gl)
-        var rl := Label.new()
-        rl.add_theme_font_override("font", BunkerUI.font_body())
-        rl.add_theme_font_size_override("font_size", 12)
-        rl.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        rl.custom_minimum_size = Vector2(0, 46)
-        vv.add_child(rl)
-        var sl := BunkerUI.make_mono_label("", 10, BunkerUI.TEXT_FAINT)
-        sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        vv.add_child(sl)
-        return {"panel": p, "glyph": gl, "reward": rl, "state": sl, "sb": sb, "day": day}
+		var p := Panel.new()
+		p.custom_minimum_size = Vector2(112, 0)
+		p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.07, 0.10, 0.055, 0.9)
+		sb.set_corner_radius_all(10)
+		sb.set_border_width_all(2)
+		sb.border_color = BunkerUI.STEEL_EDGE
+		p.add_theme_stylebox_override("panel", sb)
+		var vv := VBoxContainer.new()
+		vv.set_anchors_preset(Control.PRESET_FULL_RECT)
+		vv.offset_left = 6.0
+		vv.offset_right = -6.0
+		vv.offset_top = 8.0
+		vv.offset_bottom = -8.0
+		vv.add_theme_constant_override("separation", 4)
+		p.add_child(vv)
+		var dl := BunkerUI.make_mono_label(Loc.t("cal.day", {"n": day}), 11, BunkerUI.TEXT_DIM)
+		dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vv.add_child(dl)
+		var gl := Label.new()
+		gl.add_theme_font_override("font", BunkerUI.font_title())
+		gl.add_theme_font_size_override("font_size", 26)
+		gl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		gl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		gl.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		vv.add_child(gl)
+		var rl := Label.new()
+		rl.add_theme_font_override("font", BunkerUI.font_body())
+		rl.add_theme_font_size_override("font_size", 12)
+		rl.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
+		rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rl.custom_minimum_size = Vector2(0, 46)
+		vv.add_child(rl)
+		var sl := BunkerUI.make_mono_label("", 10, BunkerUI.TEXT_FAINT)
+		sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vv.add_child(sl)
+		return {"panel": p, "glyph": gl, "reward": rl, "state": sl, "sb": sb, "day": day}
 
 
 func _cal_reward_text(rew: Dictionary) -> String:
-        if int(rew.get("super", 0)) > 0:
-                return Loc.t("cal.r_super")
-        if int(rew.get("mut", 0)) > 0:
-                return Loc.t("cal.r_mut", {"n": int(rew["mut"])})
-        if int(rew.get("ano", 0)) > 0:
-                return Loc.t("cal.r_ano", {"n": int(rew["ano"])})
-        return Loc.t("cal.r_bio", {"n": int(rew.get("bio", 0))})
+		if int(rew.get("super", 0)) > 0:
+				return Loc.t("cal.r_super")
+		if int(rew.get("mut", 0)) > 0:
+				return Loc.t("cal.r_mut", {"n": int(rew["mut"])})
+		if int(rew.get("ano", 0)) > 0:
+				return Loc.t("cal.r_ano", {"n": int(rew["ano"])})
+		return Loc.t("cal.r_bio", {"n": int(rew.get("bio", 0))})
 
 
 func _cal_refresh() -> void:
-        var info: Dictionary = Prog.calendar_info()
-        var shown := int(info["cycle_claimed"])
-        var done_cycle := bool(info["done_cycle"])
-        var avail := bool(info["available"])
-        var next_day := int(info["next_day"])
-        _cal_today_tile_ref = {}
-        for i in range(1, 8):
-                var t: Dictionary = _cal_tiles[i - 1]
-                var sb: StyleBoxFlat = t["sb"]
-                var rew: Dictionary = Prog.CALENDAR_REWARDS[i - 1]
-                (t["reward"] as Label).text = _cal_reward_text(rew)
-                if done_cycle or i <= shown:
-                        (t["glyph"] as Label).text = "✓"
-                        (t["glyph"] as Label).add_theme_color_override("font_color", BunkerUI.GREEN)
-                        (t["state"] as Label).text = Loc.t("cal.claimed")
-                        (t["state"] as Label).add_theme_color_override("font_color", BunkerUI.GREEN)
-                        sb.bg_color = Color(0.05, 0.075, 0.04, 0.85)
-                        sb.border_color = Color(BunkerUI.GREEN, 0.35)
-                elif i == next_day and avail:
-                        (t["glyph"] as Label).text = "◆"
-                        (t["glyph"] as Label).add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
-                        (t["state"] as Label).text = Loc.t("cal.today")
-                        (t["state"] as Label).add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
-                        sb.bg_color = Color(0.09, 0.12, 0.06, 0.95)
-                        sb.border_color = BunkerUI.HAZARD_BRIGHT
-                        _cal_today_tile_ref = t
-                else:
-                        (t["glyph"] as Label).text = "·"
-                        (t["glyph"] as Label).add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-                        (t["state"] as Label).text = Loc.t("cal.locked")
-                        (t["state"] as Label).add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
-                        sb.bg_color = Color(0.05, 0.07, 0.045, 0.75)
-                        sb.border_color = BunkerUI.STEEL_EDGE
-        if done_cycle:
-                _cal_sub.text = Loc.t("cal.sub_done", {"cycles": int(info["cycles"])})
-        else:
-                _cal_sub.text = Loc.t("cal.sub", {"day": next_day})
-        _cal_claim_btn.visible = avail
+		var info: Dictionary = Prog.calendar_info()
+		var shown := int(info["cycle_claimed"])
+		var done_cycle := bool(info["done_cycle"])
+		var avail := bool(info["available"])
+		var next_day := int(info["next_day"])
+		_cal_today_tile_ref = {}
+		for i in range(1, 8):
+				var t: Dictionary = _cal_tiles[i - 1]
+				var sb: StyleBoxFlat = t["sb"]
+				var rew: Dictionary = Prog.CALENDAR_REWARDS[i - 1]
+				(t["reward"] as Label).text = _cal_reward_text(rew)
+				if done_cycle or i <= shown:
+						(t["glyph"] as Label).text = "✓"
+						(t["glyph"] as Label).add_theme_color_override("font_color", BunkerUI.GREEN)
+						(t["state"] as Label).text = Loc.t("cal.claimed")
+						(t["state"] as Label).add_theme_color_override("font_color", BunkerUI.GREEN)
+						sb.bg_color = Color(0.05, 0.075, 0.04, 0.85)
+						sb.border_color = Color(BunkerUI.GREEN, 0.35)
+				elif i == next_day and avail:
+						(t["glyph"] as Label).text = "◆"
+						(t["glyph"] as Label).add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+						(t["state"] as Label).text = Loc.t("cal.today")
+						(t["state"] as Label).add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
+						sb.bg_color = Color(0.09, 0.12, 0.06, 0.95)
+						sb.border_color = BunkerUI.HAZARD_BRIGHT
+						_cal_today_tile_ref = t
+				else:
+						(t["glyph"] as Label).text = "·"
+						(t["glyph"] as Label).add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+						(t["state"] as Label).text = Loc.t("cal.locked")
+						(t["state"] as Label).add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+						sb.bg_color = Color(0.05, 0.07, 0.045, 0.75)
+						sb.border_color = BunkerUI.STEEL_EDGE
+		if done_cycle:
+				_cal_sub.text = Loc.t("cal.sub_done", {"cycles": int(info["cycles"])})
+		else:
+				_cal_sub.text = Loc.t("cal.sub", {"day": next_day})
+		_cal_claim_btn.visible = avail
 
 
 func _cal_claim() -> void:
-        var res: Dictionary = Prog.claim_calendar()
-        if res.is_empty():
-                return
-        _play_click_sound()
-        var rew: Dictionary = res["reward"]
-        _show_message(Loc.t("cal.done_msg", {"day": int(res["day"]), "what": _cal_reward_text(rew)}), 2.4)
-        _cal_refresh()
-        _tw_refresh()
+		var res: Dictionary = Prog.claim_calendar()
+		if res.is_empty():
+				return
+		_play_click_sound()
+		var rew: Dictionary = res["reward"]
+		_show_message(Loc.t("cal.done_msg", {"day": int(res["day"]), "what": _cal_reward_text(rew)}), 2.4)
+		_cal_refresh()
+		_tw_refresh()
 
 
 func _cal_open() -> void:
-        _play_click_sound()
-        _cal_refresh()
-        _cal_root.visible = true
+		_play_click_sound()
+		_cal_refresh()
+		_cal_root.visible = true
 
 
 func _cal_close() -> void:
-        _cal_root.visible = false
+		_cal_root.visible = false
 
 
 # ==================== ЗАКРЫТИЕ СЕЗОНА (D13) ====================
@@ -6489,39 +6509,39 @@ var _season_overlay: SeasonCloseOverlay = null
 
 
 func _on_season_closed(summary: Dictionary) -> void:
-        _season_queue.append(summary)
-        _season_next()
+		_season_queue.append(summary)
+		_season_next()
 
 
 func _season_next() -> void:
-        if _season_queue.is_empty() or (is_instance_valid(_season_overlay)):
-                return
-        var summary: Dictionary = _season_queue.pop_front()
-        var mut: int = SeasonCloseData.REWARD_MUTANT_ROLLS
-        var ano: int = SeasonCloseData.REWARD_ANOMALY_ROLLS
-        var great: bool = int(summary.get("sp", 0)) >= SeasonCloseData.GREAT_SEASON_SP
-        if great:
-                mut += SeasonCloseData.GREAT_BONUS_ROLLS
-                ano += SeasonCloseData.GREAT_BONUS_ROLLS
-        # Награда через существующую гачу (панель итогов подхватит)
-        if game_manager:
-                if game_manager.has_method("grant_mutant_rolls"):
-                        game_manager.grant_mutant_rolls(mut, "season_close")
-                if game_manager.has_method("grant_anomaly_rolls"):
-                        game_manager.grant_anomaly_rolls(ano, "season_close")
-        _season_overlay = SeasonCloseOverlay.new()
-        add_child(_season_overlay)
-        _season_overlay.play(summary, mut, ano, great)
-        _season_overlay.closed.connect(func():
-                _season_overlay = null
-                _season_next())
+		if _season_queue.is_empty() or (is_instance_valid(_season_overlay)):
+				return
+		var summary: Dictionary = _season_queue.pop_front()
+		var mut: int = SeasonCloseData.REWARD_MUTANT_ROLLS
+		var ano: int = SeasonCloseData.REWARD_ANOMALY_ROLLS
+		var great: bool = int(summary.get("sp", 0)) >= SeasonCloseData.GREAT_SEASON_SP
+		if great:
+				mut += SeasonCloseData.GREAT_BONUS_ROLLS
+				ano += SeasonCloseData.GREAT_BONUS_ROLLS
+		# Награда через существующую гачу (панель итогов подхватит)
+		if game_manager:
+				if game_manager.has_method("grant_mutant_rolls"):
+						game_manager.grant_mutant_rolls(mut, "season_close")
+				if game_manager.has_method("grant_anomaly_rolls"):
+						game_manager.grant_anomaly_rolls(ano, "season_close")
+		_season_overlay = SeasonCloseOverlay.new()
+		add_child(_season_overlay)
+		_season_overlay.play(summary, mut, ano, great)
+		_season_overlay.closed.connect(func():
+				_season_overlay = null
+				_season_next())
 
 
 ## Раз в день показывать календарь сами (награда ждёт)
 func _maybe_calendar_popup() -> void:
-        if Prog.calendar_popup_needed():
-                Prog.calendar_popup_mark()
-                _cal_open()
+		if Prog.calendar_popup_needed():
+				Prog.calendar_popup_mark()
+				_cal_open()
 
 
 # ==================== БРИФИНГ ПРОВОДНИКА (v0.27.0 «ГОЛОС ЗОНЫ») ====================
@@ -6540,283 +6560,283 @@ var _sets_info_label: Label = null
 
 
 func _briefing_build():
-        if _brf_root != null:
-                return
-        _brf_root = Control.new()
-        _brf_root.name = "BriefingPopup"
-        _brf_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-        _brf_root.mouse_filter = Control.MOUSE_FILTER_STOP
-        _brf_root.visible = false
-        add_child(_brf_root)
+		if _brf_root != null:
+				return
+		_brf_root = Control.new()
+		_brf_root.name = "BriefingPopup"
+		_brf_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_brf_root.mouse_filter = Control.MOUSE_FILTER_STOP
+		_brf_root.visible = false
+		add_child(_brf_root)
 
-        var dim := ColorRect.new()
-        dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-        dim.color = Color(0, 0, 0, 0.78)
-        dim.mouse_filter = Control.MOUSE_FILTER_STOP
-        dim.gui_input.connect(func(ev: InputEvent):
-                if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-                        _briefing_close())
-        _brf_root.add_child(dim)
+		var dim := ColorRect.new()
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim.color = Color(0, 0, 0, 0.78)
+		dim.mouse_filter = Control.MOUSE_FILTER_STOP
+		dim.gui_input.connect(func(ev: InputEvent):
+				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+						_briefing_close())
+		_brf_root.add_child(dim)
 
-        var panel := Panel.new()
-        panel.anchor_left = 0.5
-        panel.anchor_right = 0.5
-        panel.anchor_top = 0.5
-        panel.anchor_bottom = 0.5
-        panel.offset_left = -460.0
-        panel.offset_right = 460.0
-        panel.offset_top = -262.0
-        panel.offset_bottom = 262.0
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.031, 0.045, 0.026, 0.995)
-        sb.border_color = BunkerUI.GREEN
-        sb.set_border_width_all(2)
-        sb.set_corner_radius_all(12)
-        sb.shadow_color = Color(0, 0, 0, 0.55)
-        sb.shadow_size = 22
-        panel.add_theme_stylebox_override("panel", sb)
-        _brf_root.add_child(panel)
+		var panel := Panel.new()
+		panel.anchor_left = 0.5
+		panel.anchor_right = 0.5
+		panel.anchor_top = 0.5
+		panel.anchor_bottom = 0.5
+		panel.offset_left = -460.0
+		panel.offset_right = 460.0
+		panel.offset_top = -262.0
+		panel.offset_bottom = 262.0
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.031, 0.045, 0.026, 0.995)
+		sb.border_color = BunkerUI.GREEN
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(12)
+		sb.shadow_color = Color(0, 0, 0, 0.55)
+		sb.shadow_size = 22
+		panel.add_theme_stylebox_override("panel", sb)
+		_brf_root.add_child(panel)
 
-        var marg := MarginContainer.new()
-        marg.set_anchors_preset(Control.PRESET_FULL_RECT)
-        marg.add_theme_constant_override("margin_left", 20)
-        marg.add_theme_constant_override("margin_right", 20)
-        marg.add_theme_constant_override("margin_top", 14)
-        marg.add_theme_constant_override("margin_bottom", 16)
-        panel.add_child(marg)
-        var v := VBoxContainer.new()
-        v.add_theme_constant_override("separation", 10)
-        marg.add_child(v)
+		var marg := MarginContainer.new()
+		marg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		marg.add_theme_constant_override("margin_left", 20)
+		marg.add_theme_constant_override("margin_right", 20)
+		marg.add_theme_constant_override("margin_top", 14)
+		marg.add_theme_constant_override("margin_bottom", 16)
+		panel.add_child(marg)
+		var v := VBoxContainer.new()
+		v.add_theme_constant_override("separation", 10)
+		marg.add_child(v)
 
-        var head := HBoxContainer.new()
-        head.add_theme_constant_override("separation", 12)
-        v.add_child(head)
-        _brf_header = Label.new()
-        _brf_header.text = Loc.t("brf.title")
-        _brf_header.add_theme_font_override("font", BunkerUI.font_title())
-        _brf_header.add_theme_font_size_override("font_size", 26)
-        _brf_header.add_theme_color_override("font_color", BunkerUI.GREEN)
-        head.add_child(_brf_header)
-        var hsp := Control.new()
-        hsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        head.add_child(hsp)
-        _brf_place = BunkerUI.make_mono_label("", 13, BunkerUI.TEXT_DIM)
-        head.add_child(_brf_place)
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 12)
+		v.add_child(head)
+		_brf_header = Label.new()
+		_brf_header.text = Loc.t("brf.title")
+		_brf_header.add_theme_font_override("font", BunkerUI.font_title())
+		_brf_header.add_theme_font_size_override("font_size", 26)
+		_brf_header.add_theme_color_override("font_color", BunkerUI.GREEN)
+		head.add_child(_brf_header)
+		var hsp := Control.new()
+		hsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(hsp)
+		_brf_place = BunkerUI.make_mono_label("", 13, BunkerUI.TEXT_DIM)
+		head.add_child(_brf_place)
 
-        var line := ColorRect.new()
-        line.custom_minimum_size = Vector2(0, 1)
-        line.color = BunkerUI.STEEL_EDGE
-        v.add_child(line)
+		var line := ColorRect.new()
+		line.custom_minimum_size = Vector2(0, 1)
+		line.color = BunkerUI.STEEL_EDGE
+		v.add_child(line)
 
-        var body := HBoxContainer.new()
-        body.add_theme_constant_override("separation", 16)
-        body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        v.add_child(body)
+		var body := HBoxContainer.new()
+		body.add_theme_constant_override("separation", 16)
+		body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		v.add_child(body)
 
-        var portrait := TextureRect.new()
-        portrait.texture = load("res://ui/lab/guide_portrait.svg")
-        portrait.custom_minimum_size = Vector2(180, 0)
-        portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-        portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        body.add_child(portrait)
+		var portrait := TextureRect.new()
+		portrait.texture = load("res://ui/lab/guide_portrait.svg")
+		portrait.custom_minimum_size = Vector2(180, 0)
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		body.add_child(portrait)
 
-        var right := VBoxContainer.new()
-        right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        right.add_theme_constant_override("separation", 10)
-        body.add_child(right)
+		var right := VBoxContainer.new()
+		right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		right.add_theme_constant_override("separation", 10)
+		body.add_child(right)
 
-        _brf_text = Label.new()
-        _brf_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        _brf_text.add_theme_font_override("font", BunkerUI.font_body())
-        _brf_text.add_theme_font_size_override("font_size", 17)
-        _brf_text.add_theme_color_override("font_color", BunkerUI.TEXT)
-        _brf_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        _brf_text.mouse_filter = Control.MOUSE_FILTER_STOP
-        _brf_text.gui_input.connect(func(ev: InputEvent):
-                if ev is InputEventMouseButton and ev.pressed:
-                        _brf_skip_typing())
-        right.add_child(_brf_text)
+		_brf_text = Label.new()
+		_brf_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_brf_text.add_theme_font_override("font", BunkerUI.font_body())
+		_brf_text.add_theme_font_size_override("font_size", 17)
+		_brf_text.add_theme_color_override("font_color", BunkerUI.TEXT)
+		_brf_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_brf_text.mouse_filter = Control.MOUSE_FILTER_STOP
+		_brf_text.gui_input.connect(func(ev: InputEvent):
+				if ev is InputEventMouseButton and ev.pressed:
+						_brf_skip_typing())
+		right.add_child(_brf_text)
 
-        _brf_chips_box = HFlowContainer.new()
-        _brf_chips_box.add_theme_constant_override("h_separation", 8)
-        _brf_chips_box.add_theme_constant_override("v_separation", 6)
-        right.add_child(_brf_chips_box)
+		_brf_chips_box = HFlowContainer.new()
+		_brf_chips_box.add_theme_constant_override("h_separation", 8)
+		_brf_chips_box.add_theme_constant_override("v_separation", 6)
+		right.add_child(_brf_chips_box)
 
-        var hint := BunkerUI.make_mono_label(Loc.t("brf.hint"), 11, BunkerUI.TEXT_FAINT)
-        right.add_child(hint)
+		var hint := BunkerUI.make_mono_label(Loc.t("brf.hint"), 11, BunkerUI.TEXT_FAINT)
+		right.add_child(hint)
 
-        var btns := HBoxContainer.new()
-        btns.add_theme_constant_override("separation", 14)
-        btns.alignment = BoxContainer.ALIGNMENT_END
-        v.add_child(btns)
-        var cancel := Button.new()
-        cancel.text = Loc.t("brf.cancel")
-        cancel.custom_minimum_size = Vector2(200, 56)
-        BunkerUI.style_button(cancel, "steel", 16)
-        cancel.pressed.connect(func():
-                _play_click_sound()
-                _briefing_close())
-        cancel.mouse_entered.connect(_play_hover_sound)
-        btns.add_child(cancel)
-        var go := Button.new()
-        go.text = Loc.t("brf.go")
-        go.custom_minimum_size = Vector2(320, 56)
-        BunkerUI.style_button(go, "primary", 17)
-        go.pressed.connect(func():
-                _play_click_sound()
-                _briefing_close()
-                _briefing_launch())
-        go.mouse_entered.connect(_play_hover_sound)
-        btns.add_child(go)
+		var btns := HBoxContainer.new()
+		btns.add_theme_constant_override("separation", 14)
+		btns.alignment = BoxContainer.ALIGNMENT_END
+		v.add_child(btns)
+		var cancel := Button.new()
+		cancel.text = Loc.t("brf.cancel")
+		cancel.custom_minimum_size = Vector2(200, 56)
+		BunkerUI.style_button(cancel, "steel", 16)
+		cancel.pressed.connect(func():
+				_play_click_sound()
+				_briefing_close())
+		cancel.mouse_entered.connect(_play_hover_sound)
+		btns.add_child(cancel)
+		var go := Button.new()
+		go.text = Loc.t("brf.go")
+		go.custom_minimum_size = Vector2(320, 56)
+		BunkerUI.style_button(go, "primary", 17)
+		go.pressed.connect(func():
+				_play_click_sound()
+				_briefing_close()
+				_briefing_launch())
+		go.mouse_entered.connect(_play_hover_sound)
+		btns.add_child(go)
 
 
 func _briefing_open():
-        if _brf_root == null:
-                _briefing_build()
-        if game_manager == null:
-                game_manager = get_tree().get_first_node_in_group("game_manager")
-        if game_manager == null:
-                _briefing_launch()
-                return
-        # Башня: выбор этажа лабы уходит в менеджер до брифинга (как при запуске)
-        if game_manager.get_selected_run_mode() == "tower":
-                game_manager.set_selected_tower_floor(_tower_floor)
-        var info: Dictionary = BriefingData.for_current_selection(game_manager)
-        _brf_hot = bool(info.get("hot", false))
-        var place: Dictionary = info.get("place", {})
-        var kind: String = str(place.get("kind", "survival"))
-        if kind == "tower":
-                _brf_place.text = "%s %d/100 · %s" % [Loc.t("brf.place.tower"), int(place.get("level", 1)), str(place.get("title", ""))]
-        elif kind == "survival":
-                _brf_place.text = Loc.t("brf.place.survival")
-        else:
-                _brf_place.text = "%s %d/100 · %s" % [Loc.t("brf.place." + kind), int(place.get("level", 1)), str(place.get("title", ""))]
-        _brf_header.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT if _brf_hot else BunkerUI.GREEN)
-        var lines: Array = []
-        for k in info.get("keys", []):
-                lines.append(Loc.t(str(k)))
-        _brf_text.text = "\n\n".join(lines)
-        _build_briefing_chips()
-        _brf_root.visible = true
-        _brf_root.modulate = Color(1, 1, 1, 0)
-        var tw := create_tween()
-        tw.tween_property(_brf_root, "modulate:a", 1.0, 0.18)
-        _brf_start_typing()
+		if _brf_root == null:
+				_briefing_build()
+		if game_manager == null:
+				game_manager = get_tree().get_first_node_in_group("game_manager")
+		if game_manager == null:
+				_briefing_launch()
+				return
+		# Башня: выбор этажа лабы уходит в менеджер до брифинга (как при запуске)
+		if game_manager.get_selected_run_mode() == "tower":
+				game_manager.set_selected_tower_floor(_tower_floor)
+		var info: Dictionary = BriefingData.for_current_selection(game_manager)
+		_brf_hot = bool(info.get("hot", false))
+		var place: Dictionary = info.get("place", {})
+		var kind: String = str(place.get("kind", "survival"))
+		if kind == "tower":
+				_brf_place.text = "%s %d/100 · %s" % [Loc.t("brf.place.tower"), int(place.get("level", 1)), str(place.get("title", ""))]
+		elif kind == "survival":
+				_brf_place.text = Loc.t("brf.place.survival")
+		else:
+				_brf_place.text = "%s %d/100 · %s" % [Loc.t("brf.place." + kind), int(place.get("level", 1)), str(place.get("title", ""))]
+		_brf_header.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT if _brf_hot else BunkerUI.GREEN)
+		var lines: Array = []
+		for k in info.get("keys", []):
+				lines.append(Loc.t(str(k)))
+		_brf_text.text = "\n\n".join(lines)
+		_build_briefing_chips()
+		_brf_root.visible = true
+		_brf_root.modulate = Color(1, 1, 1, 0)
+		var tw := create_tween()
+		tw.tween_property(_brf_root, "modulate:a", 1.0, 0.18)
+		_brf_start_typing()
 
 
 func _briefing_close():
-        if _brf_root == null or not _brf_root.visible:
-                return
-        _brf_skip_typing()
-        _brf_root.visible = false
+		if _brf_root == null or not _brf_root.visible:
+				return
+		_brf_skip_typing()
+		_brf_root.visible = false
 
 
 func _brf_start_typing():
-        if _brf_tween != null and _brf_tween.is_valid():
-                _brf_tween.kill()
-        _brf_text.visible_ratio = 0.0
-        var n: int = _brf_text.text.length()
-        var dur: float = clampf(float(n) / 70.0, 0.7, 2.6)
-        _brf_tween = create_tween()
-        _brf_tween.tween_property(_brf_text, "visible_ratio", 1.0, dur)
+		if _brf_tween != null and _brf_tween.is_valid():
+				_brf_tween.kill()
+		_brf_text.visible_ratio = 0.0
+		var n: int = _brf_text.text.length()
+		var dur: float = clampf(float(n) / 70.0, 0.7, 2.6)
+		_brf_tween = create_tween()
+		_brf_tween.tween_property(_brf_text, "visible_ratio", 1.0, dur)
 
 
 func _brf_skip_typing():
-        if _brf_tween != null and _brf_tween.is_valid():
-                _brf_tween.kill()
-        _brf_text.visible_ratio = 1.0
+		if _brf_tween != null and _brf_tween.is_valid():
+				_brf_tween.kill()
+		_brf_text.visible_ratio = 1.0
 
 
 func _build_briefing_chips():
-        for c in _brf_chips_box.get_children():
-                c.queue_free()
-        var chips: Array = []
-        var mode: String = game_manager.get_selected_run_mode()
-        if mode == "tower":
-                var p: Dictionary = TowerData.get_floor_params(_tower_floor)
-                var r: Dictionary = TowerData.get_floor_rewards(_tower_floor)
-                chips.append([Loc.t("brf.chip.waves", {"n": int(p["waves"])}), BunkerUI.TEXT_DIM])
-                chips.append([Loc.t("brf.chip.pulses", {"n": int(p["pulses_to_win"])}), BunkerUI.TEXT_DIM])
-                chips.append([Loc.t("brf.chip.biomass", {"n": int(r["biomass"])}), BunkerUI.GREEN])
-                var warden = TowerData.get_warden(_tower_floor)
-                if warden != null:
-                        chips.append([Loc.t("brf.chip.warden"), BunkerUI.HAZARD_BRIGHT])
-                        chips.append([Loc.t("brf.chip.elite", {"n": int(round(float(warden["elite_pct"]) * 100.0))}), BunkerUI.HAZARD_BRIGHT])
-                else:
-                        match str(p.get("floor_type", "normal")):
-                                "keeper":
-                                        chips.append([Loc.t("brf.chip.keeper"), BunkerUI.HAZARD])
-                                "break":
-                                        chips.append([Loc.t("brf.chip.break"), BunkerUI.HAZARD])
-        elif mode == "survival":
-                chips.append([Loc.t("brf.chip.endless"), BunkerUI.TEXT_DIM])
-                var rec := 0
-                if game_manager.current_save_data and game_manager.current_save_data.statistics:
-                        rec = int(game_manager.current_save_data.statistics.best_survival_wave)
-                chips.append([Loc.t("brf.chip.record", {"n": rec}), BunkerUI.GREEN])
-        else:
-                var lvl: int = game_manager.get_selected_or_frontier_level()
-                var p: Dictionary = CampaignData.get_level_params(lvl, game_manager.get_campaign_mode())
-                chips.append([Loc.t("brf.chip.waves", {"n": int(p["waves"])}), BunkerUI.TEXT_DIM])
-                chips.append([Loc.t("brf.chip.pulses", {"n": int(p["pulses_to_win"])}), BunkerUI.TEXT_DIM])
-                chips.append([Loc.t("brf.chip.biomass", {"n": int(p["reward_bonus"])}), BunkerUI.GREEN])
-                if bool(p.get("is_boss", false)):
-                        chips.append([Loc.t("brf.chip.boss"), BunkerUI.HAZARD_BRIGHT])
-        for c in chips:
-                _brf_chips_box.add_child(_brf_chip(str(c[0]), c[1]))
+		for c in _brf_chips_box.get_children():
+				c.queue_free()
+		var chips: Array = []
+		var mode: String = game_manager.get_selected_run_mode()
+		if mode == "tower":
+				var p: Dictionary = TowerData.get_floor_params(_tower_floor)
+				var r: Dictionary = TowerData.get_floor_rewards(_tower_floor)
+				chips.append([Loc.t("brf.chip.waves", {"n": int(p["waves"])}), BunkerUI.TEXT_DIM])
+				chips.append([Loc.t("brf.chip.pulses", {"n": int(p["pulses_to_win"])}), BunkerUI.TEXT_DIM])
+				chips.append([Loc.t("brf.chip.biomass", {"n": int(r["biomass"])}), BunkerUI.GREEN])
+				var warden = TowerData.get_warden(_tower_floor)
+				if warden != null:
+						chips.append([Loc.t("brf.chip.warden"), BunkerUI.HAZARD_BRIGHT])
+						chips.append([Loc.t("brf.chip.elite", {"n": int(round(float(warden["elite_pct"]) * 100.0))}), BunkerUI.HAZARD_BRIGHT])
+				else:
+						match str(p.get("floor_type", "normal")):
+								"keeper":
+										chips.append([Loc.t("brf.chip.keeper"), BunkerUI.HAZARD])
+								"break":
+										chips.append([Loc.t("brf.chip.break"), BunkerUI.HAZARD])
+		elif mode == "survival":
+				chips.append([Loc.t("brf.chip.endless"), BunkerUI.TEXT_DIM])
+				var rec := 0
+				if game_manager.current_save_data and game_manager.current_save_data.statistics:
+						rec = int(game_manager.current_save_data.statistics.best_survival_wave)
+				chips.append([Loc.t("brf.chip.record", {"n": rec}), BunkerUI.GREEN])
+		else:
+				var lvl: int = game_manager.get_selected_or_frontier_level()
+				var p: Dictionary = CampaignData.get_level_params(lvl, game_manager.get_campaign_mode())
+				chips.append([Loc.t("brf.chip.waves", {"n": int(p["waves"])}), BunkerUI.TEXT_DIM])
+				chips.append([Loc.t("brf.chip.pulses", {"n": int(p["pulses_to_win"])}), BunkerUI.TEXT_DIM])
+				chips.append([Loc.t("brf.chip.biomass", {"n": int(p["reward_bonus"])}), BunkerUI.GREEN])
+				if bool(p.get("is_boss", false)):
+						chips.append([Loc.t("brf.chip.boss"), BunkerUI.HAZARD_BRIGHT])
+		for c in chips:
+				_brf_chips_box.add_child(_brf_chip(str(c[0]), c[1]))
 
 
 func _brf_chip(txt: String, col: Color) -> Control:
-        var p := Panel.new()
-        var sb := StyleBoxFlat.new()
-        sb.bg_color = Color(0.05, 0.08, 0.045, 0.95)
-        sb.border_color = col
-        sb.set_border_width_all(1)
-        sb.set_corner_radius_all(7)
-        sb.content_margin_left = 10.0
-        sb.content_margin_right = 10.0
-        sb.content_margin_top = 5.0
-        sb.content_margin_bottom = 5.0
-        p.add_theme_stylebox_override("panel", sb)
-        p.add_child(BunkerUI.make_mono_label(txt, 12, col))
-        return p
+		var p := Panel.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.05, 0.08, 0.045, 0.95)
+		sb.border_color = col
+		sb.set_border_width_all(1)
+		sb.set_corner_radius_all(7)
+		sb.content_margin_left = 10.0
+		sb.content_margin_right = 10.0
+		sb.content_margin_top = 5.0
+		sb.content_margin_bottom = 5.0
+		p.add_theme_stylebox_override("panel", sb)
+		p.add_child(BunkerUI.make_mono_label(txt, 12, col))
+		return p
 
 
 # ==================== СЕТЫ АРТЕФАКТОВ В ГАЛЕРЕЕ (v0.27.0) ====================
 
 func _gallery_sets_block():
-        gallery_list.add_child(_gallery_section(Loc.t("sets.title")))
-        var hint := BunkerUI.make_mono_label(Loc.t("sets.hint"), 11, BunkerUI.TEXT_FAINT)
-        hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        gallery_list.add_child(hint)
-        var won: Array = lab_data.won_artifacts if lab_data != null else []
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 6)
-        gallery_list.add_child(row)
-        _sets_info_label = BunkerUI.make_mono_label("", 11, BunkerUI.TEXT_DIM)
-        _sets_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        _sets_info_label.custom_minimum_size = Vector2(0, 18)
-        for state in ArtifactSets.sets_state(won):
-                var def: Dictionary = state["def"]
-                var stage: int = int(state["stage"])
-                var col: Color = def["color"]
-                var b := Button.new()
-                b.text = "%s %d/%d" % [str(def["name"]), int(state["have"]), int(state["size"])]
-                b.add_theme_font_override("font", BunkerUI.font_title())
-                b.add_theme_font_size_override("font_size", 12)
-                b.add_theme_color_override("font_color", col if stage > 0 else BunkerUI.TEXT_DIM)
-                b.custom_minimum_size = Vector2(104, 42)
-                BunkerUI.style_button(b, "steel", 12)
-                if stage >= 2:
-                        b.tooltip_text = Loc.t(ArtifactSets.bonus_loc_key(str(def["id"]), stage))
-                b.pressed.connect(_sets_show_info.bind(str(def["id"]), stage, col))
-                b.mouse_entered.connect(_play_hover_sound)
-                row.add_child(b)
-        gallery_list.add_child(_sets_info_label)
+		gallery_list.add_child(_gallery_section(Loc.t("sets.title")))
+		var hint := BunkerUI.make_mono_label(Loc.t("sets.hint"), 11, BunkerUI.TEXT_FAINT)
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		gallery_list.add_child(hint)
+		var won: Array = lab_data.won_artifacts if lab_data != null else []
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		gallery_list.add_child(row)
+		_sets_info_label = BunkerUI.make_mono_label("", 11, BunkerUI.TEXT_DIM)
+		_sets_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_sets_info_label.custom_minimum_size = Vector2(0, 18)
+		for state in ArtifactSets.sets_state(won):
+				var def: Dictionary = state["def"]
+				var stage: int = int(state["stage"])
+				var col: Color = def["color"]
+				var b := Button.new()
+				b.text = "%s %d/%d" % [str(def["name"]), int(state["have"]), int(state["size"])]
+				b.add_theme_font_override("font", BunkerUI.font_title())
+				b.add_theme_font_size_override("font_size", 12)
+				b.add_theme_color_override("font_color", col if stage > 0 else BunkerUI.TEXT_DIM)
+				b.custom_minimum_size = Vector2(104, 42)
+				BunkerUI.style_button(b, "steel", 12)
+				if stage >= 2:
+						b.tooltip_text = Loc.t(ArtifactSets.bonus_loc_key(str(def["id"]), stage))
+				b.pressed.connect(_sets_show_info.bind(str(def["id"]), stage, col))
+				b.mouse_entered.connect(_play_hover_sound)
+				row.add_child(b)
+		gallery_list.add_child(_sets_info_label)
 
 
 func _sets_show_info(set_id: String, stage: int, col: Color):
-        _play_click_sound()
-        var key: String = ArtifactSets.bonus_loc_key(set_id, stage) if stage >= 2 else "sets.none"
-        _sets_info_label.text = Loc.t(key)
-        _sets_info_label.add_theme_color_override("font_color", col if stage >= 2 else BunkerUI.TEXT_DIM)
+		_play_click_sound()
+		var key: String = ArtifactSets.bonus_loc_key(set_id, stage) if stage >= 2 else "sets.none"
+		_sets_info_label.text = Loc.t(key)
+		_sets_info_label.add_theme_color_override("font_color", col if stage >= 2 else BunkerUI.TEXT_DIM)
