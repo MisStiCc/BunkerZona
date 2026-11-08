@@ -72,6 +72,40 @@ guild_banner_crimson.png и guild_emblem_256.png).
 списком товаров), кромки рваные по серии. Иконки после фикса проверять
 на витрине: 4 товара + фолбэк для sku без маппинга.
 
+## Добивка (наряднее): баннер-шапка + рамка карточек
+
+`guild_shop_banner.png` (940×140) — шапка вкладки МАГАЗИН над списком
+товаров. Текста НЕТ (Label «витрина» лежит в коде, грузится поверх).
+Вставить первым элементом vbox вкладки:
+
+```gdscript
+var bn := TextureRect.new()
+bn.texture = load("res://assets/ui/guild/guild_shop_banner.png")
+bn.custom_minimum_size = Vector2(0, 140)
+bn.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+bn.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+bn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+v.insert_child(0, bn)   # v — контейнер вкладки МАГАЗИН
+```
+
+`guild_card_frame.png` (140×88, 9-патч) — золотая рамка карточек товаров
+вместо плоского StyleBoxFlat (блик по верхней кромке, заклёпки-уголки,
+фиолетовый кант):
+
+```gdscript
+var csb := StyleBoxTexture.new()
+csb.texture = load("res://assets/ui/guild/guild_card_frame.png")
+csb.texture_margin_left = 16.0
+csb.texture_margin_right = 16.0
+csb.texture_margin_top = 16.0
+csb.texture_margin_bottom = 14.0
+csb.set_content_margin_all(10)
+card.add_theme_stylebox_override("panel", csb)   # card — PanelContainer товара
+```
+
+Рамка полупрозрачная в центре — фон витрины просвечивает, товары
+читаются. Контрольный лист обоих: `_review_extras.png`.
+
 ## CREDITS
 
 CC0, процедурный PIL — см. CREDITS.md.

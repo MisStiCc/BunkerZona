@@ -354,10 +354,28 @@ func _page_chat(body: Control) -> void:
 
 func _page_shop(body: Control) -> void:
 	var g: Dictionary = GuildSys.ensure(_save)
+	# Фон витрины (пак guild_shop_art): тёмно-фиолетовый градиент + Монолит
+	if ResourceLoader.exists("res://assets/ui/guild/guild_shop_bg.png"):
+		var bg := TextureRect.new()
+		bg.texture = load("res://assets/ui/guild/guild_shop_bg.png")
+		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		bg.stretch_mode = TextureRect.STRETCH_SCALE
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		body.add_child(bg)
+		body.move_child(bg, 0)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.add_theme_constant_override("separation", 6)
 	body.add_child(v)
+	# Баннер-шапка витрины (без текста - Label поверх не нужен, жетоны ниже)
+	if ResourceLoader.exists("res://assets/ui/guild/guild_shop_banner.png"):
+		var bn := TextureRect.new()
+		bn.texture = load("res://assets/ui/guild/guild_shop_banner.png")
+		bn.custom_minimum_size = Vector2(0, 120)
+		bn.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bn.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(bn)
 	var tokens := int(g.get("tokens", 0))
 	# 13 карточек в панель не влезают - товары в скролл (как чат/обзор)
 	var scroll := ScrollContainer.new()
@@ -405,13 +423,24 @@ func _page_shop(body: Control) -> void:
 	for sku in GuildData.SHOP:
 		var info: Dictionary = GuildData.SHOP[sku]
 		var card := PanelContainer.new()
-		var csb := StyleBoxFlat.new()
-		csb.bg_color = Color(0.07, 0.06, 0.1, 0.95)
-		csb.border_color = COL_PURPLE
-		csb.set_border_width_all(1)
-		csb.set_corner_radius_all(8)
-		csb.set_content_margin_all(8)
-		card.add_theme_stylebox_override("panel", csb)
+		# D-добивка: золотая 9-патч рамка вместо плоского StyleBox
+		if ResourceLoader.exists("res://assets/ui/guild/guild_card_frame.png"):
+			var csb := StyleBoxTexture.new()
+			csb.texture = load("res://assets/ui/guild/guild_card_frame.png")
+			csb.texture_margin_left = 16.0
+			csb.texture_margin_right = 16.0
+			csb.texture_margin_top = 16.0
+			csb.texture_margin_bottom = 14.0
+			csb.set_content_margin_all(10)
+			card.add_theme_stylebox_override("panel", csb)
+		else:
+			var csb := StyleBoxFlat.new()
+			csb.bg_color = Color(0.07, 0.06, 0.1, 0.95)
+			csb.border_color = COL_PURPLE
+			csb.set_border_width_all(1)
+			csb.set_corner_radius_all(8)
+			csb.set_content_margin_all(8)
+			card.add_theme_stylebox_override("panel", csb)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
 		card.add_child(row)
