@@ -40,7 +40,15 @@ static func add_score(save, ev: Dictionary, score: int) -> int:
 	es["score"] = int(es.get("score", 0)) + s
 	es["best"] = maxi(int(es.get("best", 0)), s)
 	var shards: int = EventsData.shards_for(str(ev["id"]), s)
-	es["shards"] = int(es.get("shards", 0)) + shards
+	# D27 дневной кап осколков (анти-фарм финала): 120/день
+	var today: String = Time.get_date_string_from_system()
+	if str(es.get("shard_day", "")) != today:
+		es["shard_day"] = today
+		es["shards_today"] = 0
+	var room: int = maxi(EventsData.DAILY_SHARD_CAP - int(es.get("shards_today", 0)), 0)
+	var granted: int = mini(shards, room)
+	es["shards_today"] = int(es.get("shards_today", 0)) + granted
+	es["shards"] = int(es.get("shards", 0)) + granted
 	save.set(SAVE_KEY, es)
 	# задачи Зоны: партии и очки ивентов (D25)
 	var tree := Engine.get_main_loop() as SceneTree
@@ -48,7 +56,7 @@ static func add_score(save, ev: Dictionary, score: int) -> int:
 	if prog and prog.has_method("bump_task"):
 			prog.bump_task("event_games", 1)
 			prog.bump_task("event_score", s)
-	return shards
+	return granted
 
 
 ## Веха доступна к получению?

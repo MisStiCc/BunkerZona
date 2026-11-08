@@ -57,6 +57,37 @@ const EVENTS := {
 		"shards_per_score": 0.01},
 }
 
+# ==================== D27 ЕДИНАЯ КРИВАЯ ОСКОЛКОВ ====================
+# PAR: очки хорошей (не идеальной) партии и осколков за неё.
+# shards = score * PAR_SHARDS / PAR_SCORE. Курс правится ТОЛЬКО тут,
+# код партий не трогается. Спека design_inbox/_done/liveops_balance.
+const PAR := {
+	"zharva": {"score": 5000.0, "shards": 12.0},
+	"uley": {"score": 1500.0, "shards": 12.0},
+	"labyrinth": {"score": 1800.0, "shards": 12.0},
+	"chain": {"score": 600.0, "shards": 12.0},
+	"vault": {"score": 2000.0, "shards": 12.0},
+	"bolts": {"score": 1400.0, "shards": 12.0},
+	"finale": {"score": 5000.0, "shards": 12.0},
+}
+# Множитель порогов вех по ивенту (вехи = PAR_SCORE x множитель, 20 партий)
+const MILESTONE_MULT := {
+	"zharva": 1.0, "uley": 0.3, "labyrinth": 0.36, "chain": 0.12,
+	"vault": 0.4, "bolts": 0.28, "finale": 1.0,
+}
+# Дневной кап осколков (анти-фарм финала): 120 осколков/день
+const DAILY_SHARD_CAP: int = 120
+
+
+## Осколки за партию по PAR-кривой (D27): base = игра без суффикса "2"
+static func shards_for(event_key: String, score: int) -> int:
+	var base: String = event_key.trim_suffix("2")
+	if base == "finale":
+		base = "zharva"
+	var par: Dictionary = PAR.get(base, PAR["zharva"])
+	return int(round(float(score) * float(par["shards"]) / float(par["score"])))
+
+
 # Вехи: счёт за ивент -> награда payload
 const MILESTONE_SCORES := [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]
 const MILESTONE_REWARDS := [
@@ -134,11 +165,4 @@ static func _calendar_event(now_unix: int) -> Dictionary:
 
 
 ## Осколки за очки (повторные ивенты ×1.1)
-static func shards_for(event_key: String, score: int) -> int:
-	var base: String = event_key.trim_suffix("2")
-	if base == "finale":
-		base = "zharva"
-	var rate: float = float(EVENTS.get(base, EVENTS["zharva"])["shards_per_score"])
-	if event_key.ends_with("2"):
-		rate *= 1.1
-	return int(round(float(score) * rate))
+

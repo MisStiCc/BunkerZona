@@ -91,6 +91,8 @@ func _ready():
         _apply_static_texts()
         _refresh_ui()
         _setup_campaign_selector()
+        # D29 «ЗОНА ЖИВЁТ»: idle-жизнь лабы (звуки/тени/гром - декорации)
+        add_child(LabAlive.new())
         # D26 онбординг новичка: лаба показывает welcome/finish
         if game_manager and game_manager.current_save_data != null                         and not bool(game_manager.current_save_data.onboarding_done):
                 var onb := OnboardingOverlay.new()

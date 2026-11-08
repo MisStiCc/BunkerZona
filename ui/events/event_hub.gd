@@ -311,10 +311,11 @@ func _fill_milestones(es: Dictionary) -> void:
 	for c in _list.get_children():
 		_list.remove_child(c)
 		c.queue_free()
-	var mult: float = float(_event["mult"]) \
-		if str(es.get("event_id", "")) == str(_event["id"]) else 1.0
+	# D27: порог вехи = PAR x множитель ивента (спека liveops_balance §4)
+	var base: String = str(_event.get("base", _event.get("id", "zharva")))
+	var mmult: float = float(EventsData.MILESTONE_MULT.get(base, 1.0))
 	for i in EventsData.MILESTONE_SCORES.size():
-		var goal := int(float(EventsData.MILESTONE_SCORES[i]) / mult)
+		var goal := int(round(float(EventsData.MILESTONE_SCORES[i]) * mmult))
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		_list.add_child(row)
