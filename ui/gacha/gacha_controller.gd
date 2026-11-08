@@ -258,6 +258,18 @@ func _build_bottom() -> void:
         _tries_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         center.add_child(_tries_label)
 
+        # DEV: масс-призыв x1000 на текущей руке (мут/аном/супер) - без анимаций,
+        # сводка тостом. Для тестов вех/пити/жалобы на курсы.
+        var mass := Button.new()
+        mass.text = "ПРИЗВАТЬ  ×1000  (dev)"
+        mass.custom_minimum_size = Vector2(300, 40)
+        mass.add_theme_font_size_override("font_size", 14)
+        mass.focus_mode = Control.FOCUS_NONE
+        BunkerUI.style_button(mass, "steel", 14)
+        mass.pressed.connect(_on_mass_spin)
+        mass.mouse_entered.connect(_play_hover_sound)
+        center.add_child(mass)
+
         # Шансы справа внизу
         # D16 принцип 3: публикация шансов гачи (политика лутбоксов)
         var chances_btn := Button.new()
@@ -861,6 +873,48 @@ func _animate_strips(dir: int) -> void:
         _arm_tween = create_tween().set_parallel(true)
         _arm_tween.tween_property(box, "position", home, 0.20).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
         _arm_tween.tween_property(box, "modulate:a", 1.0, 0.20)
+
+
+## DEV: масс-призыв x1000 на текущей руке - без анимаций, сводка тостом
+func _on_mass_spin() -> void:
+        _play_click_sound()
+        if not _game_manager:
+                return
+        var lab = _lab()
+        if lab == null:
+                return
+        # валюта руки +1000, затем тишина
+        if _arm == "super":
+                lab.super_pulls += 1000
+        elif _arm == "mutants":
+                lab.gacha_rolls_mutants += 1000
+        else:
+                lab.gacha_rolls_artifacts += 1000
+        var results: Array = []
+        if _arm == "super":
+                results = _game_manager.spin_super_gacha(1000)
+        elif _arm == "mutants":
+                results = _game_manager.spin_mutant_gacha(1000)
+        else:
+                results = _game_manager.spin_artifact_gacha(1000)
+        var new_n := 0
+        var dup_n := 0
+        var legs := 0
+        var epics := 0
+        for r in results:
+                if str(r.get("status", "")) == "new":
+                        new_n += 1
+                else:
+                        dup_n += 1
+                match str(r.get("rarity", "")):
+                        "legendary":
+                                legs += 1
+                        "epic":
+                                epics += 1
+        if _game_manager.has_method("save_to_active_slot"):
+                _game_manager.save_to_active_slot()
+        _refresh_all()
+        _show_toast("x1000 [%s]: новых %d · повторов %d · эпиков %d · легендарок %d" % [_arm, new_n, dup_n, epics, legs])
 
 
 func _on_spin(times: int) -> void:
