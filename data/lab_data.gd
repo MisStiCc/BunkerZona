@@ -33,6 +33,8 @@ var campaign_level_reached: int = 1
 # Покупки магазина: придут в бой / заспавнятся у монолита в начале забега
 @export var pending_mutants: Array[String] = []
 @export var pending_artifacts: Array[String] = []
+# D30 сезонный журнал арены: {season, place, waves, reward} — пишет rollover
+@export var arena_history: Array = []
 @export var monolith_regen_level: int = 0
 @export var rare_chance_level: int = 0
 

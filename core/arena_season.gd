@@ -89,6 +89,11 @@ static func ensure_season(save) -> Dictionary:
 	# письмо: место по сезонным волнам против ФИКСИРОВАННОЙ таблицы лиг
 	var place: int = letter_place(season_idx_from_key(prev_key), waves)
 	var reward := place_reward(place)
+	# D30 сезонный журнал: запись до письма (кап 20, старые вылетают)
+	var hist: Array = lab.arena_history
+	hist.insert(0, {"season": season_idx_from_key(prev_key), "place": place,
+		"waves": waves, "reward": reward})
+	lab.arena_history = hist.slice(0, 20)
 	var box: Array = save.guild_state.get("mail", [])
 	box.insert(0, {
 		"from": "АРЕНА «ВЫБРОС I»",

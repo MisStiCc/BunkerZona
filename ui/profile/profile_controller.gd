@@ -1961,6 +1961,8 @@ var _dossier_root: Control = null
 var _dossier_rows: Array = []
 var _medals_root: Control = null
 var _medals_grid: GridContainer = null
+var _seasons_box: VBoxContainer = null
+var _seasons_best: Label = null
 var _medals_head_count: Label = null
 var _medal_tiles: Array = []
 var _medal_btn: Button = null
@@ -2188,6 +2190,23 @@ func _build_medals_panel() -> void:
         _medals_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         sc.add_child(_medals_grid)
 
+        # D30 СЕЗОНЫ: журнал арены под медалями (10 последних + лучший)
+        var seasons_head := Label.new()
+        seasons_head.text = Loc.t("seasons.title")
+        seasons_head.add_theme_font_override("font", BunkerUI.font_title())
+        seasons_head.add_theme_font_size_override("font_size", 16)
+        seasons_head.add_theme_color_override("font_color", BunkerUI.GREEN)
+        seasons_head.custom_minimum_size = Vector2(0, 30)
+        sc.add_child(seasons_head)
+        _seasons_best = Label.new()
+        _seasons_best.add_theme_font_size_override("font_size", 13)
+        _seasons_best.add_theme_color_override("font_color", Color("ffd94d"))
+        sc.add_child(_seasons_best)
+        _seasons_box = VBoxContainer.new()
+        _seasons_box.add_theme_constant_override("separation", 3)
+        _seasons_box.custom_minimum_size = Vector2(0, 40)
+        sc.add_child(_seasons_box)
+
         var btns := HBoxContainer.new()
         btns.alignment = BoxContainer.ALIGNMENT_CENTER
         v.add_child(btns)
@@ -2215,6 +2234,43 @@ func _medals_rebuild() -> void:
                 _medals_grid.add_child(tile["panel"])
                 _medal_tiles.append(tile)
         _medals_head_count.text = Loc.t("medals.count", {"n": earned, "total": MedalsData.MEDALS.size()})
+        _seasons_rebuild()
+
+
+## D30 СЕЗОНЫ: журнал арены (10 последних, лучший сверху, цвет по месту)
+func _seasons_rebuild() -> void:
+        if _seasons_box == null:
+                return
+        for c in _seasons_box.get_children():
+                c.queue_free()
+        var hist: Array = _save.arena_history if _save != null and "arena_history" in _save else []
+        if hist.is_empty():
+                var empty := Label.new()
+                empty.text = Loc.t("seasons.empty")
+                empty.add_theme_color_override("font_color", BunkerUI.TEXT_FAINT)
+                _seasons_box.add_child(empty)
+                if _seasons_best:
+                        _seasons_best.text = ""
+                return
+        var best_place := 999
+        for r in hist:
+                best_place = mini(best_place, int(r.get("place", 99)))
+        if _seasons_best:
+                _seasons_best.text = Loc.t("seasons.best", {"n": best_place})
+        for r in hist.slice(0, 10):
+                var place := int(r.get("place", 0))
+                var col: Color = Color("ffd94d") if place == 1 else (
+                        Color("c9d4dd") if place <= 3 else (
+                        Color("d98a4a") if place <= 10 else BunkerUI.TEXT_FAINT))
+                var row := Label.new()
+                var rew: Dictionary = r.get("reward", {}) if r.get("reward", {}) is Dictionary else {}
+                var rew_txt: String = ""
+                if int(rew.get("rolls_mut", 0)) > 0:
+                        rew_txt = Loc.t("seasons.rew_rolls", {"n": int(rew["rolls_mut"])})
+                row.text = Loc.t("seasons.row", {"s": int(r.get("season", 0)), "p": place,
+                        "w": int(r.get("waves", 0))}) + rew_txt
+                row.add_theme_color_override("font_color", col)
+                _seasons_box.add_child(row)
 
 
 func _medal_txt(m: Dictionary, key: String) -> String:
