@@ -134,7 +134,7 @@ func _ready():
 
 
 func _show_last_run_result():
-        """Панель итогов последнего забега (результат кладёт GameManager.process_run_result)"""
+		"""Панель итогов последнего забега (результат кладёт GameManager.process_run_result)"""
 		if not get_tree().root.has_meta("last_run_result"):
 				return
 
@@ -144,8 +144,8 @@ func _show_last_run_result():
 
 
 func _load_cover_art():
-        """Фоновая обложка лаборатории: БУНКЕР-зал (ui/lab/bunker_lab.svg).
-        Файла нет - остаётся тёмная подложка Background."""
+		"""Фоновая обложка лаборатории: БУНКЕР-зал (ui/lab/bunker_lab.svg).
+		Файла нет - остаётся тёмная подложка Background."""
 		var cover: TextureRect = get_node_or_null("CoverArt")
 		if not cover:
 				return
@@ -210,7 +210,7 @@ func _play_hover_sound():
 
 
 func _apply_static_texts():
-        """Все статические надписи лаборатории по текущему языку (Loc.changed пере apply)"""
+		"""Все статические надписи лаборатории по текущему языку (Loc.changed пере apply)"""
 		var title: Label = get_node_or_null("VBox/Header/Title")
 		if title:
 				title.text = Loc.t("lab.title")
@@ -340,7 +340,7 @@ func _format_number(value: float) -> String:
 # ==================== КАМПАНИЯ ====================
 
 func _setup_campaign_selector():
-        """Селектор уровня кампании в шапке лаборатории: ◀ уровень ▶ и режим сложности"""
+		"""Селектор уровня кампании в шапке лаборатории: ◀ уровень ▶ и режим сложности"""
 		# По умолчанию стоим на ТЕКУЩЕМ рубеже, а не переигрываем первый уровень
 		if game_manager:
 				_campaign_level = game_manager.get_campaign_level()
@@ -471,8 +471,8 @@ func _refresh_campaign_ui():
 # ==================== КАРТА ПУТИ ====================
 
 func _setup_journey_map():
-        """Анимированная полоса пути по Зоне вместо пустого Spacer'а:
-        кампания - 100 уровней до Саркофага, башня - 100 этажей, выживание - волны."""
+		"""Анимированная полоса пути по Зоне вместо пустого Spacer'а:
+		кампания - 100 уровней до Саркофага, башня - 100 этажей, выживание - волны."""
 		var vbox: VBoxContainer = get_node_or_null("VBox")
 		var spacer: Control = get_node_or_null("VBox/Spacer")
 		if vbox == null:
@@ -510,7 +510,7 @@ func _update_journey():
 
 
 func _on_journey_step(dir: int) -> void:
-        """Свайп по ленте пути (тач-жест карты этажей) — шаг как кнопками ◀▶."""
+		"""Свайп по ленте пути (тач-жест карты этажей) — шаг как кнопками ◀▶."""
 		if dir < 0:
 				_on_campaign_prev_pressed()
 		else:
@@ -518,7 +518,7 @@ func _on_journey_step(dir: int) -> void:
 
 
 func _on_run_mode_pressed():
-        """Переключение режима забега: кампания -> башня -> выживание -> кампания"""
+		"""Переключение режима забега: кампания -> башня -> выживание -> кампания"""
 		_play_click_sound()
 		if not game_manager:
 				return
@@ -560,7 +560,7 @@ func _on_campaign_next_pressed():
 
 
 func _on_campaign_mode_pressed():
-        """Цикл режимов сложности: Сталкер -> Ветеран -> Легенда"""
+		"""Цикл режимов сложности: Сталкер -> Ветеран -> Легенда"""
 		_play_click_sound()
 		if not game_manager:
 				return
@@ -626,8 +626,8 @@ func _on_menu_pressed():
 
 
 func _setup_settings_sliders():
-        """Слайдеры громкости лаборатории - те же аудиошины Music/SFX,
-        что и в главном меню (значения глобальные)"""
+		"""Слайдеры громкости лаборатории - те же аудиошины Music/SFX,
+		что и в главном меню (значения глобальные)"""
 		settings_music_slider.value_changed.connect(
 				func(v): _set_bus_volume("Music", v))
 		settings_sfx_slider.value_changed.connect(
@@ -641,7 +641,7 @@ func _setup_settings_sliders():
 
 
 func _setup_save_slot_selector():
-        """Выбор активного слота сохранения между слайдерами и кнопкой НАЗАД"""
+		"""Выбор активного слота сохранения между слайдерами и кнопкой НАЗАД"""
 		var panel = get_node_or_null("SettingsScreen/Panel")
 		if not panel:
 				# print("lab_controller: SettingsScreen/Panel не найден, селектор слота не построен")
@@ -683,7 +683,7 @@ func _on_shop_close_pressed():
 
 
 func _rebuild_shop():
-        """Кнопки магазина из таблиц GachaData: имя + цена, покупка за биомассу лаборатории"""
+		"""Кнопки магазина из таблиц GachaData: имя + цена, покупка за биомассу лаборатории"""
 		for child in mutant_grid.get_children():
 				child.queue_free()
 		for child in artifact_grid.get_children():
@@ -725,7 +725,7 @@ func _rebuild_shop():
 
 
 func _add_card_icon(btn: Button, type: String, is_mutant: bool):
-        """Карточка-иконка слева от текста кнопки (магазин/дропы/ферма)"""
+		"""Карточка-иконка слева от текста кнопки (магазин/дропы/ферма)"""
 		var path: String = GachaData.card_icon_path(type, is_mutant)
 		if ResourceLoader.exists(path):
 				btn.icon = load(path)
@@ -758,7 +758,7 @@ func _make_icon_rect(type: String, is_mutant: bool, icon_size: int = 24) -> Text
 
 
 func _shop_item_text(item_name: String, type: String, is_mutant: bool) -> String:
-        """Имя + звёзды, если тип уже в коллекции (в бою получит эти звёзды)"""
+		"""Имя + звёзды, если тип уже в коллекции (в бою получит эти звёзды)"""
 		if not lab_data:
 				return item_name
 		var stars: int = lab_data.get_mutant_stars(type) if is_mutant else lab_data.get_artifact_stars(type)
@@ -784,7 +784,7 @@ func _on_shop_buy(kind: String, item_type: String, price: float):
 
 
 func _build_shop_tabs():
-        """Вкладки магазина: МУТАНТЫ/АРТЕФАКТЫ (за биомассу) + СЕЗОН/ОБМЕННИК (за СП)"""
+		"""Вкладки магазина: МУТАНТЫ/АРТЕФАКТЫ (за биомассу) + СЕЗОН/ОБМЕННИК (за СП)"""
 		if shop_tabs == null:
 				return
 		for t in ["МУТАНТЫ", "АРТЕФАКТЫ", "СЕЗОН", "ОБМЕННИК"]:
@@ -807,7 +807,7 @@ func _on_shop_tab_changed(idx: int):
 
 
 func _rebuild_shop_season():
-        """СЕЗОН: товары за очки сезона - эксклюзивы ЧЯ, крутки, биомасса, копии"""
+		"""СЕЗОН: товары за очки сезона - эксклюзивы ЧЯ, крутки, биомасса, копии"""
 		for child in season_grid.get_children():
 				child.queue_free()
 		var sp: int = lab_data.season_points if lab_data else 0
@@ -850,7 +850,7 @@ func _rebuild_shop_season():
 
 
 func _rebuild_shop_exchange():
-        """ОБМЕННИК: артефакты выбросов и биомасса -> очки сезона"""
+		"""ОБМЕННИК: артефакты выбросов и биомасса -> очки сезона"""
 		for child in exchange_box.get_children():
 				child.queue_free()
 		var sp: int = lab_data.season_points if lab_data else 0
@@ -988,7 +988,7 @@ var _stars_return: String = ""  # откуда открыли звёзды: "far
 
 
 func _build_star_ui():
-        """Кнопка ★ в магазине + панель прокачки звёзд (строится кодом)"""
+		"""Кнопка ★ в магазине + панель прокачки звёзд (строится кодом)"""
 		star_panel = Control.new()
 		star_panel.name = "StarPanel"
 		star_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1075,7 +1075,7 @@ func _on_stars_close_pressed():
 
 
 func _rebuild_star_panel():
-        """Строка на каждого питомца коллекции: имя, звёзды, цена следующей звезды"""
+		"""Строка на каждого питомца коллекции: имя, звёзды, цена следующей звезды"""
 		for child in star_list.get_children():
 				child.queue_free()
 		if not lab_data:
@@ -1348,7 +1348,7 @@ func _on_hunt_calendar_pressed() -> void:
 
 
 func _build_farm_ui():
-        """Кнопка ФЕРМА + полноэкранная ферма-инкубатор (строится кодом)"""
+		"""Кнопка ФЕРМА + полноэкранная ферма-инкубатор (строится кодом)"""
 		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
 		if bottom:
 				var farm_btn := Button.new()
@@ -1633,7 +1633,7 @@ func _on_feed_heater_pressed():
 
 
 func _make_farm_card(type: String) -> Control:
-        """Вертикальная карточка питомца: свечение редкости, звёзды, бак, множитель"""
+		"""Вертикальная карточка питомца: свечение редкости, звёзды, бак, множитель"""
 		var stars: int = lab_data.get_mutant_stars(type)
 		var copies: int = lab_data.get_farm_copies(type)
 		var rar: String = GachaData.get_mutant_rarity(type)
@@ -1795,7 +1795,7 @@ func _on_farm_card_selected(type: String):
 # ==================== ФЕРМА: ФИЛЬТР + СВАЙП ====================
 
 func _process(delta: float) -> void:
-        """Инерция свайпа фермы: палец отпущен — список едет и плавно тормозит."""
+		"""Инерция свайпа фермы: палец отпущен — список едет и плавно тормозит."""
 		# Инерция свайпа живёт в SwipeHelper (ui/base/swipe_helper.gd, v0.29.2)
 		_tw_tick(delta)
 
@@ -1946,7 +1946,7 @@ func _make_altar_kv(k: String, v: String, vcol: Color = BunkerUI.TEXT_LIGHT) -> 
 
 
 func _rebuild_farm_altar():
-        """АЛТАРЬ ЗВЁЗД справа: выбранный питомец, бак, кнопки прокачки без выхода"""
+		"""АЛТАРЬ ЗВЁЗД справа: выбранный питомец, бак, кнопки прокачки без выхода"""
 		for child in _farm_altar_box.get_children():
 				child.queue_free()
 		if _farm_selected.is_empty() or lab_data == null or lab_data.unlocked_mutants.is_empty():
@@ -2108,7 +2108,7 @@ func _rebuild_farm_altar():
 
 
 func _rebuild_farm_panel():
-        """Карточки питомцев + алтарь. Режимы: cards / feed_pick / кормление / утилизация"""
+		"""Карточки питомцев + алтарь. Режимы: cards / feed_pick / кормление / утилизация"""
 		for child in farm_list.get_children():
 				child.queue_free()
 		if not lab_data:
@@ -2265,7 +2265,7 @@ var _lang_button: Button = null
 
 
 func _build_language_button():
-        """Кнопка RU/EN в настройках лаборатории"""
+		"""Кнопка RU/EN в настройках лаборатории"""
 		var panel = get_node_or_null("SettingsScreen/Panel")
 		if not panel:
 				return
@@ -2298,8 +2298,8 @@ var _artifact_last_drops: Array = []
 
 
 func _build_gacha_ui():
-        """ДЕКА ГАЧИ (БУНКЕР): большая жёлтая 3D-кнопка ГАЧА ЗОНЫ + пластины круток.
-        Гача - ОТДЕЛЬНЫЙ полноэкранный узел: change_scene("gacha")."""
+		"""ДЕКА ГАЧИ (БУНКЕР): большая жёлтая 3D-кнопка ГАЧА ЗОНЫ + пластины круток.
+		Гача - ОТДЕЛЬНЫЙ полноэкранный узел: change_scene("gacha")."""
 		var vbox: VBoxContainer = get_node_or_null("VBox")
 		if vbox:
 				var deck := PanelContainer.new()
@@ -2361,7 +2361,7 @@ func _on_gacha_close_pressed():
 
 
 func _gacha_spin_buttons(kind: String) -> Control:
-        """Ряд кнопок круток x1/x10/x100/x1000"""
+		"""Ряд кнопок круток x1/x10/x100/x1000"""
 		var row := HBoxContainer.new()
 		for times in [1, 10, 100, 1000]:
 				var btn := Button.new()
@@ -2401,7 +2401,7 @@ func _on_gacha_spin(kind: String, times: int):
 
 
 func _make_drop_row(r: Dictionary, is_mutant: bool) -> Control:
-        """Строка дропа гачи: карточка-иконка + имя, окрашенное по редкости"""
+		"""Строка дропа гачи: карточка-иконка + имя, окрашенное по редкости"""
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
 		row.add_child(_make_icon_rect(str(r.get("type", "")), is_mutant, 24))
@@ -2436,7 +2436,7 @@ func _gacha_stats_line(stats: Array, has_uncommon: bool) -> String:
 
 
 func _rebuild_gacha_panel():
-        """Два рукава гачи: крутки, кнопки, статистика шансов, последние дропы"""
+		"""Два рукава гачи: крутки, кнопки, статистика шансов, последние дропы"""
 		for child in gacha_list.get_children():
 				child.queue_free()
 		if not lab_data or not game_manager:
@@ -2488,8 +2488,8 @@ var _gallery_scroll: ScrollContainer = null
 
 
 func _build_profile_ui():
-        """Кнопка ПРОФИЛЬ: терминал «Сканер личности» — отдельная сцена
-        (как гача): аватары из коллекции, рамки/титулы/статусы за прогресс."""
+		"""Кнопка ПРОФИЛЬ: терминал «Сканер личности» — отдельная сцена
+		(как гача): аватары из коллекции, рамки/титулы/статусы за прогресс."""
 		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
 		if bottom:
 				var prof_btn := Button.new()
@@ -2512,8 +2512,8 @@ func _on_profile_pressed():
 
 
 func _build_gallery_ui():
-        """Кнопка ГАЛЕРЕЯ + панель коллекции: фильтры (все/мутанты/арты/эксклюзивы/мои),
-        плитки от самых сильных к слабым"""
+		"""Кнопка ГАЛЕРЕЯ + панель коллекции: фильтры (все/мутанты/арты/эксклюзивы/мои),
+		плитки от самых сильных к слабым"""
 		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
 		if bottom:
 				var gal_btn := Button.new()
@@ -2717,7 +2717,7 @@ func _gallery_owned_count() -> int:
 
 
 func _gallery_tile(type: String, is_mutant: bool) -> Control:
-        """Плитка карточки: цветная если открыто, серая если нет"""
+		"""Плитка карточки: цветная если открыто, серая если нет"""
 		var unlocked: bool = lab_data.unlocked_mutants.has(type) if is_mutant else (lab_data.won_artifacts.has(type) or lab_data.exclusive_anomalies.has(type))
 		var tile := VBoxContainer.new()
 		tile.custom_minimum_size = Vector2(82, 0)
@@ -2776,7 +2776,7 @@ func _gallery_tile(type: String, is_mutant: bool) -> Control:
 
 
 func _gallery_ex_tile(type: String, is_mutant: bool) -> Control:
-        """Плитка эксклюзива Чёрного ящика: фиолетовая рамка, серый силуэт если не получен"""
+		"""Плитка эксклюзива Чёрного ящика: фиолетовая рамка, серый силуэт если не получен"""
 		var wrap_box := PanelContainer.new()
 		wrap_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var sb := StyleBoxFlat.new()
@@ -2807,7 +2807,7 @@ var detail_desc: Label
 
 
 func _build_card_detail():
-        """Большая карточка: арт художника (PNG) + описание. Открывается кликом по плитке"""
+		"""Большая карточка: арт художника (PNG) + описание. Открывается кликом по плитке"""
 		detail_panel = Control.new()
 		detail_panel.name = "CardDetail"
 		detail_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -2890,8 +2890,8 @@ func _build_card_detail():
 
 
 func _show_card_detail(type: String, is_mutant: bool, unlocked: bool):
-        """Заполнить карточку: большой арт (PNG художника или SVG), имя, редкость,
-        звёзды, описание, открываемая аномалия"""
+		"""Заполнить карточку: большой арт (PNG художника или SVG), имя, редкость,
+		звёзды, описание, открываемая аномалия"""
 		if not detail_panel:
 				_build_card_detail()
 		var rarity: String = GachaData.get_mutant_rarity(type) if is_mutant else GachaData.get_artifact_rarity(type)
@@ -2973,7 +2973,7 @@ func _anomaly_loc_key(anomaly_type: String) -> String:
 
 
 func _rebuild_gallery_panel():
-        """Коллекция по активному фильтру, от самых сильных к слабым: счётчик + секции"""
+		"""Коллекция по активному фильтру, от самых сильных к слабым: счётчик + секции"""
 		for child in gallery_list.get_children():
 				child.queue_free()
 		if not lab_data:
@@ -3082,7 +3082,7 @@ var _boost_cands: Array = []
 
 
 func _build_upgrade_dialog():
-        """Окно повышения: слоты копий/звёздного/простого корма с '+', ОК применяет"""
+		"""Окно повышения: слоты копий/звёздного/простого корма с '+', ОК применяет"""
 		up_panel = Control.new()
 		up_panel.name = "UpgradeStarDialog"
 		up_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -3209,7 +3209,7 @@ func _rebuild_boost_chooser():
 
 
 func _on_farm_upgrade(type: String):
-        """↑N★ - открыть окно сбора рецепта по этому мутанту (ПОВЕРХ фермы)"""
+		"""↑N★ - открыть окно сбора рецепта по этому мутанту (ПОВЕРХ фермы)"""
 		_play_click_sound()
 		_up_target = type
 		_up_copies = 0
@@ -3771,7 +3771,7 @@ func _recycle_pending_points() -> int:
 
 
 func _rebuild_farm_recycle():
-        """Сдача копий: очки по редкости, 10 очков = 1 крутка артефактов"""
+		"""Сдача копий: очки по редкости, 10 очков = 1 крутка артефактов"""
 		for child in farm_list.get_children():
 				child.queue_free()
 		if not lab_data:
@@ -3960,7 +3960,7 @@ func _on_recycle_confirm():
 # ==================== СТИЛЬ БУНКЕР ====================
 
 func _apply_bunker_style():
-        """Тема и декорации БУНКЕР для лаборатории (вариант 4)."""
+		"""Тема и декорации БУНКЕР для лаборатории (вариант 4)."""
 		BunkerUI.apply_bunker(self, true)
 
 		# Фон-арт бункера 2K (пак lab_ui, спека lab_redesign): за контентом
@@ -4048,7 +4048,7 @@ func _apply_lab_background_art():
 
 
 func _refresh_gacha_deck():
-        """Пластины круток в деке гачи."""
+		"""Пластины круток в деке гачи."""
 		var deck: PanelContainer = get_node_or_null("VBox/GachaDeck")
 		if deck == null or lab_data == null:
 				return
@@ -4067,7 +4067,7 @@ func _rolls_lab_text(n: int) -> String:
 
 
 func _apply_bunker_layout_sizes():
-        """Компактные размеры рядов в духе макета: станции ниже, статистика дышит."""
+		"""Компактные размеры рядов в духе макета: станции ниже, статистика дышит."""
 		var stations_row: HBoxContainer = get_node_or_null("VBox/Stations")
 		if stations_row:
 				stations_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
@@ -4095,7 +4095,7 @@ var _defense_power_label: Label = null
 
 
 func _build_arena_ui():
-        """Кнопка АРЕНА + полноэкранная арена выживания (строится кодом)"""
+		"""Кнопка АРЕНА + полноэкранная арена выживания (строится кодом)"""
 		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
 		if bottom:
 				var arena_btn := Button.new()
@@ -4508,7 +4508,7 @@ func _make_arena_board_row(k: String, v: String, gold: bool = false) -> Control:
 
 
 func _make_claim_row(kind: String, idx: int, k: String, v: String) -> Control:
-        """Строка выполненной сезонной награды с кнопкой ЗАБРАТЬ"""
+		"""Строка выполненной сезонной награды с кнопкой ЗАБРАТЬ"""
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		var kl := BunkerUI.make_mono_label(k, 15, Color("a9bd8d"))
@@ -4607,7 +4607,7 @@ func _on_arena_claim(kind: String, idx: int):
 
 
 func _rebuild_arena_panel():
-        """Список вызовов + доска по активной вкладке"""
+		"""Список вызовов + доска по активной вкладке"""
 		for child in _arena_foes_box.get_children():
 				child.queue_free()
 		for child in _arena_board_box.get_children():
@@ -4763,7 +4763,7 @@ func _on_arena_challenge(foe_name: String):
 
 
 func _on_arena_defend_run_pressed():
-        """Кнопка ОБОРОНА на строке «Я»: старт выживания от лица защитного отряда"""
+		"""Кнопка ОБОРОНА на строке «Я»: старт выживания от лица защитного отряда"""
 		_play_click_sound()
 		if not game_manager:
 				return
@@ -4838,7 +4838,7 @@ func _defense_power() -> int:
 
 
 func _build_defense_ui():
-        """СМЕНА ОБОРОНЫ: выбор мутантов, держащих арену (строится кодом)"""
+		"""СМЕНА ОБОРОНЫ: выбор мутантов, держащих арену (строится кодом)"""
 		defense_panel = Control.new()
 		defense_panel.name = "DefensePanel"
 		defense_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -4902,7 +4902,7 @@ func _build_defense_ui():
 
 
 func _rebuild_defense_panel():
-        """Список мутантов с переключателем В ОБОРОНЕ/В РЕЗЕРВ"""
+		"""Список мутантов с переключателем В ОБОРОНЕ/В РЕЗЕРВ"""
 		for child in _defense_list_box.get_children():
 				child.queue_free()
 		if not lab_data:
@@ -4993,7 +4993,7 @@ var _gates_go_button: Button
 
 
 func _build_gates_ui():
-        """Полноэкранные врата ярусов (строится кодом, рисует TierGates)"""
+		"""Полноэкранные врата ярусов (строится кодом, рисует TierGates)"""
 		gates_panel = Control.new()
 		gates_panel.name = "GatesPanel"
 		gates_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -5166,7 +5166,7 @@ func _on_gate_selected(tier_idx: int):
 
 
 func _rebuild_gates_info():
-        """Панель выбранного яруса справа"""
+		"""Панель выбранного яруса справа"""
 		for child in _gates_info_box.get_children():
 				child.queue_free()
 		var t := clampi(_gates_control.selected_tier, 0, 9)
@@ -5240,7 +5240,7 @@ var _tasks_track_scroll: ScrollContainer = null
 
 
 func _build_tasks_ui():
-        """Кнопка ЗАДАЧИ в нижнем ряду + полноэкранная панель (строится кодом)."""
+		"""Кнопка ЗАДАЧИ в нижнем ряду + полноэкранная панель (строится кодом)."""
 		var bottom: HBoxContainer = get_node_or_null("VBox/BottomButtons")
 		if bottom:
 				var tbtn := Button.new()
