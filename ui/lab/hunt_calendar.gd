@@ -59,12 +59,12 @@ static func _skills_have_icons(skills: Array) -> bool:
 static func portrait(boss_id: String, size: float) -> Control:
 	var path := "res://ui/cards/bosses/%s.png" % boss_id
 	if ResourceLoader.exists(path):
-		var tr := TextureRect.new()
-		tr.texture = load(path)
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.custom_minimum_size = Vector2(size, size)
-		return tr
+		var tex_r := TextureRect.new()
+		tex_r.texture = load(path)
+		tex_r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex_r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_r.custom_minimum_size = Vector2(size, size)
+		return tex_r
 	var ph := Panel.new()
 	ph.custom_minimum_size = Vector2(size, size)
 	var nm: String = str(BossHuntData.BOSSES.get(boss_id, {}).get("name_ru", boss_id))
@@ -175,7 +175,7 @@ func _refresh() -> void:
 		days_box.add_child(_make_day_row(day, today_ids))
 
 
-func _make_day_row(day: Dictionary, today_ids: Array) -> Control:
+func _make_day_row(day: Dictionary, _today_ids: Array) -> Control:
 	var day_v := VBoxContainer.new()
 	day_v.add_theme_constant_override("separation", 4)
 	# прошедшие дни недели приглушаем (строго раньше сегодняшнего)
@@ -280,13 +280,13 @@ func _make_boss_row(boss_id: String, is_today: bool, dimmed: bool) -> Control:
 			chip.add_theme_constant_override("separation", 4)
 			var ic := skill_icon(sid)
 			if ic != null:
-				var tr := TextureRect.new()
-				tr.texture = ic
-				tr.custom_minimum_size = Vector2(20, 20)
-				tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-				tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-				tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				chip.add_child(tr)
+				var tex_r := TextureRect.new()
+				tex_r.texture = ic
+				tex_r.custom_minimum_size = Vector2(20, 20)
+				tex_r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				tex_r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				tex_r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				chip.add_child(tex_r)
 			else:
 				var gl := Label.new()
 				gl.text = str(SKILL_GLYPH.get(sid, "•"))

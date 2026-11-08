@@ -172,12 +172,12 @@ func _check_height():
                 # "MasterStalker: провалился под землю, возвращён на рельеф Y=", global_position.y  # (лог отключён)
         else:
                 # Земли нет (чанк выгружен) - возвращаем к монолиту
-                var mx = 10.0
+                var mx_x = 10.0
                 var mz = 10.0
                 if monolith and is_instance_valid(monolith):
-                        mx = monolith.global_position.x + 10.0
+                        mx_x = monolith.global_position.x + 10.0
                         mz = monolith.global_position.z + 10.0
-                global_position = Vector3(mx, STALKER_HEIGHT, mz)
+                global_position = Vector3(mx_x, STALKER_HEIGHT, mz)
                 # "MasterStalker: земли нет под сталкером, возвращён к монолиту"  # (лог отключён)
 
 

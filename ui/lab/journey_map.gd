@@ -835,7 +835,7 @@ func _draw_chain(w: float, h: float, mono: Font, sc: float, slide: float) -> voi
 
 # ---------- БАШНЯ: лента этажей (временная, до выбора объёмного варианта) ----------
 
-func _draw_tape(w: float, h: float, pad: float, title_font: Font, mono: Font, slide: float) -> void:
+func _draw_tape(w: float, h: float, pad: float, _title_font: Font, mono: Font, slide: float) -> void:
         var pulse: float = 0.5 + 0.5 * sin(_t * 3.4)
         var glow: float = 0.6 + 0.4 * sin(_t * 1.6)
         var map_left: float = pad + 8.0 + slide
@@ -1022,7 +1022,7 @@ func _bicon_center(bname: String, c: Vector2, px: float, tint := Color.WHITE) ->
         return true
 
 
-func _draw_map_campaign(w: float, h: float, mono: Font, sc: float, slide: float) -> void:
+func _draw_map_campaign(w: float, h: float, mono: Font, _sc: float, slide: float) -> void:
         if _cm_pts.is_empty():
                 var built: Array = _map_build(CM_WP)
                 _cm_pts = built[0]
@@ -1171,7 +1171,7 @@ func _draw_map_campaign(w: float, h: float, mono: Font, sc: float, slide: float)
         _map_plate(px + 16.0 * s, py + 6.0 * s, lbl, Color(1.0, 0.89, 0.55), maxi(10, int(12.0 * s)), mono)
 
 ## ---------- ВЫЖИВАНИЕ: «Тропа в туман» ----------
-func _draw_map_survival(w: float, h: float, mono: Font, sc: float, slide: float) -> void:
+func _draw_map_survival(w: float, h: float, mono: Font, _sc: float, slide: float) -> void:
         if _sv_pts.is_empty():
                 var built: Array = _map_build(SV_WP)
                 _sv_pts = built[0]

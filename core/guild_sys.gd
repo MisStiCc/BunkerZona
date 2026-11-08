@@ -55,7 +55,7 @@ static func cycle() -> int:
 
 
 ## Смена недели -> новый босс, свежий пул
-static func ensure_week(save, g: Dictionary) -> void:
+static func ensure_week(_save, g: Dictionary) -> void:
 	var wk := week_key()
 	if str(g.get("week", "")) == wk:
 		return
@@ -287,7 +287,7 @@ static func raid_damage(save, g: Dictionary, dmg: int) -> Dictionary:
 	return res
 
 
-static func _check_slain(save, g: Dictionary) -> void:
+static func _check_slain(_save, g: Dictionary) -> void:
 	if float(g.get("boss_dmg", 0)) >= boss_pool(g):
 		g["boss_slain"] = int(g.get("boss_slain", 0)) + 1
 		g["tokens"] = int(g.get("tokens", 0)) + 100

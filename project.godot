@@ -83,3 +83,7 @@ textures/vram_compression/import_etc2_astc=true
 textures/default_filters/anisotropic_filtering_level=4
 anti_aliasing/quality/msaa_3d=2
 anti_aliasing/quality/msaa_3d.mobile=1
+
+[debug]
+debug/gdscript/warnings/integer_division=0
+debug/gdscript/warnings/narrowing_conversion=0

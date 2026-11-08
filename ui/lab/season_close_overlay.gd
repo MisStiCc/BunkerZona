@@ -27,7 +27,7 @@ func _ready() -> void:
 
 
 func play(summary: Dictionary, reward_mut: int, reward_ano: int, great: bool) -> void:
-	var next_cycle: int = maxi(int(summary.get("cycle", 1)), 1) + 1
+	var _next_cycle: int = maxi(int(summary.get("cycle", 1)), 1) + 1
 	var title: Label = _root.get_node("Panel/V/Title")
 	title.text = Loc.t("season_close.title", {"n": int(summary.get("cycle", 1))})
 	title.scale = Vector2(1.6, 1.6)

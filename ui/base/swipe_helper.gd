@@ -40,26 +40,26 @@ var _inertia_on := false
 ## Обёртка над scroll: свайп-слой поверх + невидимые скроллбары.
 ## reserve_bottom/right - резерв пустого поля под/справа от списка (px).
 static func attach(sc: ScrollContainer, horizontal: bool, reserve_bottom: float = 0.0, reserve_right: float = 0.0, tap_callback: Callable = Callable()) -> Control:
-	var wrap := Control.new()
-	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var wrap_box := Control.new()
+	wrap_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wrap_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	wrap_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	sc.set_anchors_preset(Control.PRESET_FULL_RECT)
 	sc.offset_bottom = -reserve_bottom
 	sc.offset_right = -reserve_right
-	wrap.add_child(sc)
+	wrap_box.add_child(sc)
 	var lay: SwipeHelper = SwipeHelper.new()
 	lay.name = "SwipeLayer"
 	lay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	lay.offset_bottom = -reserve_bottom
 	lay.offset_right = -reserve_right
 	lay.mouse_filter = Control.MOUSE_FILTER_STOP
-	wrap.add_child(lay)
+	wrap_box.add_child(lay)
 	lay.scroll = sc
 	lay.horiz = horizontal
 	lay.tap_cb = tap_callback
 	lay.hide_scrollbars()
-	return wrap
+	return wrap_box
 
 
 ## Полоса прокрутки исчезает: нулевой размер, прозрачность, мышь мимо.

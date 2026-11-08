@@ -445,7 +445,6 @@ func spend_sparks(n: int) -> bool:
         return false
     awaken_sparks -= n
     return true
-    awaken_sparks = maxi(awaken_sparks + n, 0)
 
 
 static func get_star_stat_mult(stars: int, awaken: int = 0) -> float:

@@ -409,7 +409,7 @@ func _on_enemy_dead(e: Dictionary) -> void:
 
 
 func _update_info() -> void:
-	var pending := _spawn_queue + _enemies.size()
+	var _pending_unused := _spawn_queue + _enemies.size()
 	_info.text = "%s %d/%d   ·   ⚡ %d   ·   %s %d/%d   ·   %s %d" % [
 		Loc.t("labyrinth.wave_short"), _wave, WAVES,
 		int(_energy),

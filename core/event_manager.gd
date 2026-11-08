@@ -34,8 +34,8 @@ static func state(save) -> Dictionary:
 ## Добавить очки партии (возвращает начисленные осколки)
 static func add_score(save, ev: Dictionary, score: int) -> int:
 	var es := state(save)
-	var is_same: bool = str(es.get("event_id", "")) == str(ev["id"])
-	var mult: float = float(ev["mult"]) if is_same else 1.0
+	var same_evt: bool = str(es.get("event_id", "")) == str(ev["id"])
+	var mult: float = float(ev["mult"]) if same_evt else 1.0
 	var s := int(round(float(score) * mult))
 	es["score"] = int(es.get("score", 0)) + s
 	es["best"] = maxi(int(es.get("best", 0)), s)

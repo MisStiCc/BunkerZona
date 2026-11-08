@@ -279,19 +279,19 @@ func _draw_board() -> void:
 
 
 func _make_pipe_cell(cell: Vector2i, cs: float) -> Control:
-	var wrap := Control.new()
-	wrap.position = Vector2(cell.x * cs, cell.y * cs)
-	wrap.size = Vector2(cs, cs)
-	wrap.mouse_filter = Control.MOUSE_FILTER_STOP
-	wrap.gui_input.connect(_on_cell_input.bind(cell))
-	_board.add_child(wrap)
+	var wrap_box := Control.new()
+	wrap_box.position = Vector2(cell.x * cs, cell.y * cs)
+	wrap_box.size = Vector2(cs, cs)
+	wrap_box.mouse_filter = Control.MOUSE_FILTER_STOP
+	wrap_box.gui_input.connect(_on_cell_input.bind(cell))
+	_board.add_child(wrap_box)
 
 	var base := ColorRect.new()
 	base.position = Vector2(2, 2)
 	base.size = Vector2(cs - 4, cs - 4)
 	base.color = Color(0.06, 0.09, 0.06)
 	base.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	wrap.add_child(base)
+	wrap_box.add_child(base)
 
 	var c: Dictionary = _cells[cell.y][cell.x]
 	var mid := cs * 0.5
@@ -319,7 +319,7 @@ func _make_pipe_cell(cell: Vector2i, cs: float) -> Control:
 			3:   # W
 				bar_rect.position = Vector2(2, mid - bar * 0.5)
 				bar_rect.size = Vector2(mid - 2, bar)
-		wrap.add_child(bar_rect)
+		wrap_box.add_child(bar_rect)
 
 	var glyph := Label.new()
 	glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -328,8 +328,8 @@ func _make_pipe_cell(cell: Vector2i, cs: float) -> Control:
 	glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	glyph.add_theme_font_size_override("font_size", int(cs * 0.4))
 	glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	wrap.add_child(glyph)
-	return wrap
+	wrap_box.add_child(glyph)
+	return wrap_box
 
 
 func _on_cell_input(ev: InputEvent, cell: Vector2i) -> void:

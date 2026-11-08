@@ -174,17 +174,17 @@ func _make_cell(x: int, y: int) -> Panel:
 	if tex == null:
 		tex = _tile_tex[cell["t"]]
 	if tex != null:
-		var tr := TextureRect.new()
-		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
-		tr.offset_left = 4
-		tr.offset_top = 4
-		tr.offset_right = -4
-		tr.offset_bottom = -4
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.texture = tex
-		p.add_child(tr)
+		var tex_r := TextureRect.new()
+		tex_r.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tex_r.offset_left = 4
+		tex_r.offset_top = 4
+		tex_r.offset_right = -4
+		tex_r.offset_bottom = -4
+		tex_r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex_r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tex_r.texture = tex
+		p.add_child(tex_r)
 	else:
 		var lbl := Label.new()
 		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -284,7 +284,7 @@ func _cell_pos(p: Vector2i) -> Vector2:
 
 
 ## Все текущие совпадения: массив ранов [{cells:[Vector2i], horiz:bool}]
-func _find_matches(swap_a: Vector2i, swap_b: Vector2i) -> Array:
+func _find_matches(_swap_a: Vector2i, _swap_b: Vector2i) -> Array:
 	var runs: Array = []
 	# горизонтальные
 	for y in ROWS:

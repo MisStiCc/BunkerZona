@@ -242,17 +242,14 @@ func _apply_static_texts():
         var shop_title: Label = get_node_or_null("ShopPanel/Panel/ShopTitle")
         if shop_title:
                 shop_title.text = Loc.t("shop.title")
-        var mutants_header: Label = get_node_or_null("ShopPanel/Panel/MutantsHeader")
         if mutants_header:
                 mutants_header.text = Loc.t("shop.mutants_header")
-        var artifacts_header: Label = get_node_or_null("ShopPanel/Panel/ArtifactsHeader")
         if artifacts_header:
                 artifacts_header.text = Loc.t("shop.artifacts_header")
         var shop_close: Button = get_node_or_null("ShopPanel/Panel/ShopClose")
         if shop_close:
                 shop_close.text = Loc.t("lab.back")
         # v0.31.2: долокализация станций улучшений и хранилища
-        var up_title: Label = get_node_or_null("UpgradePanel/Panel/Margin/VBox/Title")
         if up_title:
                 up_title.text = Loc.t("upgrade.title")
         var up_back: Button = get_node_or_null("UpgradePanel/Panel/Margin/VBox/BackButton")
@@ -2778,17 +2775,17 @@ func _gallery_tile(type: String, is_mutant: bool) -> Control:
 
 func _gallery_ex_tile(type: String, is_mutant: bool) -> Control:
         """Плитка эксклюзива Чёрного ящика: фиолетовая рамка, серый силуэт если не получен"""
-        var wrap := PanelContainer.new()
-        wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        var wrap_box := PanelContainer.new()
+        wrap_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
         var sb := StyleBoxFlat.new()
         sb.bg_color = Color("0a100b")
         sb.set_border_width_all(2)
         sb.set_corner_radius_all(8)
         sb.border_color = Color("b48cff")
         sb.set_content_margin_all(3)
-        wrap.add_theme_stylebox_override("panel", sb)
-        wrap.add_child(_gallery_tile(type, is_mutant))
-        return wrap
+        wrap_box.add_theme_stylebox_override("panel", sb)
+        wrap_box.add_child(_gallery_tile(type, is_mutant))
+        return wrap_box
 
 
 func _on_gallery_tile_input(event: InputEvent, type: String, is_mutant: bool, unlocked: bool):
@@ -4501,11 +4498,11 @@ func _make_arena_board_row(k: String, v: String, gold: bool = false) -> Control:
         var line := ColorRect.new()
         line.custom_minimum_size = Vector2(0, 1)
         line.color = Color(BunkerUI.STEEL_EDGE, 0.6)
-        var wrap := VBoxContainer.new()
-        wrap.add_theme_constant_override("separation", 2)
-        wrap.add_child(row)
-        wrap.add_child(line)
-        return wrap
+        var wrap_box := VBoxContainer.new()
+        wrap_box.add_theme_constant_override("separation", 2)
+        wrap_box.add_child(row)
+        wrap_box.add_child(line)
+        return wrap_box
 
 
 func _make_claim_row(kind: String, idx: int, k: String, v: String) -> Control:
@@ -4528,11 +4525,11 @@ func _make_claim_row(kind: String, idx: int, k: String, v: String) -> Control:
         var line := ColorRect.new()
         line.custom_minimum_size = Vector2(0, 1)
         line.color = Color(BunkerUI.STEEL_EDGE, 0.6)
-        var wrap := VBoxContainer.new()
-        wrap.add_theme_constant_override("separation", 2)
-        wrap.add_child(row)
-        wrap.add_child(line)
-        return wrap
+        var wrap_box := VBoxContainer.new()
+        wrap_box.add_theme_constant_override("separation", 2)
+        wrap_box.add_child(row)
+        wrap_box.add_child(line)
+        return wrap_box
 
 
 func _on_arena_claim(kind: String, idx: int):
@@ -6126,22 +6123,22 @@ func _tw_refresh(_x = null) -> void:
                 elif bool(t["done"]):
                         claimable = true
         _tw_today_head.text = "%d/%d" % [claimed_n, dt.size()]
-        var ready := 0
+        var ready_n := 0
         var next_tier := 0
         for i in range(1, Prog.TRACK_TIERS + 1):
                 if Prog.tier_claimed(i):
                         continue
                 if Prog.track_points() >= i * Prog.TIER_COST:
-                        ready += 1
+                        ready_n += 1
                 elif next_tier == 0:
                         next_tier = i
-        if ready > 0:
-                _tw_track_btn.text = "● " + Loc.t("tw.track_ready", {"n": ready})
+        if ready_n > 0:
+                _tw_track_btn.text = "● " + Loc.t("tw.track_ready", {"n": ready_n})
                 _tw_track_btn.add_theme_color_override("font_color", BunkerUI.HAZARD_BRIGHT)
         else:
                 _tw_track_btn.text = Loc.t("tw.track_next", {"n": next_tier, "pts": Prog.track_points(), "need": next_tier * Prog.TIER_COST})
                 _tw_track_btn.add_theme_color_override("font_color", BunkerUI.TEXT_LIGHT)
-        _tw_dot.visible = claimable or ready > 0 or bool(Prog.calendar_info()["available"])
+        _tw_dot.visible = claimable or ready_n > 0 or bool(Prog.calendar_info()["available"])
         if not _tw_open:
                 return
         _tw_rebuild_rows()

@@ -120,8 +120,8 @@ func _persist() -> void:
 
 # ==================== ПРОФИЛЬ: УРОВЕНЬ / ОПЫТ ====================
 
-func xp_need(level: int) -> int:
-		return 100 + (level - 1) * 50
+func xp_need(tier: int) -> int:
+		return 100 + (tier - 1) * 50
 
 
 func _prof() -> Dictionary:
@@ -144,7 +144,7 @@ func xp_in_level() -> int:
 
 
 ## Начисление опыта. Счётчик "xp" кормит недельную задачу w_xp.
-func add_xp(amount: int, reason: String = "") -> void:
+func add_xp(amount: int, _reason: String = "") -> void:
 		if amount <= 0:
 				return
 		var p := _prof()
@@ -188,7 +188,7 @@ func _month_key() -> String:
 
 
 
-func _day_of_year(y: int, m: int, d: int) -> int:
+func _day_of_year(_y: int, m: int, d: int) -> int:
 		var cum := [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
 		var idx: int = clampi(m - 1, 0, 11)
 		return cum[idx] + d
